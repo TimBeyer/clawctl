@@ -1,0 +1,16 @@
+{
+  "name": "sam",
+  "project": "~/openclaw-vms/sam",
+  "services": {
+    "onePassword": {
+      "serviceAccountToken": "env://OP_SERVICE_ACCOUNT_TOKEN"
+    }
+  },
+  "provider": {
+    "type": "zai",
+    "apiKey": "op://Sam/z.AI API Key/credential"
+  },
+  "telegram": {
+    "botToken": "op://Sam/Telegram Token/credential"
+  }
+}

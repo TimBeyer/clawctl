@@ -1,0 +1,8 @@
+{
+  "name": "my-agent",
+  "project": "~/openclaw-vms/my-agent",
+  "provider": {
+    "type": "anthropic",
+    "apiKey": "sk-ant-..."
+  }
+}

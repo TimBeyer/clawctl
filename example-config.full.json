@@ -1,0 +1,56 @@
+{
+  "name": "hal",
+  "project": "~/openclaw-vms/hal",
+
+  "resources": {
+    "cpus": 4,
+    "memory": "8GiB",
+    "disk": "50GiB"
+  },
+
+  "network": {
+    "forwardGateway": true,
+    "gatewayPort": 18789,
+    "gatewayToken": "my-dashboard-token",
+    "tailscale": {
+      "authKey": "tskey-auth-...",
+      "mode": "serve"
+    }
+  },
+
+  "services": {
+    "onePassword": {
+      "serviceAccountToken": "ops_..."
+    }
+  },
+
+  "provider": {
+    "type": "anthropic",
+    "apiKey": "sk-ant-...",
+    "model": "anthropic/claude-opus-4-6"
+  },
+
+  "agent": {
+    "toolsProfile": "full",
+    "sandbox": false
+  },
+
+  "bootstrap": {
+    "agent": {
+      "name": "Archie",
+      "context": "A household agent — part AI assistant, part digital butler. Helpful, resourceful, dry sense of humor."
+    },
+    "user": {
+      "name": "Alex",
+      "context": "Lives in London with Sam and Jamie. Timezone Europe/London."
+    }
+  },
+
+  "telegram": {
+    "botToken": "123456:ABC-...",
+    "allowFrom": ["123456789"],
+    "groups": {
+      "-100123456789": { "requireMention": true }
+    }
+  }
+}
