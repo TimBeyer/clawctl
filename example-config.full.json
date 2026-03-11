@@ -1,0 +1,56 @@
+{
+  "name": "hal",
+  "project": "~/openclaw-vms/hal",
+
+  "resources": {
+    "cpus": 4,
+    "memory": "8GiB",
+    "disk": "50GiB"
+  },
+
+  "network": {
+    "forwardGateway": true,
+    "gatewayPort": 18789,
+    "gatewayToken": "my-dashboard-token",
+    "tailscale": {
+      "authKey": "tskey-auth-...",
+      "mode": "serve"
+    }
+  },
+
+  "services": {
+    "onePassword": {
+      "serviceAccountToken": "ops_..."
+    }
+  },
+
+  "provider": {
+    "type": "anthropic",
+    "apiKey": "sk-ant-...",
+    "model": "anthropic/claude-opus-4-6"
+  },
+
+  "agent": {
+    "toolsProfile": "full",
+    "sandbox": false
+  },
+
+  "bootstrap": {
+    "agent": {
+      "name": "Klaus",
+      "context": "A family agent — part AI assistant, part Berlin raccoon. Named after Claude, but more German. Warm, practical, witty. 🦝"
+    },
+    "user": {
+      "name": "Tim",
+      "context": "Lives in Berlin with Tati and Lily. Timezone Europe/Berlin."
+    }
+  },
+
+  "telegram": {
+    "botToken": "123456:ABC-...",
+    "allowFrom": ["123456789"],
+    "groups": {
+      "-100123456789": { "requireMention": true }
+    }
+  }
+}
