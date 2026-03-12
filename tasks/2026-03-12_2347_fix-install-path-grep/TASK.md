@@ -1,6 +1,6 @@
 # Fix: install.sh falsely detects ~/.local/bin in PATH config
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -19,9 +19,9 @@ use the full line for matching.
 
 ## Steps
 
-- [ ] Fix grep pattern in `install.sh` line 153
-- [ ] Run `bun test`
-- [ ] Manual verification
+- [x] Fix grep pattern in `install.sh` line 153
+- [x] Run `bun test`
+- [x] Manual verification
 
 ## Notes
 
@@ -32,3 +32,7 @@ use the full line for matching.
   which is correct since the rc file contains the literal string `$HOME`.
 
 ## Outcome
+
+Changed grep pattern from `.local/bin` to `$HOME/.local/bin` in `install.sh`
+line 153. All 230 existing tests pass. Manual verification confirms
+`/usr/local/bin` no longer triggers a false positive.
