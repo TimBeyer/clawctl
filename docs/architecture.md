@@ -184,11 +184,15 @@ OpenClaw onboarding (`openclaw onboard`) is an interactive wizard that runs insi
 
 ### Current implementation: exit Ink + stdio inherit
 
-The onboard step exits the Ink app (via `useApp().exit()`) with an `OnboardResult` that triggers post-wizard logic in the create command. The create command detaches stdin, then spawns `limactl shell <vmName> -- openclaw onboard --skip-daemon` with `stdio: 'inherit'`. This gives the user full PTY interaction with OpenClaw's prompts. After the subprocess exits, the gateway daemon is installed separately, and the instance is registered.
+The onboard step exits the Ink app (via `useApp().exit()`) with an `OnboardResult` that triggers post-wizard logic in the create command. The subprocess `limactl shell <vmName> -- openclaw onboard --skip-daemon` runs with `stdio: 'inherit'`, giving the user full PTY interaction with OpenClaw's prompts. After the subprocess exits, the gateway daemon is installed separately, and the instance is registered.
+
+**Ink gets its own stdin via `/dev/tty`**: Ink's `render()` receives a private `tty.ReadStream` opened on `/dev/tty` instead of `process.stdin`. This prevents Ink from putting `process.stdin` into raw mode or attaching `'readable'` listeners to it. When Ink exits, the private stream is destroyed — `process.stdin` (fd 0) remains untouched and pristine for the subprocess to inherit. Without this, Bun's stdin implementation continues consuming bytes from fd 0 after Ink's cleanup, causing the parent and child process to compete for input (manifesting as swallowed keypresses). See `src/commands/create.ts` for the implementation.
 
 Trade-offs:
 
-- Simple and reliable -- no terminal emulation layer
+- Simple and reliable — no terminal emulation layer
+- Works around Bun's stdin behavior (Bun ignores `pause()`/`readStop()` on stdin)
+- Falls back to `process.stdin` when `/dev/tty` is unavailable (CI, piped input)
 - Loses Ink UI during onboarding (no step indicator, no guidance sidebar)
 - Cannot provide contextual tips alongside the wizard
 
