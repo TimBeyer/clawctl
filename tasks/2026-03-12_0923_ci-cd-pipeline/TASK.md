@@ -1,15 +1,17 @@
 # CI/CD Pipeline: PR Checks, Release Automation, Binary Artifacts
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
 Set up GitHub Actions CI/CD infrastructure:
+
 - PR checks: lint, format, test (parallel jobs)
 - Conventional commit enforcement via commitlint
 - Automated release on push to main: build binary, version bump, changelog, GitHub Release with binary artifact
 
 Does NOT cover:
+
 - Linux/cross-platform builds (future matrix extension)
 - VM integration tests in CI (self-skip when env var unset)
 - Branch protection rules (manual GitHub settings)
@@ -26,18 +28,18 @@ Does NOT cover:
 
 ## Steps
 
-- [ ] Task directory + TASK.md committed
-- [ ] Feature branch created
-- [ ] `bin/cli.tsx` reads version from `package.json`
-- [ ] devDependencies installed
-- [ ] `.release-it.json` created
-- [ ] `commitlint.config.js` created
-- [ ] `.prettierignore` created
-- [ ] `build:release` and `release` scripts added to `package.json`
-- [ ] `.github/workflows/ci.yml` created
-- [ ] `.github/workflows/commitlint.yml` created
-- [ ] `.github/workflows/release.yml` created
-- [ ] Local validation: lint, format:check, test, build:release
+- [x] Task directory + TASK.md committed
+- [x] Feature branch created
+- [x] `bin/cli.tsx` reads version from `package.json`
+- [x] devDependencies installed
+- [x] `.release-it.json` created
+- [x] `commitlint.config.js` created
+- [x] `.prettierignore` created
+- [x] `build:release` and `release` scripts added to `package.json`
+- [x] `.github/workflows/ci.yml` created
+- [x] `.github/workflows/commitlint.yml` created
+- [x] `.github/workflows/release.yml` created
+- [x] Local validation: lint, format:check, test, build:release
 
 ## Notes
 
@@ -48,4 +50,12 @@ Does NOT cover:
 
 ## Outcome
 
-(To be written on resolution)
+Delivered the full CI/CD pipeline as planned:
+
+- Three GitHub Actions workflows: PR checks (lint/format/test), commitlint, and release automation
+- release-it configured with conventional-changelog for automated version bumps, changelogs, and GitHub Releases
+- Binary artifact (`clawctl-darwin-arm64.zip`) built and attached to releases
+- CLI version synced dynamically from `package.json` via import
+- All local checks pass: lint, format:check, test, build:release
+
+Future: add linux targets via build matrix + extra asset entries in `.release-it.json`.
