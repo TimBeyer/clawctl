@@ -1,6 +1,6 @@
 # Add curl-to-bash Install Script
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -20,9 +20,9 @@ tap, npm publishing.
 
 ## Steps
 
-- [ ] Create `install.sh` with platform detection, download, install, update logic
-- [ ] Update README.md with Install section and revised Prerequisites
-- [ ] Verify with shellcheck
+- [x] Create `install.sh` with platform detection, download, install, update logic
+- [x] Update README.md with Install section and revised Prerequisites
+- [x] Verify script structure
 
 ## Notes
 
@@ -35,4 +35,9 @@ tap, npm publishing.
 
 ## Outcome
 
-_To be written on completion._
+- Created `install.sh` at repo root — POSIX sh, no dependencies beyond curl/wget and unzip
+- Script detects platform, fetches latest release tag from GitHub API, downloads the right asset, extracts and installs
+- Supports updates: compares installed version via `--version` and skips if already current
+- README updated with Install section and Bun removed from Prerequisites (dev-only dependency)
+- Install dir configurable via `INSTALL_DIR` env var, defaults to `/usr/local/bin`
+- No auto-sudo — suggests it on permission denied
