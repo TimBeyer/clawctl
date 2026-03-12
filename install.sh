@@ -22,6 +22,10 @@ command_exists() {
   command -v "$1" >/dev/null 2>&1
 }
 
+trim() {
+  printf '%s' "$1" | tr -d '[:space:]'
+}
+
 # --- Downloader ---
 
 DOWNLOADER=""
@@ -86,7 +90,7 @@ get_latest_version() {
 
 check_installed_version() {
   if [ -x "${INSTALL_DIR}/${BINARY_NAME}" ]; then
-    INSTALLED_VERSION="$("${INSTALL_DIR}/${BINARY_NAME}" --version 2>/dev/null || true)"
+    INSTALLED_VERSION="$(trim "$("${INSTALL_DIR}/${BINARY_NAME}" --version 2>/dev/null || true)")"
     if [ -n "$INSTALLED_VERSION" ] && [ "$INSTALLED_VERSION" = "$LATEST_VERSION" ]; then
       info "${BINARY_NAME} is already up to date (v${LATEST_VERSION})"
       exit 0
@@ -101,7 +105,10 @@ check_installed_version() {
 
 install_binary() {
   download_url="https://github.com/${REPO}/releases/download/${TAG}/${BINARY_NAME}-${PLATFORM}.zip"
-  tmpdir="$(mktemp -d)"
+  tmpdir="$(mktemp -d 2>/dev/null || mktemp -d -t clawctl)"
+  if [ ! -d "$tmpdir" ]; then
+    error "failed to create temporary directory"
+  fi
   trap 'rm -rf "$tmpdir"' EXIT
 
   info "downloading ${BINARY_NAME} v${LATEST_VERSION} for ${PLATFORM}..."
@@ -132,7 +139,7 @@ Try one of:
 # --- Verify ---
 
 verify_install() {
-  installed_version="$("${INSTALL_DIR}/${BINARY_NAME}" --version 2>/dev/null || true)"
+  installed_version="$(trim "$("${INSTALL_DIR}/${BINARY_NAME}" --version 2>/dev/null || true)")"
   if [ -z "$installed_version" ]; then
     error "installation failed — could not run ${BINARY_NAME}"
   fi
