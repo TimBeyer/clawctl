@@ -17,6 +17,16 @@ everything OpenClaw needs, running onboarding, and managing instances
 afterwards. Your project directory on the host is the source of truth: config
 and persistent data live there, editable and backed up by git.
 
+## Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
+```
+
+To update an existing installation, run the same command again.
+
+**Requirements**: macOS on Apple Silicon (M1/M2/M3/M4).
+
 ## Quickstart
 
 ```bash
@@ -35,7 +45,6 @@ a JSON config file.
 
 - **macOS** on **Apple Silicon** (M1/M2/M3/M4)
 - **Homebrew** installed ([brew.sh](https://brew.sh))
-- **Bun** installed (`brew install oven-sh/bun/bun`)
 
 Lima is installed automatically by the CLI if not already present.
 
@@ -132,6 +141,12 @@ bun build ./bin/cli.tsx --compile --outfile dist/clawctl   # build binary
 bun test                                                   # unit tests
 bun run lint                                               # ESLint
 bun run format:check                                       # Prettier check
+```
+
+To install to a custom directory, set `INSTALL_DIR`:
+
+```bash
+INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
 ```
 
 See [Testing](docs/testing.md) for the full test strategy.
