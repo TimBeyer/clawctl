@@ -150,7 +150,7 @@ setup_path() {
 
   for rcfile in "${HOME}/.zshrc" "${HOME}/.bashrc"; do
     if [ -f "$rcfile" ]; then
-      if grep -qF '.local/bin' "$rcfile" 2>/dev/null; then
+      if grep -qF '$HOME/.local/bin' "$rcfile" 2>/dev/null; then
         continue
       fi
     fi
