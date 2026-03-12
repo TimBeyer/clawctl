@@ -1,6 +1,6 @@
 # Fix release pipeline version mismatch
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -10,6 +10,7 @@ version in `package.json`, so every release ships a binary that reports the
 previous version (e.g. tag v0.4.2 ships a binary reporting v0.4.1).
 
 Does **not** cover:
+
 - Multi-platform builds (only darwin-arm64 today)
 - Changes to install.sh (works as-is)
 
@@ -22,11 +23,11 @@ Does **not** cover:
 
 ## Steps
 
-- [ ] Create task directory and TASK.md
-- [ ] Modify `package.json` — add `draft: true`, remove `assets` from release-it github config
-- [ ] Modify `.github/workflows/release.yml` — remove `build` job, rewire `release` depends on lint/format/test
-- [ ] Create `.github/workflows/release-build.yml` — tag-triggered build + publish workflow
-- [ ] Run tests, lint, format check
+- [x] Create task directory and TASK.md
+- [x] Modify `package.json` — add `draft: true`, remove `assets` from release-it github config
+- [x] Modify `.github/workflows/release.yml` — remove `build` job, rewire `release` depends on lint/format/test
+- [x] Create `.github/workflows/release-build.yml` — tag-triggered build + publish workflow
+- [x] Run tests, lint, format check
 
 ## Notes
 
@@ -39,4 +40,14 @@ Does **not** cover:
 
 ## Outcome
 
-(To be filled on completion)
+Split the release pipeline into two workflows to fix the version mismatch:
+
+- `release.yml` now only runs CI checks and `release-it` (which bumps version,
+  commits, tags, and creates a **draft** GitHub release)
+- New `release-build.yml` triggers on tag push, builds the binary on macOS
+  (from the tagged commit with the correct version), uploads it to the draft
+  release, and publishes the release
+
+The draft release approach ensures `install.sh` users never see a release
+without a binary attached, since the `/releases/latest` API only returns
+published releases.

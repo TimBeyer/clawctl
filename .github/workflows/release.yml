@@ -48,22 +48,8 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun test
 
-  build:
-    needs: [lint, format, test]
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run build:release
-      - run: cd dist && zip clawctl-darwin-arm64.zip clawctl
-      - uses: actions/upload-artifact@v4
-        with:
-          name: clawctl-darwin-arm64
-          path: dist/clawctl-darwin-arm64.zip
-
   release:
-    needs: build
+    needs: [lint, format, test]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -73,10 +59,6 @@ jobs:
           fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - uses: actions/download-artifact@v4
-        with:
-          name: clawctl-darwin-arm64
-          path: dist/
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
