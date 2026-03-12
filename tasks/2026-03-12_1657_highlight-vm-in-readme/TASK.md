@@ -1,6 +1,6 @@
 # Highlight VM isolation in README
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -19,10 +19,11 @@ Does not cover changes to any other docs — just README.md.
 
 ## Steps
 
-- [ ] Update hero tagline (lines 8-9)
-- [ ] Rewrite opening paragraphs (lines 14-22) into single VM-first block
-- [ ] Update closing CTA (lines 142-149)
-- [ ] Format check and commit
+- [x] Update hero tagline (lines 8-9)
+- [x] Rewrite opening paragraphs (lines 14-22) into single VM-first block
+- [x] Update closing CTA (lines 142-149)
+- [x] Update Features list bullets to lead with isolation
+- [x] Format check and commit
 
 ## Notes
 
@@ -35,4 +36,11 @@ Does not cover changes to any other docs — just README.md.
 
 ## Outcome
 
-_To be written on completion._
+Rewrote 4 areas of README.md to lead with VM isolation:
+
+- **Hero tagline**: "Run OpenClaw agents in isolated VMs — managed entirely from your Mac"
+- **Opener**: Merged two paragraphs into one VM-first block; Lima mentioned up front
+- **Features list**: First two bullets now "Fully isolated" and "Zero VM wrangling" instead of "One-command setup" and "No SSH required"
+- **Closing CTA**: "Your agent will be running in its own isolated VM in minutes"
+
+Dropped "No SSH / No YAML wrestling" framing — those aren't pain points the target audience would have experienced without clawctl.
