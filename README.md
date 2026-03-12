@@ -63,6 +63,7 @@ provisioning, and — optionally — credential setup and OpenClaw onboarding.
 - **Secret management** — 1Password `op://` references and `env://` variables; zero plaintext secrets in config
 - **Remote access** — optional Tailscale integration for accessing your agent from anywhere
 - **15+ AI providers** — Anthropic, OpenAI, Gemini, Mistral, and more out of the box
+- **Run multiple agents** — each instance gets its own isolated VM; spin up as many as you need
 - **CI/CD ready** — [headless mode](docs/headless-mode.md) for fully automated provisioning
 
 ## Commands
@@ -82,8 +83,28 @@ provisioning, and — optionally — credential setup and OpenClaw onboarding.
 
 Run `clawctl --help` for the full list.
 
+### Day-to-day management
+
+clawctl isn't just an installer — it's how you manage your agents after setup too.
+
+```bash
+# See what's running
+clawctl list
+
+# Spin up a second agent for a different project
+clawctl create
+
+# Restart one that's acting up
+clawctl restart my-agent
+
+# Tear it down when you're done (keeps your project dir by default)
+clawctl delete my-agent
+```
+
 Instances are tracked in `~/.config/clawctl/instances.json` and registered
-automatically on create, or manually via `clawctl register`.
+automatically on create, or manually via `clawctl register`. Run as many
+agents as your hardware allows — each gets its own isolated VM, project
+directory, and config.
 
 ## Documentation
 
