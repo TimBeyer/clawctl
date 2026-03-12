@@ -23,12 +23,6 @@ and persistent data live there, editable and backed up by git.
 curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
 ```
 
-To install to a custom directory:
-
-```bash
-INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
-```
-
 To update an existing installation, run the same command again.
 
 **Requirements**: macOS on Apple Silicon (M1/M2/M3/M4).
@@ -147,6 +141,12 @@ bun build ./bin/cli.tsx --compile --outfile dist/clawctl   # build binary
 bun test                                                   # unit tests
 bun run lint                                               # ESLint
 bun run format:check                                       # Prettier check
+```
+
+To install to a custom directory, set `INSTALL_DIR`:
+
+```bash
+INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
 ```
 
 See [Testing](docs/testing.md) for the full test strategy.
