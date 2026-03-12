@@ -1,5 +1,17 @@
 # Changelog
 
+# [0.4.0](https://github.com/TimBeyer/clawctl/compare/v0.3.0...v0.4.0) (2026-03-12)
+
+
+### Bug Fixes
+
+* trim version output and use portable mktemp in install script ([7586a91](https://github.com/TimBeyer/clawctl/commit/7586a915ec598ca63c5901424cc312e7f463b66d))
+
+
+### Features
+
+* add curl-to-bash install script ([490531e](https://github.com/TimBeyer/clawctl/commit/490531e433ad8be0dfe4a9cd981e9bced23d6dd0))
+
 # 0.3.0 (2026-03-12)
 
 
