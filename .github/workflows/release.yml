@@ -51,6 +51,8 @@ jobs:
   release:
     needs: [lint, format, test]
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.release-it.outputs.tag }}
     permissions:
       contents: write
     steps:
@@ -62,6 +64,31 @@ jobs:
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-      - run: bunx release-it --ci
+      - id: release-it
+        run: |
+          bunx release-it --ci
+          TAG=$(git describe --tags --abbrev=0)
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    needs: release
+    if: needs.release.outputs.tag != ''
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag }}
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run build:release
+      - run: cd dist && zip clawctl-darwin-arm64.zip clawctl
+      - name: Upload binary and publish release
+        run: |
+          gh release upload "${{ needs.release.outputs.tag }}" dist/clawctl-darwin-arm64.zip --clobber
+          gh release edit "${{ needs.release.outputs.tag }}" --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
