@@ -1,3 +1,4 @@
+import { openSync, closeSync } from "node:fs";
 import { writeFile, unlink } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -100,17 +101,24 @@ export class LimaDriver implements VMDriver {
   }
 
   async execInteractive(name: string, command: string): Promise<{ exitCode: number }> {
-    const sshEnv = { ...process.env, SSH: "ssh -tt" };
-    const result = await execa(
-      "limactl",
-      ["shell", "--workdir", "/tmp", name, "bash", "-lc", command],
-      {
-        stdio: "inherit",
-        reject: false,
-        env: sshEnv,
-      },
-    );
-    return { exitCode: result.exitCode ?? 1 };
+    // Open /dev/tty directly instead of inheriting process.stdin (fd 0).
+    // After Ink exits, the parent's stdin TTY handle may still be in
+    // readStart mode, stealing bytes from any child that shares fd 0.
+    // A fresh /dev/tty fd is independent of process.stdin's state.
+    const ttyFd = openSync("/dev/tty", "r+");
+    try {
+      const result = await execa(
+        "limactl",
+        ["shell", "--workdir", "/tmp", name, "bash", "-lc", command],
+        {
+          stdio: [ttyFd, ttyFd, ttyFd],
+          reject: false,
+        },
+      );
+      return { exitCode: result.exitCode ?? 1 };
+    } finally {
+      closeSync(ttyFd);
+    }
   }
 
   async runScript(

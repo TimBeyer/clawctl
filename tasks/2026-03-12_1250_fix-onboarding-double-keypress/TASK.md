@@ -1,6 +1,6 @@
 # Fix: onboarding double keypress (round 2)
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -22,10 +22,10 @@ OpenClaw onboarding wizard.
 
 ## Steps
 
-- [ ] Modify `src/drivers/lima.ts` — `execInteractive()` to use `/dev/tty`
-- [ ] Enhance `src/commands/create.ts` — stdin cleanup with `readStop()`
-- [ ] Run tests and lint
-- [ ] Commit
+- [x] Modify `src/drivers/lima.ts` — `execInteractive()` to use `/dev/tty`
+- [x] Enhance `src/commands/create.ts` — stdin cleanup with `readStop()`
+- [x] Run tests and lint
+- [x] Commit
 
 ## Notes
 
@@ -50,4 +50,18 @@ OpenClaw onboarding wizard.
 
 ## Outcome
 
-_To be written when resolved._
+1. **`execInteractive()` uses `/dev/tty`**: Opens a fresh fd to the
+   controlling terminal instead of inheriting fd 0. This completely
+   bypasses the parent's polluted `process.stdin` handle.
+
+2. **`readStop()` defense-in-depth**: After Ink exits, the stdin cleanup
+   now directly calls `_handle.readStop()` to stop the underlying TTY
+   handle from reading fd 0, in case any other code path still uses
+   `stdio: "inherit"`.
+
+3. **Removed `SSH="ssh -tt"` hack**: This was a workaround from the
+   first fix attempt that didn't address the root cause (parent stealing
+   bytes from fd 0). PTY allocation via limactl shell works correctly
+   without it.
+
+All 230 tests pass, lint and format checks clean.

@@ -53,13 +53,22 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
   const instance = render(React.createElement(App, { driver }));
   const result = await instance.waitUntilExit();
 
-  // Ink may leave stdin listeners active. Fully detach before spawning
-  // subprocesses with stdio: "inherit".
+  // Ink uses the 'readable' event on stdin, which calls readStart() on
+  // the underlying TTY handle. When Ink exits it removes the listener
+  // and calls unref(), but never calls readStop(). pause() is a no-op
+  // because the stream was never in flowing mode. Stop the handle
+  // directly so it can't steal bytes from child processes on fd 0.
   if (process.stdin.isTTY && process.stdin.setRawMode) {
     process.stdin.setRawMode(false);
   }
   process.stdin.removeAllListeners();
   process.stdin.pause();
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- internal Node/Bun API
+    (process.stdin as any)._handle?.readStop?.();
+  } catch {
+    // Best-effort: _handle may not exist in all runtimes
+  }
 
   // Write minimal clawctl.json for wizard-created instances
   const writeMinimalConfig = async (vmName: string, projectDir: string) => {
