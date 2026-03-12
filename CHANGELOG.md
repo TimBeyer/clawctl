@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.5](https://github.com/TimBeyer/clawctl/compare/v0.4.4...v0.4.5) (2026-03-12)
+
+
+### Bug Fixes
+
+* merge build into release workflow to fix trigger ([5ee2aba](https://github.com/TimBeyer/clawctl/commit/5ee2abac6278cf9db1e2d1348da04d98b1ce1960))
+
 ## [0.4.4](https://github.com/TimBeyer/clawctl/compare/v0.4.3...v0.4.4) (2026-03-12)
 
 
