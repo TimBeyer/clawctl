@@ -5,21 +5,18 @@
 <h1 align="center">clawctl</h1>
 
 <p align="center">
-  <strong>Get an OpenClaw agent running in one command.</strong><br>
-  <em>No SSH. No YAML wrestling. Just answer a few questions and you're live.</em>
+  <strong>Run OpenClaw agents in isolated VMs — managed entirely from your Mac.</strong><br>
+  <em>You never touch the VM. Config lives on your host, git-tracked and reproducible.</em>
 </p>
 
 ---
 
-**Setting up an OpenClaw agent shouldn't feel like a sysadmin exam.** clawctl
-gets you from zero to a running agent in a single command — no manual
-provisioning, no shelling into VMs, no piecing together scripts. Everything
-lives in your project directory, version-controlled and reproducible.
-
-Under the hood, clawctl spins up an isolated Ubuntu VM via
+**clawctl gives each OpenClaw agent its own isolated Ubuntu VM** via
 [Lima](https://lima-vm.io), provisions it with everything OpenClaw needs, and
-mounts your project directory so config and data stay on your Mac — editable,
-git-trackable, and safe from VM rebuilds.
+manages the full lifecycle from your Mac. You never shell in or piece together
+scripts — just answer a few questions (or hand it a config file) and the agent
+is running. Config and data are mounted into a project directory on your host,
+so they're editable, git-trackable, and safe from VM rebuilds.
 
 ## Install
 
@@ -56,8 +53,8 @@ provisioning, and — optionally — credential setup and OpenClaw onboarding.
 
 ## Features
 
-- **One-command setup** — interactive wizard or headless config file, your choice
-- **No SSH required** — everything is orchestrated from your Mac
+- **Fully isolated** — each agent runs in its own Ubuntu VM; nothing installed on your Mac
+- **Zero VM wrangling** — interactive wizard or headless config file, no manual provisioning
 - **Git-friendly** — config and data live in your project directory, not buried in a VM
 - **Reproducible** — delete the VM, recreate it, pick up right where you left off
 - **Secret management** — 1Password `op://` references and `env://` variables; zero plaintext secrets in config
@@ -146,4 +143,4 @@ curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | 
 clawctl create
 ```
 
-Your OpenClaw agent will be running in minutes.
+Your agent will be running in its own isolated VM in minutes.
