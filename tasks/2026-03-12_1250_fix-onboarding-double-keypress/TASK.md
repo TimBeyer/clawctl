@@ -41,8 +41,11 @@ OpenClaw onboarding wizard.
 
 - **What worked**: Don't clean up after Ink — prevent the problem
   entirely. Pass a private `tty.ReadStream` (from `/dev/tty`) to
-  Ink's `render()` as the `stdin` option (documented in
-  [Ink #378](https://github.com/vadimdemedes/ink/issues/378)).
+  Ink's `render()` as the `stdin` option. (Ink #378 showed that
+  `render()` accepts a custom stdin — though for a different problem,
+  using a mock stream to avoid raw-mode errors with subprocesses.
+  Our approach uses a *real* TTY stream so Ink still has full
+  interactive input, just on a separate fd.)
   Ink reads from its own fd, `process.stdin` is never touched.
   After Ink exits, destroy the private stream. The subprocess then
   inherits a pristine `process.stdin` with no competition for bytes.
