@@ -1,13 +1,13 @@
 # Getting Started
 
 This guide walks you through creating your first OpenClaw instance with
-clawctl. By the end, you'll have a fully provisioned VM with OpenClaw running
-and a dashboard accessible from your browser.
+clawctl. By the end, you'll have a fully provisioned VM with an OpenClaw
+gateway running and a dashboard accessible from your browser.
 
 ## What you'll end up with
 
 - An Ubuntu 24.04 VM running on your Mac via Lima
-- OpenClaw installed, configured, and running inside the VM
+- The OpenClaw gateway installed, configured, and running inside the VM
 - A dashboard at `http://localhost:18789`
 - A project directory on your Mac with the instance config and persistent data
 - The VM managed by `clawctl` — start, stop, shell in, delete, all from the host
@@ -89,7 +89,7 @@ Shows a summary with your dashboard URL and useful commands.
 The wizard creates two things:
 
 **A Lima VM** — managed by `limactl` under `~/.lima/<vmName>/`. Contains the
-Ubuntu guest OS, installed tools, and OpenClaw installation.
+Ubuntu guest OS, installed tools, and the OpenClaw gateway.
 
 **A project directory** — on your Mac at the path you chose in step 2:
 

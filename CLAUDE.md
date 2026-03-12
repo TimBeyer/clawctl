@@ -1,13 +1,18 @@
 # clawctl
 
-Full-lifecycle bootstrapping and management tool for OpenClaw instances
+Full-lifecycle bootstrapping and management tool for OpenClaw gateways
 running in Lima VMs on macOS. Built with Bun + TypeScript + Ink.
 
-- **Bootstrap**: Create a VM, provision it, install OpenClaw, run onboarding —
-  all from the host. The user never shells into the VM to set things up.
-- **Manage**: Start, stop, inspect, and reconfigure OpenClaw instances. The
-  project directory on the host is the source of truth.
-- **Persist**: OpenClaw config and state are mounted into the host project
+Each clawctl **instance** is a Lima VM running an OpenClaw **gateway**.
+The gateway hosts one or more **agents**. clawctl manages the instance
+lifecycle (VM, networking, credentials); OpenClaw manages the agents inside.
+
+- **Bootstrap**: Create a VM, provision it, install the OpenClaw gateway, run
+  onboarding — all from the host. The user never shells into the VM to set
+  things up.
+- **Manage**: Start, stop, inspect, and reconfigure instances. The project
+  directory on the host is the source of truth.
+- **Persist**: Gateway config and state are mounted into the host project
   directory (`data/`) where they're editable and backed up by git. Rebuilding
   the VM doesn't lose configuration.
 - **Delegate, don't duplicate**: We use OpenClaw's own installer and onboarding

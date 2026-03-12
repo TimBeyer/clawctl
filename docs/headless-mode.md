@@ -6,7 +6,7 @@ onboarding.
 
 ## When to use it
 
-- **CI/CD pipelines** — spin up OpenClaw instances as part of automated workflows
+- **CI/CD pipelines** — spin up OpenClaw gateways as part of automated workflows
 - **Scripted setups** — provision multiple instances from a shell script
 - **Team onboarding** — share a config file so teammates get identical environments
 - **Reproducible rebuilds** — recreate a VM from a checked-in config
@@ -22,7 +22,7 @@ The headless pipeline runs these stages in order:
 5. **Verify installed tools** — Node.js 22, Tailscale, Homebrew, 1Password CLI
 6. **Set up 1Password** — if `services.onePassword` is configured
 7. **Connect Tailscale** — if `network.tailscale` is configured
-8. **Bootstrap OpenClaw** — if `provider` is configured (runs `openclaw onboard --non-interactive`)
+8. **Bootstrap gateway** — if `provider` is configured (runs `openclaw onboard --non-interactive`)
 9. **Register instance** — write `clawctl.json` and update the instance registry
 
 Progress is printed as `[prefix] message` lines — suitable for terminals and
@@ -42,7 +42,7 @@ in the VM when ready.
 }
 ```
 
-**Bootstrap** — creates a VM with a fully working OpenClaw instance:
+**Bootstrap** — creates a VM with a fully working OpenClaw gateway:
 
 ```json
 {

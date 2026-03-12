@@ -2,9 +2,9 @@
 
 ## Overview
 
-`clawctl` is a CLI for creating and managing OpenClaw instances on macOS. Each instance runs in an isolated Lima VM -- provisioned, configured, and lifecycle-managed entirely from the host. The user never shells into the VM to set things up.
+`clawctl` is a CLI for creating and managing OpenClaw gateways on macOS. Each **instance** (a Lima VM running an OpenClaw gateway) is provisioned, configured, and lifecycle-managed entirely from the host. The user never shells into the VM to set things up.
 
-The tool delegates to OpenClaw's own tooling (installer, onboarding wizard) rather than reimplementing it. OpenClaw config and state persist in the host project directory (`data/`) via virtiofs mounts, so they're editable from the host and survive VM rebuilds.
+The tool delegates to OpenClaw's own tooling (installer, onboarding wizard) rather than reimplementing it. Gateway config and state persist in the host project directory (`data/`) via virtiofs mounts, so they're editable from the host and survive VM rebuilds.
 
 The high-level flow (two modes):
 
@@ -39,7 +39,7 @@ When `provider` is present in the config, the bootstrap phase runs
 `openclaw onboard --non-interactive` to set up auth, install the daemon, and
 configure the gateway. It then applies post-onboard config (tools profile,
 workspace, sandbox) and optional Telegram channel setup. The result is a
-fully working openclaw instance — daemon running, dashboard accessible.
+fully working gateway — daemon running, dashboard accessible.
 
 Without a `provider` section, onboarding is skipped and the user runs
 `openclaw onboard` manually in the VM.

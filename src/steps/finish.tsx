@@ -41,8 +41,8 @@ export function Finish({ driver, config, onboardSkipped, tailscaleMode }: Finish
       <Box flexDirection="column" marginLeft={2} marginBottom={1}>
         <Text bold color="green">
           {onboardSkipped
-            ? "Your OpenClaw VM is ready. Onboarding was skipped."
-            : "Your OpenClaw VM is ready!"}
+            ? "Your OpenClaw gateway is ready. Onboarding was skipped."
+            : "Your OpenClaw gateway is ready!"}
         </Text>
       </Box>
 
