@@ -13,55 +13,50 @@ OpenClaw onboarding wizard.
 
 ## Plan
 
-1. Change `LimaDriver.execInteractive()` to open `/dev/tty` directly
-   instead of using `stdio: "inherit"`, giving the child a fresh fd to
-   the terminal that doesn't compete with the parent's `process.stdin`.
-2. Enhance the stdin cleanup in `create.ts` to call `readStop()` on the
-   underlying handle as defense-in-depth.
-3. Remove the `SSH="ssh -tt"` env var hack that was ineffective.
+1. Give Ink its own stdin stream (via `/dev/tty`) so it never touches
+   `process.stdin`. The subprocess inherits pristine `process.stdin`.
+2. Revert `execInteractive()` to simple execa + `stdio: "inherit"`.
 
 ## Steps
 
-- [x] Modify `src/drivers/lima.ts` — `execInteractive()` to use `/dev/tty`
-- [x] Enhance `src/commands/create.ts` — stdin cleanup with `readStop()`
+- [x] Create separate `/dev/tty` ReadStream for Ink in `src/commands/create.ts`
+- [x] Revert `src/drivers/lima.ts` to simple execa
 - [x] Run tests and lint
-- [x] Commit
+- [x] Commit and verify fix manually
 
 ## Notes
 
-- **Why the previous fix failed**: Ink uses the `'readable'` event (not
-  `'data'`) on stdin. This means stdin was never in flowing mode. The
-  cleanup code calls `pause()`, but `pause()` only sets
-  `state.flowing = false` — a no-op when the stream was never flowing.
-  The underlying TTY handle stays in `readStart` mode, continuously
-  reading from fd 0 into Node's/Bun's internal buffer. When the child
-  process inherits fd 0 via `stdio: "inherit"`, both parent and child
-  compete for the same bytes — the parent steals alternating keypresses.
+- **Why post-Ink cleanup never worked**: Ink uses the `'readable'` event
+  on stdin, which starts the underlying TTY handle reading from fd 0.
+  After Ink exits, `pause()` is a no-op (stream was never in flowing
+  mode), `removeAllListeners()` doesn't stop the handle, and
+  `_handle.readStop()` doesn't exist in Bun. The handle continues
+  consuming bytes, stealing them from any child process sharing fd 0.
 
-- **Why `/dev/tty`**: Opening `/dev/tty` gives a completely independent
-  file descriptor to the controlling terminal. The parent's polluted
-  `process.stdin` (fd 0) doesn't interfere. This is a standard POSIX
-  pattern for programs that need terminal access after stdin has been
-  consumed or redirected.
+- **Failed approaches (4 rounds)**:
+  1. `stdin cleanup + SSH="ssh -tt"` — cleanup was ineffective in Bun
+  2. `/dev/tty` fds via execa — execa doesn't handle raw fd numbers
+  3. `/dev/tty` fds via child_process.spawn — also fails in Bun
+  4. `_handle.readStop()` — no-op in Bun (no `_handle` property)
 
-- **Why not `process.stdin.destroy()`**: For a TTY ReadStream (which
-  extends net.Socket), `destroy()` calls `_handle.close()` which closes
-  the underlying fd. This would break the child process's access to fd 0.
+- **What worked**: Don't clean up after Ink — prevent the problem
+  entirely. Pass a private `tty.ReadStream` (from `/dev/tty`) to
+  Ink's `render()` as the `stdin` option (documented in
+  [Ink #378](https://github.com/vadimdemedes/ink/issues/378)).
+  Ink reads from its own fd, `process.stdin` is never touched.
+  After Ink exits, destroy the private stream. The subprocess then
+  inherits a pristine `process.stdin` with no competition for bytes.
 
 ## Outcome
 
-1. **`execInteractive()` uses `/dev/tty`**: Opens a fresh fd to the
-   controlling terminal instead of inheriting fd 0. This completely
-   bypasses the parent's polluted `process.stdin` handle.
+1. **Ink gets its own stdin**: `new tty.ReadStream(openSync("/dev/tty", "r"))`
+   passed to `render()` via the `stdin` option. Falls back to
+   `process.stdin` when `/dev/tty` is unavailable (CI, piped).
 
-2. **`readStop()` defense-in-depth**: After Ink exits, the stdin cleanup
-   now directly calls `_handle.readStop()` to stop the underlying TTY
-   handle from reading fd 0, in case any other code path still uses
-   `stdio: "inherit"`.
+2. **`execInteractive()` reverted to simple form**: Just execa with
+   `stdio: "inherit"`, no hacks needed.
 
-3. **Removed `SSH="ssh -tt"` hack**: This was a workaround from the
-   first fix attempt that didn't address the root cause (parent stealing
-   bytes from fd 0). PTY allocation via limactl shell works correctly
-   without it.
+3. **Net code change**: 15 lines added, 48 removed. Simpler than before.
 
-All 230 tests pass, lint and format checks clean.
+All 230 tests pass, lint and format checks clean. Manually verified:
+keypresses register on first press during onboarding.
