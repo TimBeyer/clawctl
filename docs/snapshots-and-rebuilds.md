@@ -18,7 +18,7 @@ The VM must be stopped before cloning.
 
 Good times to take a snapshot:
 
-- **After provisioning completes** -- before you start configuring OpenClaw. This gives you a clean baseline to return to.
+- **After provisioning completes** -- before you start configuring the gateway. This gives you a clean baseline to return to.
 - **Before experiments** -- trying a new configuration, upgrading packages, or testing destructive changes.
 - **Before onboarding** -- a snapshot of the provisioned-but-not-onboarded VM lets you re-run `openclaw onboard` cleanly.
 

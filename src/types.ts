@@ -40,7 +40,7 @@ export type WizardStep =
 export interface InstanceConfig {
   /** Instance name — becomes the VM name. */
   name: string;
-  /** Host directory for project files, config, and agent state. */
+  /** Host directory for project files, config, and gateway state. */
   project: string;
 
   /** VM resource allocation. All optional, sensible defaults. */

@@ -1,6 +1,6 @@
 # Review OpenClaw Terminology
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -8,7 +8,7 @@ Align clawctl's user-facing terminology with OpenClaw's own vocabulary.
 The main fix: we say "agent" when we mean "gateway" (the central OpenClaw
 process), and we should be precise about the distinction.
 
-**In scope**: README, CLAUDE.md, docs/*.md, CLI help strings.
+**In scope**: README, CLAUDE.md, docs/\*.md, CLI help strings.
 **Out of scope**: Code identifiers (`InstanceConfig`, `RegistryEntry`, etc.) —
 "instance" is our own valid term for a clawctl-managed VM + gateway.
 
@@ -23,18 +23,18 @@ process), and we should be precise about the distinction.
 
 ## Steps
 
-- [ ] Update README.md
-- [ ] Update CLAUDE.md
-- [ ] Update bin/cli.tsx description and help text
-- [ ] Update src/steps/finish.tsx
-- [ ] Update docs/getting-started.md
-- [ ] Update docs/architecture.md
-- [ ] Update docs/project-directory.md
-- [ ] Update docs/headless-mode.md
-- [ ] Update docs/snapshots-and-rebuilds.md
-- [ ] Update docs/config-reference.md
-- [ ] Run lint, format, tests
-- [ ] Grep for remaining incorrect uses
+- [x] Update README.md
+- [x] Update CLAUDE.md
+- [x] Update bin/cli.tsx description and help text
+- [x] Update src/steps/finish.tsx
+- [x] Update docs/getting-started.md
+- [x] Update docs/architecture.md
+- [x] Update docs/project-directory.md (no changes needed)
+- [x] Update docs/headless-mode.md
+- [x] Update docs/snapshots-and-rebuilds.md
+- [x] Update docs/config-reference.md
+- [x] Run lint, format, tests
+- [x] Grep for remaining incorrect uses
 
 ## Notes
 
@@ -47,4 +47,20 @@ process), and we should be precise about the distinction.
 
 ## Outcome
 
-(To be written on completion)
+Aligned user-facing terminology with OpenClaw's vocabulary:
+
+- Replaced "agent" → "gateway" in all prose where it referred to the running
+  OpenClaw system (README, CLAUDE.md, docs, finish step UI string)
+- Kept "instance" as clawctl's own term for the managed unit (VM + gateway +
+  project dir), since OpenClaw has no equivalent concept
+- Added a terminology callout in README and CLAUDE.md defining the relationship:
+  instance = VM + gateway + project dir; gateway hosts agents
+- Kept "agent" where it correctly refers to OpenClaw agent personas
+- Kept code identifiers (`InstanceConfig`, `RegistryEntry`) unchanged — "instance"
+  is our valid term
+- Updated one TSDoc comment in `src/types.ts` ("agent state" → "gateway state")
+- CLI command descriptions kept as-is — they use "instance" which is correct
+
+Files not changed (no incorrect terminology found): `docs/project-directory.md`,
+`docs/tailscale-setup.md`, `docs/1password-setup.md`, `docs/troubleshooting.md`,
+`bin/cli.tsx` (command descriptions use "instance" correctly)

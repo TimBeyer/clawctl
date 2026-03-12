@@ -14,7 +14,7 @@ and `project` are required. Everything else is optional and has sensible default
 }
 ```
 
-**Minimal bootstrap** (VM + working openclaw):
+**Minimal bootstrap** (VM + working gateway):
 
 ```json
 {
@@ -88,10 +88,10 @@ and `project` are required. Everything else is optional and has sensible default
 
 ## Top-level fields
 
-| Field     | Type   | Required | Default | Description                                                                                         |
-| --------- | ------ | -------- | ------- | --------------------------------------------------------------------------------------------------- |
-| `name`    | string | Yes      | —       | Instance name. Becomes the Lima VM name.                                                            |
-| `project` | string | Yes      | —       | Host directory for generated files, config, and agent state. `~` is expanded to the home directory. |
+| Field     | Type   | Required | Default | Description                                                                                           |
+| --------- | ------ | -------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `name`    | string | Yes      | —       | Instance name. Becomes the Lima VM name.                                                              |
+| `project` | string | Yes      | —       | Host directory for generated files, config, and gateway state. `~` is expanded to the home directory. |
 
 ## `resources`
 
@@ -146,7 +146,7 @@ the type is defined for forward compatibility. Currently accepted but ignored.
 ## `provider`
 
 Model provider configuration. When present, headless mode runs
-`openclaw onboard --non-interactive` to fully bootstrap the instance — daemon
+`openclaw onboard --non-interactive` to fully bootstrap the gateway — daemon
 running, model configured, dashboard accessible.
 
 | Field           | Type   | Default    | Description                                                                                       |
@@ -204,6 +204,6 @@ secrets and can be safely committed to git. See
 ## Example config files
 
 - [`config.json`](../examples/config.json) — minimal (name + project only)
-- [`config.bootstrap.json`](../examples/config.bootstrap.json) — minimal working openclaw (name + project + API key)
+- [`config.bootstrap.json`](../examples/config.bootstrap.json) — minimal working gateway (name + project + API key)
 - [`config.full.json`](../examples/config.full.json) — all options including provider + telegram
 - [`config.op.json`](../examples/config.op.json) — zero-plaintext secrets using `op://` and `env://` references
