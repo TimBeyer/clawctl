@@ -209,5 +209,5 @@ credential access is an explicit opt-in at runtime, not just at setup time.
 
 ### Example config
 
-See [`example-config.op.json`](../example-config.op.json) for a complete
+See [`config.op.json`](../examples/config.op.json) for a complete
 example with zero plaintext secrets.

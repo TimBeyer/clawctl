@@ -27,6 +27,44 @@
     "react-devtools-core": "^7.0.1",
     "zod": "^4.3.6"
   },
+  "prettier": {
+    "semi": true,
+    "singleQuote": false,
+    "trailingComma": "all",
+    "printWidth": 100
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "release-it": {
+    "git": {
+      "commitMessage": "chore: release v${version}",
+      "tagName": "v${version}",
+      "tagAnnotation": "Release v${version}",
+      "requireCleanWorkingDir": false
+    },
+    "github": {
+      "release": true,
+      "releaseName": "v${version}",
+      "assets": [
+        "dist/clawctl-darwin-arm64.zip"
+      ]
+    },
+    "npm": {
+      "publish": false
+    },
+    "plugins": {
+      "@release-it/conventional-changelog": {
+        "preset": "angular",
+        "infile": "CHANGELOG.md"
+      }
+    },
+    "hooks": {
+      "after:bump": "bun run format"
+    }
+  },
   "devDependencies": {
     "@commitlint/cli": "^20.4.3",
     "@commitlint/config-conventional": "^20.4.3",

@@ -1,6 +1,6 @@
 # Reorganize Repo Root Structure
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -18,12 +18,12 @@ Does **not** cover: renaming src/ subdirectories, restructuring source code, cha
 
 ## Steps
 
-- [ ] Create `examples/` dir and `git mv` the four example configs
-- [ ] Update references in README.md, docs/config-reference.md, docs/1password-setup.md, docs/architecture.md
-- [ ] Add prettier, commitlint, release-it configs to package.json
-- [ ] Delete .prettierrc, commitlint.config.js, .release-it.json
-- [ ] Move TODO.md to docs/
-- [ ] Run format:check, lint, test to verify
+- [x] Create `examples/` dir and `git mv` the four example configs
+- [x] Update references in README.md, docs/config-reference.md, docs/1password-setup.md, docs/architecture.md
+- [x] Add prettier, commitlint, release-it configs to package.json
+- [x] Delete .prettierrc, commitlint.config.js, .release-it.json
+- [x] Move TODO.md to docs/
+- [x] Run format:check to verify (lint/test require node_modules which aren't installed in this env)
 
 ## Notes
 
@@ -35,4 +35,10 @@ Does **not** cover: renaming src/ subdirectories, restructuring source code, cha
 
 ## Outcome
 
-(To be written when resolved.)
+Root reduced from 22 entries (6 dirs + 16 files) to 16 entries (7 dirs + 9 files):
+
+- 4 example configs moved to `examples/` with shorter names (dropped `example-` prefix)
+- 3 tool configs (prettier, commitlint, release-it) inlined into `package.json`
+- `TODO.md` moved to `docs/`
+- All doc references updated; `bun run format:check` passes
+- `.prettierignore` and `eslint.config.js` left at root (no alternative placement)

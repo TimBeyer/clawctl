@@ -44,8 +44,8 @@ fully working openclaw instance — daemon running, dashboard accessible.
 Without a `provider` section, onboarding is skipped and the user runs
 `openclaw onboard` manually in the VM.
 
-See `example-config.json`, `example-config.bootstrap.json`, and
-`example-config.full.json` for the schema.
+See `examples/config.json`, `examples/config.bootstrap.json`, and
+`examples/config.full.json` for the schema.
 
 ## Tech Stack
 

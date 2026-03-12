@@ -127,7 +127,7 @@ For automated or CI/CD setups, see [Headless Mode](docs/headless-mode.md).
 
 ```bash
 bun bin/cli.tsx create                                     # run the wizard
-bun bin/cli.tsx create --config example-config.json        # headless mode
+bun bin/cli.tsx create --config examples/config.json       # headless mode
 bun build ./bin/cli.tsx --compile --outfile dist/clawctl   # build binary
 bun test                                                   # unit tests
 bun run lint                                               # ESLint
