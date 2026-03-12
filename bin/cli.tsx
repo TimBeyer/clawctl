@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import { Command } from "commander";
+import pkg from "../package.json";
 import { LimaDriver } from "../src/drivers/index.js";
 import { BIN_NAME } from "../src/lib/bin-name.js";
 import {
@@ -21,7 +22,7 @@ const driver = new LimaDriver();
 const program = new Command()
   .name(BIN_NAME)
   .description("Full-lifecycle management tool for OpenClaw instances")
-  .version("0.1.0")
+  .version(pkg.version)
   .action(() => {
     program.help();
   });
