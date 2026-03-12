@@ -203,7 +203,7 @@ secrets and can be safely committed to git. See
 
 ## Example config files
 
-- [`example-config.json`](../example-config.json) — minimal (name + project only)
-- [`example-config.bootstrap.json`](../example-config.bootstrap.json) — minimal working openclaw (name + project + API key)
-- [`example-config.full.json`](../example-config.full.json) — all options including provider + telegram
-- [`example-config.op.json`](../example-config.op.json) — zero-plaintext secrets using `op://` and `env://` references
+- [`config.json`](../examples/config.json) — minimal (name + project only)
+- [`config.bootstrap.json`](../examples/config.bootstrap.json) — minimal working openclaw (name + project + API key)
+- [`config.full.json`](../examples/config.full.json) — all options including provider + telegram
+- [`config.op.json`](../examples/config.op.json) — zero-plaintext secrets using `op://` and `env://` references
