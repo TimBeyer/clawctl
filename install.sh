@@ -3,7 +3,7 @@ set -eu
 
 REPO="TimBeyer/clawctl"
 BINARY_NAME="clawctl"
-DEFAULT_INSTALL_DIR="/usr/local/bin"
+DEFAULT_INSTALL_DIR="${HOME}/.local/bin"
 INSTALL_DIR="${INSTALL_DIR:-$DEFAULT_INSTALL_DIR}"
 GITHUB_API="https://api.github.com/repos/${REPO}/releases/latest"
 
@@ -128,11 +128,39 @@ install_binary() {
     error "expected binary '${BINARY_NAME}' not found in archive"
   fi
 
+  mkdir -p "$INSTALL_DIR" 2>/dev/null || true
+
   if ! install -m 755 "${tmpdir}/${BINARY_NAME}" "${INSTALL_DIR}/${BINARY_NAME}" 2>/dev/null; then
     error "permission denied writing to ${INSTALL_DIR}
-Try one of:
-  curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install.sh | sudo bash
-  INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install.sh | bash"
+Try: INSTALL_DIR=<writable-dir> curl -fsSL https://raw.githubusercontent.com/${REPO}/main/install.sh | bash"
+  fi
+}
+
+# --- PATH Setup ---
+
+PATH_LINE='export PATH="$HOME/.local/bin:$PATH"'
+
+setup_path() {
+  # Only auto-configure PATH when using the default install directory
+  if [ "$INSTALL_DIR" != "$DEFAULT_INSTALL_DIR" ]; then
+    return
+  fi
+
+  modified=""
+
+  for rcfile in "${HOME}/.zshrc" "${HOME}/.bashrc"; do
+    if [ -f "$rcfile" ]; then
+      if grep -qF '.local/bin' "$rcfile" 2>/dev/null; then
+        continue
+      fi
+    fi
+
+    printf '\n%s\n' "$PATH_LINE" >> "$rcfile"
+    modified="${modified} $(basename "$rcfile")"
+  done
+
+  if [ -n "$modified" ]; then
+    info "added ~/.local/bin to PATH in:${modified}"
   fi
 }
 
@@ -144,15 +172,15 @@ verify_install() {
     error "installation failed — could not run ${BINARY_NAME}"
   fi
 
+  info "${BINARY_NAME} v${installed_version} installed to ${INSTALL_DIR}/${BINARY_NAME}"
+
   case ":${PATH}:" in
     *":${INSTALL_DIR}:"*) ;;
     *)
-      info "warning: ${INSTALL_DIR} is not in your PATH"
-      info "add it with: export PATH=\"${INSTALL_DIR}:\$PATH\""
+      info "restart your shell or run: source ~/.zshrc"
       ;;
   esac
 
-  info "${BINARY_NAME} v${installed_version} installed to ${INSTALL_DIR}/${BINARY_NAME}"
   info "run '${BINARY_NAME} create' to get started"
 }
 
@@ -164,6 +192,7 @@ main() {
   get_latest_version
   check_installed_version
   install_binary
+  setup_path
   verify_install
 }
 

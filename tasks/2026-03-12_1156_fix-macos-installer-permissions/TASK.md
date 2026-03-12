@@ -1,6 +1,6 @@
 # Fix macOS installer to use ~/.local/bin by default
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -19,12 +19,12 @@ Does NOT cover: Linux support, fish shell support, Windows.
 
 ## Steps
 
-- [ ] Update `DEFAULT_INSTALL_DIR` to `${HOME}/.local/bin`
-- [ ] Add `mkdir -p` before install
-- [ ] Add `setup_path` function for shell rc files
-- [ ] Update permission error message
-- [ ] Update verify_install messages
-- [ ] Syntax-check with `bash -n`
+- [x] Update `DEFAULT_INSTALL_DIR` to `${HOME}/.local/bin`
+- [x] Add `mkdir -p` before install
+- [x] Add `setup_path` function for shell rc files
+- [x] Update permission error message
+- [x] Update verify_install messages
+- [x] Syntax-check with `bash -n`
 
 ## Notes
 
@@ -39,4 +39,10 @@ Does NOT cover: Linux support, fish shell support, Windows.
 
 ## Outcome
 
-(To be written when resolved)
+- Default install dir changed from `/usr/local/bin` to `~/.local/bin`
+- Installer creates `~/.local/bin` via `mkdir -p` if it doesn't exist
+- New `setup_path` function appends PATH export to `~/.zshrc` and `~/.bashrc`
+  (idempotent — checks for existing `.local/bin` reference before appending)
+- Skips PATH setup when user provides custom `INSTALL_DIR`
+- Simplified permission error message (removed sudo suggestion)
+- Verify step tells user to restart shell when `~/.local/bin` isn't in current PATH
