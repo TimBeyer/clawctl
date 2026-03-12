@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.4](https://github.com/TimBeyer/clawctl/compare/v0.4.3...v0.4.4) (2026-03-12)
+
+
+### Bug Fixes
+
+* trigger release build on release event instead of tag push ([c18f83d](https://github.com/TimBeyer/clawctl/commit/c18f83d3bd52b8a42bb2d48476cdbf7e90409f21))
+
 ## [0.4.3](https://github.com/TimBeyer/clawctl/compare/v0.4.2...v0.4.3) (2026-03-12)
 
 
