@@ -5,17 +5,21 @@
 <h1 align="center">clawctl</h1>
 
 <p align="center">
-  <strong>Full-lifecycle management for OpenClaw instances on macOS.</strong><br>
-  <em>One command to create, provision, and manage isolated VMs — no SSH required.</em>
+  <strong>Get an OpenClaw agent running in one command.</strong><br>
+  <em>No SSH. No YAML wrestling. Just answer a few questions and you're live.</em>
 </p>
 
 ---
 
-Run OpenClaw in an isolated VM without ever SSHing in to set things up.
-clawctl handles the full lifecycle — creating a Lima VM, provisioning it with
-everything OpenClaw needs, running onboarding, and managing instances
-afterwards. Your project directory on the host is the source of truth: config
-and persistent data live there, editable and backed up by git.
+**Setting up an OpenClaw agent shouldn't feel like a sysadmin exam.** clawctl
+gets you from zero to a running agent in a single command — no manual
+provisioning, no shelling into VMs, no piecing together scripts. Everything
+lives in your project directory, version-controlled and reproducible.
+
+Under the hood, clawctl spins up an isolated Ubuntu VM via
+[Lima](https://lima-vm.io), provisions it with everything OpenClaw needs, and
+mounts your project directory so config and data stay on your Mac — editable,
+git-trackable, and safe from VM rebuilds.
 
 ## Install
 
@@ -25,42 +29,42 @@ curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | 
 
 To update an existing installation, run the same command again.
 
-**Requirements**: macOS on Apple Silicon (M1/M2/M3/M4).
+**Requires** macOS on Apple Silicon (M1/M2/M3/M4) with
+[Homebrew](https://brew.sh) installed. Lima is installed automatically if not
+already present.
 
 ## Quickstart
 
 ```bash
-# Interactive wizard
+# Interactive wizard — answers a few questions, does everything else
 clawctl create
 
-# Headless (config-file-driven, no prompts)
+# Headless — config-file-driven, no prompts, great for CI/CD
 clawctl create --config config.json
 ```
 
-The wizard walks you through configuration and creates everything automatically.
-For CI/CD or scripted setups, use [headless mode](docs/headless-mode.md) with
-a JSON config file.
+## What you get
 
-## Prerequisites
+In about five minutes, the wizard gives you:
 
-- **macOS** on **Apple Silicon** (M1/M2/M3/M4)
-- **Homebrew** installed ([brew.sh](https://brew.sh))
+- A running OpenClaw agent with a dashboard at `http://localhost:18789`
+- An isolated Ubuntu 24.04 VM with Node.js, Tailscale, and the 1Password CLI pre-installed
+- A project directory on your Mac with git-tracked config and persistent data that survives VM rebuilds
 
-Lima is installed automatically by the CLI if not already present.
+You just answer a few questions. clawctl handles prerequisites, VM creation,
+provisioning, and — optionally — credential setup and OpenClaw onboarding.
 
-## What happens
+## Features
 
-The wizard checks your prerequisites, prompts for VM settings (name, CPUs,
-memory, disk, project directory), then creates an Ubuntu 24.04 arm64 VM using
-Lima with the vz backend and virtiofs mounts. It provisions the VM with
-Node.js 22, Tailscale, Homebrew, and the 1Password CLI — then optionally
-configures credentials and runs OpenClaw's onboarding wizard inside the VM.
-
-When it's done, your dashboard is live at `http://localhost:18789`.
-
-The project directory on your Mac contains `clawctl.json` (the instance
-recipe, safe to commit) and a `data/` folder that's mounted as writable
-storage inside the VM. Data there survives VM deletion and recreation.
+- **One-command setup** — interactive wizard or headless config file, your choice
+- **No SSH required** — everything is orchestrated from your Mac
+- **Git-friendly** — config and data live in your project directory, not buried in a VM
+- **Reproducible** — delete the VM, recreate it, pick up right where you left off
+- **Secret management** — 1Password `op://` references and `env://` variables; zero plaintext secrets in config
+- **Remote access** — optional Tailscale integration for accessing your agent from anywhere
+- **15+ AI providers** — Anthropic, OpenAI, Gemini, Mistral, and more out of the box
+- **Run multiple agents** — each instance gets its own isolated VM; spin up as many as you need
+- **CI/CD ready** — [headless mode](docs/headless-mode.md) for fully automated provisioning
 
 ## Commands
 
@@ -77,46 +81,34 @@ storage inside the VM. Data there survives VM deletion and recreation.
 | `clawctl shell <name>`                     | Shell into the VM                             |
 | `clawctl register <name> --project <path>` | Register an existing (pre-registry) instance  |
 
-Running bare `clawctl` or `clawctl --help` shows help.
+Run `clawctl --help` for the full list.
 
-## After setup
+### Day-to-day management
+
+clawctl isn't just an installer — it's how you manage your agents after setup too.
 
 ```bash
-# List your instances
+# See what's running
 clawctl list
 
-# Access the dashboard
-open http://localhost:18789
+# Spin up a second agent for a different project
+clawctl create
 
-# Enter the VM
-clawctl shell my-agent
-
-# Stop / start / restart
-clawctl stop my-agent
-clawctl start my-agent
+# Restart one that's acting up
 clawctl restart my-agent
 
-# Delete (keeps project dir by default)
+# Tear it down when you're done (keeps your project dir by default)
 clawctl delete my-agent
-
-# Delete everything
-clawctl delete my-agent --purge
 ```
 
-Instances are tracked in `~/.config/clawctl/instances.json` — this powers
-`clawctl list`, `clawctl status`, and the other management commands. Instances
-are registered automatically on create, or manually via `clawctl register`.
-
-For automated or CI/CD setups, see [Headless Mode](docs/headless-mode.md).
+Instances are tracked in `~/.config/clawctl/instances.json` and registered
+automatically on create, or manually via `clawctl register`. Run as many
+agents as your hardware allows — each gets its own isolated VM, project
+directory, and config.
 
 ## Documentation
 
-### Getting started
-
 - [Getting Started](docs/getting-started.md) — guided walkthrough for first-time users
-
-### Guides
-
 - [Headless Mode](docs/headless-mode.md) — config-file-driven provisioning for CI and scripted setups
 - [Config Reference](docs/config-reference.md) — full schema for headless config files
 - [1Password Setup](docs/1password-setup.md) — service accounts and `op://` secret references
@@ -125,14 +117,7 @@ For automated or CI/CD setups, see [Headless Mode](docs/headless-mode.md).
 - [Project Directory](docs/project-directory.md) — what the CLI creates and how to customize it
 - [Troubleshooting](docs/troubleshooting.md) — common issues and fixes
 
-### Internals
-
-- [Architecture](docs/architecture.md) — system design, tech stack, component relationships
-- [CLI Wizard Flow](docs/cli-wizard-flow.md) — each wizard step in detail
-- [VM Provisioning](docs/vm-provisioning.md) — what gets installed and how
-- [Testing](docs/testing.md) — test strategy, running tests, adding new tests
-
-## Development
+## Contributing
 
 ```bash
 bun bin/cli.tsx create                                     # run the wizard
@@ -149,4 +134,16 @@ To install to a custom directory, set `INSTALL_DIR`:
 INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
 ```
 
-See [Testing](docs/testing.md) for the full test strategy.
+See [Architecture](docs/architecture.md), [CLI Wizard Flow](docs/cli-wizard-flow.md),
+[VM Provisioning](docs/vm-provisioning.md), and [Testing](docs/testing.md) for internals.
+
+---
+
+**Ready to go?**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
+clawctl create
+```
+
+Your OpenClaw agent will be running in minutes.
