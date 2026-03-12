@@ -47,10 +47,8 @@
     },
     "github": {
       "release": true,
-      "releaseName": "v${version}",
-      "assets": [
-        "dist/clawctl-darwin-arm64.zip"
-      ]
+      "draft": true,
+      "releaseName": "v${version}"
     },
     "npm": {
       "publish": false
