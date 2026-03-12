@@ -1,9 +1,8 @@
 name: Release Build
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -18,7 +17,7 @@ jobs:
       - run: cd dist && zip clawctl-darwin-arm64.zip clawctl
       - name: Upload binary and publish release
         run: |
-          gh release upload "${{ github.ref_name }}" dist/clawctl-darwin-arm64.zip --clobber
-          gh release edit "${{ github.ref_name }}" --draft=false
+          gh release upload "${{ github.event.release.tag_name }}" dist/clawctl-darwin-arm64.zip --clobber
+          gh release edit "${{ github.event.release.tag_name }}" --draft=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,6 +1,6 @@
 # Fix Release Build Trigger
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -15,8 +15,8 @@ the release-it configuration.
 
 ## Steps
 
-- [ ] Update trigger in `.github/workflows/release-build.yml`
-- [ ] Update tag ref expressions
+- [x] Update trigger in `.github/workflows/release-build.yml`
+- [x] Update tag ref expressions
 - [ ] Commit and push
 
 ## Notes
@@ -34,4 +34,8 @@ the release-it configuration.
 
 ## Outcome
 
-(pending)
+Changed `release-build.yml` trigger from `push: tags: v*` to
+`release: types: [created]` and updated ref expressions accordingly.
+The build workflow will now trigger when `release-it` creates the draft
+release, bypassing the `GITHUB_TOKEN` limitation that prevented tag-push
+events from triggering downstream workflows.
