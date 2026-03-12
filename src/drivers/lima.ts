@@ -100,15 +100,10 @@ export class LimaDriver implements VMDriver {
   }
 
   async execInteractive(name: string, command: string): Promise<{ exitCode: number }> {
-    const sshEnv = { ...process.env, SSH: "ssh -tt" };
     const result = await execa(
       "limactl",
       ["shell", "--workdir", "/tmp", name, "bash", "-lc", command],
-      {
-        stdio: "inherit",
-        reject: false,
-        env: sshEnv,
-      },
+      { stdio: "inherit", reject: false },
     );
     return { exitCode: result.exitCode ?? 1 };
   }
