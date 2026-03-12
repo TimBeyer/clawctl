@@ -1,4 +1,6 @@
 import { writeFile } from "fs/promises";
+import { openSync } from "node:fs";
+import { ReadStream } from "node:tty";
 import { join } from "path";
 import type { VMDriver } from "../drivers/types.js";
 import { addInstance } from "../lib/registry.js";
@@ -50,25 +52,22 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
     tailscaleMode?: "off" | "serve" | "funnel";
   };
 
-  const instance = render(React.createElement(App, { driver }));
+  // Give Ink its own stdin stream via /dev/tty so it never touches
+  // process.stdin. After Ink exits, the subprocess can inherit
+  // process.stdin cleanly without competing for bytes on fd 0.
+  let inkStdin: ReadStream | undefined;
+  try {
+    inkStdin = new ReadStream(openSync("/dev/tty", "r"));
+  } catch {
+    // /dev/tty unavailable (CI, piped, etc.) — Ink will use process.stdin
+  }
+
+  const renderOpts = inkStdin ? { stdin: inkStdin } : undefined;
+  const instance = render(React.createElement(App, { driver }), renderOpts);
   const result = await instance.waitUntilExit();
 
-  // Ink uses the 'readable' event on stdin, which calls readStart() on
-  // the underlying TTY handle. When Ink exits it removes the listener
-  // and calls unref(), but never calls readStop(). pause() is a no-op
-  // because the stream was never in flowing mode. Stop the handle
-  // directly so it can't steal bytes from child processes on fd 0.
-  if (process.stdin.isTTY && process.stdin.setRawMode) {
-    process.stdin.setRawMode(false);
-  }
-  process.stdin.removeAllListeners();
-  process.stdin.pause();
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- internal Node/Bun API
-    (process.stdin as any)._handle?.readStop?.();
-  } catch {
-    // Best-effort: _handle may not exist in all runtimes
-  }
+  // Destroy Ink's private stdin — doesn't affect process.stdin
+  inkStdin?.destroy();
 
   // Write minimal clawctl.json for wizard-created instances
   const writeMinimalConfig = async (vmName: string, projectDir: string) => {
