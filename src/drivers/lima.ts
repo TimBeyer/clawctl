@@ -1,4 +1,6 @@
 import { writeFile, unlink } from "fs/promises";
+import { openSync, closeSync } from "node:fs";
+import { spawn as cpSpawn } from "node:child_process";
 import { join } from "path";
 import { tmpdir } from "os";
 import { execa } from "execa";
@@ -100,13 +102,40 @@ export class LimaDriver implements VMDriver {
   }
 
   async execInteractive(name: string, command: string): Promise<{ exitCode: number }> {
+    // Open /dev/tty for fresh terminal fds independent of process.stdin,
+    // which Ink/Bun may leave in a state that steals bytes from fd 0.
+    let ttyReadFd: number | undefined;
+    let ttyWriteFd: number | undefined;
+    try {
+      ttyReadFd = openSync("/dev/tty", "r");
+      ttyWriteFd = openSync("/dev/tty", "w");
+    } catch {
+      // /dev/tty unavailable (CI, piped, etc.)
+    }
+
+    if (ttyReadFd !== undefined && ttyWriteFd !== undefined) {
+      try {
+        const exitCode = await new Promise<number>((resolve, reject) => {
+          const child = cpSpawn(
+            "limactl",
+            ["shell", "--workdir", "/tmp", name, "bash", "-lc", command],
+            { stdio: [ttyReadFd, ttyWriteFd, ttyWriteFd] },
+          );
+          child.on("error", reject);
+          child.on("close", (code) => resolve(code ?? 1));
+        });
+        return { exitCode };
+      } finally {
+        closeSync(ttyReadFd);
+        closeSync(ttyWriteFd);
+      }
+    }
+
+    // Fallback when /dev/tty unavailable
     const result = await execa(
       "limactl",
       ["shell", "--workdir", "/tmp", name, "bash", "-lc", command],
-      {
-        stdio: "inherit",
-        reject: false,
-      },
+      { stdio: "inherit", reject: false },
     );
     return { exitCode: result.exitCode ?? 1 };
   }
