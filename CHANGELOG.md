@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.9](https://github.com/TimBeyer/clawctl/compare/v0.4.8...v0.4.9) (2026-03-12)
+
+
+### Bug Fixes
+
+* prevent false positive in install.sh PATH detection ([3958017](https://github.com/TimBeyer/clawctl/commit/3958017e14f98eaae737b471693b2af473745f3d))
+
 ## [0.4.8](https://github.com/TimBeyer/clawctl/compare/v0.4.7...v0.4.8) (2026-03-12)
 
 ## [0.4.7](https://github.com/TimBeyer/clawctl/compare/v0.4.6...v0.4.7) (2026-03-12)
