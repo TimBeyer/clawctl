@@ -23,8 +23,9 @@ export async function runCompletions(shell: string): Promise<void> {
   // Print the script to stdout (for eval or piping)
   process.stdout.write(script);
 
-  // Print install instructions to stderr (so they don't contaminate piped output)
-  if (process.stderr.isTTY) {
+  // Print install instructions to stderr only when stdout is a TTY
+  // (i.e. the user ran `clawctl completions zsh` directly, not via eval/pipe)
+  if (process.stdout.isTTY) {
     process.stderr.write(`\n# Add this to ${rcFile}:\n`);
     process.stderr.write(`#   eval "$(${BIN_NAME} completions ${shell})"\n`);
   }

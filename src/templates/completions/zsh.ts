@@ -6,8 +6,6 @@ export function generateZshCompletion(binName: string): string {
   return (
     dedent`
     #compdef ${binName}
-    # zsh completion for ${binName}
-    # eval "$(${binName} completions zsh)"
 
     _${binName}_instances() {
       local registry="$HOME/.config/clawctl/instances.json"

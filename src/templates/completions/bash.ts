@@ -3,9 +3,6 @@ import dedent from "dedent";
 export function generateBashCompletion(binName: string): string {
   return (
     dedent`
-    # bash completion for ${binName}
-    # eval "$(${binName} completions bash)"
-
     _${binName}_instances() {
       local registry="$HOME/.config/clawctl/instances.json"
       if [[ -f "$registry" ]]; then
