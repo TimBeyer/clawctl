@@ -30,7 +30,10 @@ describe("validateConfig", () => {
       },
       services: { onePassword: { serviceAccountToken: "ops_abc" } },
       tools: { docker: true, python: true },
-      mounts: ["~/.ssh", "~/.gitconfig"],
+      mounts: [
+        { location: "~/.ssh", mountPoint: "/mnt/ssh" },
+        { location: "~/.gitconfig", mountPoint: "/mnt/gitconfig" },
+      ],
       agent: { skipOnboarding: true, toolsProfile: "full", sandbox: false },
       provider: { type: "anthropic", apiKey: "sk-ant-xyz", model: "anthropic/claude-opus-4-6" },
       telegram: {
@@ -48,7 +51,10 @@ describe("validateConfig", () => {
     expect(config.network?.tailscale?.authKey).toBe("tskey-auth-abc");
     expect(config.services?.onePassword?.serviceAccountToken).toBe("ops_abc");
     expect(config.tools?.docker).toBe(true);
-    expect(config.mounts).toEqual(["~/.ssh", "~/.gitconfig"]);
+    expect(config.mounts).toEqual([
+      { location: "~/.ssh", mountPoint: "/mnt/ssh" },
+      { location: "~/.gitconfig", mountPoint: "/mnt/gitconfig" },
+    ]);
     expect(config.agent?.skipOnboarding).toBe(true);
     expect(config.provider?.type).toBe("anthropic");
     expect(config.provider?.apiKey).toBe("sk-ant-xyz");
@@ -242,8 +248,20 @@ describe("validateConfig", () => {
     );
   });
 
-  test("throws on non-string mount entry", () => {
-    expect(() => validateConfig({ name: "t", project: "/tmp", mounts: [123] })).toThrow("mounts");
+  test("throws on string mount entry (must be object)", () => {
+    expect(() => validateConfig({ name: "t", project: "/tmp", mounts: ["~"] })).toThrow("mounts");
+  });
+
+  test("throws on mount missing location", () => {
+    expect(() =>
+      validateConfig({ name: "t", project: "/tmp", mounts: [{ mountPoint: "/mnt/host" }] }),
+    ).toThrow("location");
+  });
+
+  test("throws on mount missing mountPoint", () => {
+    expect(() =>
+      validateConfig({ name: "t", project: "/tmp", mounts: [{ location: "~" }] }),
+    ).toThrow("mountPoint");
   });
 
   test("throws on non-boolean agent.skipOnboarding", () => {
@@ -529,6 +547,31 @@ describe("configToVMConfig", () => {
     expect(vm.cpus).toBe(2);
     expect(vm.memory).toBe("8GiB");
     expect(vm.disk).toBe("50GiB");
+  });
+
+  test("passes mounts as extraMounts", () => {
+    const vm = configToVMConfig({
+      name: "t",
+      project: "/tmp",
+      mounts: [
+        { location: "~", mountPoint: "/mnt/host" },
+        { location: "/opt/data", mountPoint: "/mnt/data" },
+      ],
+    });
+    expect(vm.extraMounts).toEqual([
+      { location: "~", mountPoint: "/mnt/host" },
+      { location: "/opt/data", mountPoint: "/mnt/data" },
+    ]);
+  });
+
+  test("extraMounts undefined when no mounts", () => {
+    const vm = configToVMConfig({ name: "t", project: "/tmp" });
+    expect(vm.extraMounts).toBeUndefined();
+  });
+
+  test("extraMounts undefined when mounts is empty array", () => {
+    const vm = configToVMConfig({ name: "t", project: "/tmp", mounts: [] });
+    expect(vm.extraMounts).toBeUndefined();
   });
 });
 

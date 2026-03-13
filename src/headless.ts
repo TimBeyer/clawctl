@@ -89,6 +89,7 @@ export async function runHeadless(driver: VMDriver, configPath: string): Promise
       {
         forwardGateway: config.network?.forwardGateway ?? true,
         gatewayPort: config.network?.gatewayPort,
+        extraMounts: vmConfig.extraMounts,
       },
     );
 

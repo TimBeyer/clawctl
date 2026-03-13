@@ -46,9 +46,9 @@ describe("findSecretRefs", () => {
     expect(refs).toHaveLength(0);
   });
 
-  test("ignores arrays", () => {
+  test("ignores string arrays", () => {
     const refs = findSecretRefs({
-      mounts: ["~/.ssh", "op://not-a-ref"],
+      tags: ["some-tag", "op://not-a-ref"],
     });
     expect(refs).toHaveLength(0);
   });

@@ -27,11 +27,16 @@ export function CreateVM({ driver, config, onComplete }: CreateVMProps) {
   useEffect(() => {
     async function run() {
       try {
-        await provisionVM(driver, config, {
-          onPhase: (p) => setPhase(p as Phase),
-          onStep: (step) => setCompletedSteps((prev) => [...prev, step]),
-          onLine: addProcessLog,
-        });
+        await provisionVM(
+          driver,
+          config,
+          {
+            onPhase: (p) => setPhase(p as Phase),
+            onStep: (step) => setCompletedSteps((prev) => [...prev, step]),
+            onLine: addProcessLog,
+          },
+          { extraMounts: config.extraMounts },
+        );
 
         setTimeout(() => onComplete(), 500);
       } catch (err) {

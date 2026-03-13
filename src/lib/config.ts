@@ -76,13 +76,17 @@ export function validateConfig(raw: unknown): InstanceConfig {
 
 /** Convert InstanceConfig → VMConfig with defaults applied. */
 export function configToVMConfig(config: InstanceConfig): VMConfig {
-  return {
+  const vm: VMConfig = {
     vmName: config.name,
     projectDir: config.project,
     cpus: config.resources?.cpus ?? 4,
     memory: config.resources?.memory ?? "8GiB",
     disk: config.resources?.disk ?? "50GiB",
   };
+  if (config.mounts && config.mounts.length > 0) {
+    vm.extraMounts = config.mounts;
+  }
+  return vm;
 }
 
 /** Strip secrets and one-time fields from config for persistence as clawctl.json. */

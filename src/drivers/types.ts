@@ -1,10 +1,12 @@
-import type { VMConfig } from "../types.js";
+import type { VMConfig, MountSpec } from "../types.js";
 
 export type OnLine = (line: string) => void;
 
 export interface VMCreateOptions {
   forwardGateway?: boolean;
   gatewayPort?: number;
+  /** Extra host directories to mount into the VM. */
+  extraMounts?: MountSpec[];
 }
 
 export interface ExecResult {
