@@ -25,6 +25,7 @@
     "ink-text-input": "^6.0.0",
     "react": "^19.0.0",
     "react-devtools-core": "^7.0.1",
+    "yaml": "^2.8.2",
     "zod": "^4.3.6"
   },
   "prettier": {

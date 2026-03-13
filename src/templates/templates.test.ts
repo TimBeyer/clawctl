@@ -1,5 +1,6 @@
 import { describe, test, expect } from "bun:test";
 import { execa } from "execa";
+import YAML from "yaml";
 import {
   generateLimaYaml,
   generateHelpersScript,
@@ -115,6 +116,11 @@ describe("generateHelpersScript", () => {
 
 // -- Lima YAML generator ------------------------------------------------------
 
+/** Parse the YAML body from generateLimaYaml output (skips the comment header). */
+function parseLimaYaml(raw: string): Record<string, unknown> {
+  return YAML.parse(raw) as Record<string, unknown>;
+}
+
 describe("generateLimaYaml", () => {
   const config: VMConfig = {
     projectDir: "/Users/test/my-project",
@@ -124,70 +130,61 @@ describe("generateLimaYaml", () => {
     disk: "50GiB",
   };
 
-  const yaml = generateLimaYaml(config);
+  const raw = generateLimaYaml(config);
+  const doc = parseLimaYaml(raw);
 
-  test("interpolates vmName", () => {
-    expect(yaml).toContain("# VM: test-vm");
+  test("includes VM name in header comment", () => {
+    expect(raw).toContain("# VM: test-vm");
   });
 
-  test("interpolates cpus", () => {
-    expect(yaml).toContain("cpus: 4");
+  test("sets cpus", () => {
+    expect(doc.cpus).toBe(4);
   });
 
-  test("interpolates memory", () => {
-    expect(yaml).toContain('memory: "8GiB"');
+  test("sets memory", () => {
+    expect(doc.memory).toBe("8GiB");
   });
 
-  test("interpolates disk", () => {
-    expect(yaml).toContain('disk: "50GiB"');
-  });
-
-  test("interpolates projectDir in mounts", () => {
-    expect(yaml).toContain('location: "/Users/test/my-project"');
-    expect(yaml).toContain('location: "/Users/test/my-project/data"');
-  });
-
-  test("includes mount points", () => {
-    expect(yaml).toContain('mountPoint: "/mnt/project"');
-    expect(yaml).toContain('mountPoint: "/mnt/project/data"');
+  test("sets disk", () => {
+    expect(doc.disk).toBe("50GiB");
   });
 
   test("sets vmType to vz", () => {
-    expect(yaml).toContain("vmType: vz");
+    expect(doc.vmType).toBe("vz");
   });
 
   test("sets arch to aarch64", () => {
-    expect(yaml).toContain("arch: aarch64");
+    expect(doc.arch).toBe("aarch64");
   });
 
-  test("includes port forwarding", () => {
-    expect(yaml).toContain("guestPort: 18789");
-    expect(yaml).toContain("hostPort: 18789");
+  test("sets mountType to virtiofs", () => {
+    expect(doc.mountType).toBe("virtiofs");
   });
 
-  test("includes virtiofs mount type", () => {
-    expect(yaml).toContain("mountType: virtiofs");
-  });
-
-  test("does not mount home directory", () => {
-    expect(yaml).not.toContain("/mnt/host");
-    expect(yaml).not.toContain('location: "~"');
+  test("includes project mounts with correct paths", () => {
+    const mounts = doc.mounts as Array<Record<string, unknown>>;
+    expect(mounts[0].location).toBe("/Users/test/my-project");
+    expect(mounts[0].mountPoint).toBe("/mnt/project");
+    expect(mounts[1].location).toBe("/Users/test/my-project/data");
+    expect(mounts[1].mountPoint).toBe("/mnt/project/data");
   });
 
   test("project mount is read-only, data mount is writable", () => {
-    // Find the two project-related mounts and check their writable flags
-    const lines = yaml.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].includes('mountPoint: "/mnt/project"') && !lines[i].includes("/data")) {
-        // The writable line should be nearby
-        const nearby = lines.slice(Math.max(0, i - 3), i + 3).join("\n");
-        expect(nearby).toContain("writable: false");
-      }
-      if (lines[i].includes('mountPoint: "/mnt/project/data"')) {
-        const nearby = lines.slice(Math.max(0, i - 3), i + 3).join("\n");
-        expect(nearby).toContain("writable: true");
-      }
-    }
+    const mounts = doc.mounts as Array<Record<string, unknown>>;
+    expect(mounts[0].writable).toBe(false);
+    expect(mounts[1].writable).toBe(true);
+  });
+
+  test("does not include home directory mount by default", () => {
+    const mounts = doc.mounts as Array<Record<string, unknown>>;
+    expect(mounts.length).toBe(2);
+    expect(mounts.every((m) => m.location !== "~")).toBe(true);
+  });
+
+  test("includes port forwarding by default", () => {
+    const forwards = doc.portForwards as Array<Record<string, unknown>>;
+    expect(forwards[0].guestPort).toBe(18789);
+    expect(forwards[0].hostPort).toBe(18789);
   });
 
   test("generates SKILL.md with frontmatter and expected content", () => {
@@ -205,28 +202,22 @@ describe("generateLimaYaml", () => {
   });
 
   test("omits port forwards when forwardGateway is false", () => {
-    const noPortYaml = generateLimaYaml(config, { forwardGateway: false });
-    expect(noPortYaml).not.toContain("portForwards");
-    expect(noPortYaml).not.toContain("guestPort");
-  });
-
-  test("includes port forwards by default", () => {
-    const defaultYaml = generateLimaYaml(config);
-    expect(defaultYaml).toContain("portForwards");
-    expect(defaultYaml).toContain("guestPort: 18789");
+    const noPortDoc = parseLimaYaml(generateLimaYaml(config, { forwardGateway: false }));
+    expect(noPortDoc.portForwards).toBeUndefined();
   });
 
   test("uses custom host port with default guest port", () => {
-    const customPortYaml = generateLimaYaml(config, { gatewayPort: 9000 });
-    expect(customPortYaml).toContain("guestPort: 18789");
-    expect(customPortYaml).toContain("hostPort: 9000");
-    expect(customPortYaml).not.toContain("hostPort: 18789");
+    const customDoc = parseLimaYaml(generateLimaYaml(config, { gatewayPort: 9000 }));
+    const forwards = customDoc.portForwards as Array<Record<string, unknown>>;
+    expect(forwards[0].guestPort).toBe(18789);
+    expect(forwards[0].hostPort).toBe(9000);
   });
 
   test("guest port stays 18789 regardless of custom host port", () => {
-    const customPortYaml = generateLimaYaml(config, { gatewayPort: 28789 });
-    expect(customPortYaml).toContain("guestPort: 18789");
-    expect(customPortYaml).toContain("hostPort: 28789");
+    const customDoc = parseLimaYaml(generateLimaYaml(config, { gatewayPort: 28789 }));
+    const forwards = customDoc.portForwards as Array<Record<string, unknown>>;
+    expect(forwards[0].guestPort).toBe(18789);
+    expect(forwards[0].hostPort).toBe(28789);
   });
 });
 
@@ -241,63 +232,65 @@ describe("generateLimaYaml extra mounts", () => {
     disk: "50GiB",
   };
 
-  test("includes extra mounts in YAML", () => {
-    const yaml = generateLimaYaml(config, {
-      extraMounts: [{ location: "~", mountPoint: "/mnt/host" }],
-    });
-    expect(yaml).toContain('location: "~"');
-    expect(yaml).toContain('mountPoint: "/mnt/host"');
-    expect(yaml).toContain("writable: false");
+  test("includes extra mounts", () => {
+    const doc = parseLimaYaml(
+      generateLimaYaml(config, {
+        extraMounts: [{ location: "~", mountPoint: "/mnt/host" }],
+      }),
+    );
+    const mounts = doc.mounts as Array<Record<string, unknown>>;
+    expect(mounts[2].location).toBe("~");
+    expect(mounts[2].mountPoint).toBe("/mnt/host");
+    expect(mounts[2].writable).toBe(false);
   });
 
   test("supports multiple extra mounts", () => {
-    const yaml = generateLimaYaml(config, {
-      extraMounts: [
-        { location: "~", mountPoint: "/mnt/host" },
-        { location: "/opt/data", mountPoint: "/mnt/data", writable: true },
-      ],
-    });
-    expect(yaml).toContain('location: "~"');
-    expect(yaml).toContain('mountPoint: "/mnt/host"');
-    expect(yaml).toContain('location: "/opt/data"');
-    expect(yaml).toContain('mountPoint: "/mnt/data"');
+    const doc = parseLimaYaml(
+      generateLimaYaml(config, {
+        extraMounts: [
+          { location: "~", mountPoint: "/mnt/host" },
+          { location: "/opt/data", mountPoint: "/mnt/data", writable: true },
+        ],
+      }),
+    );
+    const mounts = doc.mounts as Array<Record<string, unknown>>;
+    expect(mounts.length).toBe(4);
+    expect(mounts[2].location).toBe("~");
+    expect(mounts[2].mountPoint).toBe("/mnt/host");
+    expect(mounts[3].location).toBe("/opt/data");
+    expect(mounts[3].mountPoint).toBe("/mnt/data");
   });
 
   test("respects writable flag", () => {
-    const yaml = generateLimaYaml(config, {
-      extraMounts: [{ location: "/opt/data", mountPoint: "/mnt/data", writable: true }],
-    });
-    // Find the extra mount's writable line (not the project mounts)
-    const lines = yaml.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].includes('mountPoint: "/mnt/data"')) {
-        const nearby = lines.slice(Math.max(0, i - 3), i + 3).join("\n");
-        expect(nearby).toContain("writable: true");
-      }
-    }
+    const doc = parseLimaYaml(
+      generateLimaYaml(config, {
+        extraMounts: [{ location: "/opt/data", mountPoint: "/mnt/data", writable: true }],
+      }),
+    );
+    const mounts = doc.mounts as Array<Record<string, unknown>>;
+    expect(mounts[2].writable).toBe(true);
   });
 
   test("defaults writable to false", () => {
-    const yaml = generateLimaYaml(config, {
-      extraMounts: [{ location: "~", mountPoint: "/mnt/host" }],
-    });
-    const lines = yaml.split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].includes('mountPoint: "/mnt/host"') && !lines[i].includes("/mnt/project")) {
-        const nearby = lines.slice(Math.max(0, i - 3), i + 3).join("\n");
-        expect(nearby).toContain("writable: false");
-      }
-    }
+    const doc = parseLimaYaml(
+      generateLimaYaml(config, {
+        extraMounts: [{ location: "~", mountPoint: "/mnt/host" }],
+      }),
+    );
+    const mounts = doc.mounts as Array<Record<string, unknown>>;
+    expect(mounts[2].writable).toBe(false);
   });
 
   test("does not include extra mounts when undefined", () => {
-    const yaml = generateLimaYaml(config);
-    expect(yaml).not.toContain("/mnt/host");
+    const doc = parseLimaYaml(generateLimaYaml(config));
+    const mounts = doc.mounts as Array<Record<string, unknown>>;
+    expect(mounts.length).toBe(2);
   });
 
   test("does not include extra mounts when empty array", () => {
-    const yaml = generateLimaYaml(config, { extraMounts: [] });
-    expect(yaml).not.toContain("/mnt/host");
+    const doc = parseLimaYaml(generateLimaYaml(config, { extraMounts: [] }));
+    const mounts = doc.mounts as Array<Record<string, unknown>>;
+    expect(mounts.length).toBe(2);
   });
 });
 
