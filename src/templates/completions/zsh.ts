@@ -48,6 +48,8 @@ export function generateZshCompletion(binName: string): string {
         'skill:Manage skills'
       )
 
+      local state
+
       # Stop completing after --
       local i
       for (( i=2; i < CURRENT; i++ )); do
@@ -57,61 +59,65 @@ export function generateZshCompletion(binName: string): string {
         fi
       done
 
-      if (( CURRENT == 2 )); then
-        _describe -t commands 'command' commands
-        return
-      fi
+      _arguments -C ${BS}
+        '1:command:->cmd' ${BS}
+        '*:: :->args'
 
-      local cmd="\${words[2]}"
-
-      case "$cmd" in
-        create)
-          _arguments ${BS}
-            '--config[Config file for headless mode]:config file:_files' ${BS}
-            '--help[Show help]'
+      case \$state in
+        cmd)
+          _describe -t commands 'command' commands
           ;;
-        list)
-          _arguments '--help[Show help]'
-          ;;
-        status|start|stop|restart)
-          _arguments ${BS}
-            '1:instance name:_${binName}_instances' ${BS}
-            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
-            '--help[Show help]'
-          ;;
-        delete)
-          _arguments ${BS}
-            '1:instance name:_${binName}_instances' ${BS}
-            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
-            '--purge[Also remove the project directory]' ${BS}
-            '--help[Show help]'
-          ;;
-        shell)
-          _arguments ${BS}
-            '1:instance name:_${binName}_instances' ${BS}
-            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
-            '--help[Show help]'
-          ;;
-        register)
-          _arguments ${BS}
-            '1:instance name:' ${BS}
-            '--project[Path to the project directory]:project dir:_directories' ${BS}
-            '--help[Show help]'
-          ;;
-        openclaw|oc)
-          _arguments ${BS}
-            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
-            '1:subcommand:_describe -t openclaw-commands "openclaw command" openclaw_subcommands' ${BS}
-            '--help[Show help]'
-          ;;
-        use)
-          _arguments ${BS}
-            '1:instance name:_${binName}_instances' ${BS}
-            '--global[Set global context instead of local .clawctl file]' ${BS}
-            '--help[Show help]'
-          ;;
-        completions)
-          _arguments '1:shell:(bash zsh)' '--help[Show help]'
+        args)
+          case \${words[1]} in
+            create)
+              _arguments ${BS}
+                '--config[Config file for headless mode]:config file:_files' ${BS}
+                '--help[Show help]'
+              ;;
+            list)
+              _arguments '--help[Show help]'
+              ;;
+            status|start|stop|restart)
+              _arguments ${BS}
+                '1:instance name:_${binName}_instances' ${BS}
+                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
+                '--help[Show help]'
+              ;;
+            delete)
+              _arguments ${BS}
+                '1:instance name:_${binName}_instances' ${BS}
+                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
+                '--purge[Also remove the project directory]' ${BS}
+                '--help[Show help]'
+              ;;
+            shell)
+              _arguments ${BS}
+                '1:instance name:_${binName}_instances' ${BS}
+                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
+                '--help[Show help]'
+              ;;
+            register)
+              _arguments ${BS}
+                '1:instance name:' ${BS}
+                '--project[Path to the project directory]:project dir:_directories' ${BS}
+                '--help[Show help]'
+              ;;
+            openclaw|oc)
+              _arguments ${BS}
+                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
+                '*:subcommand:_describe -t openclaw-commands "openclaw command" openclaw_subcommands' ${BS}
+                '--help[Show help]'
+              ;;
+            use)
+              _arguments ${BS}
+                '1:instance name:_${binName}_instances' ${BS}
+                '--global[Set global context instead of local .clawctl file]' ${BS}
+                '--help[Show help]'
+              ;;
+            completions)
+              _arguments '1:shell:(bash zsh)' '--help[Show help]'
+              ;;
+          esac
           ;;
       esac
     }
