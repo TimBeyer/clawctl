@@ -43,19 +43,18 @@ export function generateLimaYaml(config: VMConfig, options: LimaYamlOptions = {}
     `,
   ];
 
-  // Append extra mounts
+  // Append extra mounts (2-space indent for list item, 4-space for properties —
+  // matches the dedented project mounts above)
   if (extraMounts && extraMounts.length > 0) {
     const mountLines = extraMounts
       .map(
-        (mount) => dedent`
-          - location: "${mount.location}"
-            mountPoint: "${mount.mountPoint}"
-            writable: ${mount.writable ?? false}
-        `,
+        (mount) =>
+          `  - location: "${mount.location}"\n` +
+          `    mountPoint: "${mount.mountPoint}"\n` +
+          `    writable: ${mount.writable ?? false}`,
       )
       .join("\n");
 
-    // Continue the mounts block
     sections[0] += "\n" + mountLines;
   }
 
