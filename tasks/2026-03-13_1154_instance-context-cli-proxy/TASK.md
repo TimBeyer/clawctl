@@ -1,10 +1,11 @@
 # Host-side CLI proxy, shell pass-through, and instance context
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
 Add three features:
+
 1. **`clawctl openclaw <subcommand...>`** (alias: `oc`) — proxy openclaw commands in the VM
 2. **`clawctl shell [-- <cmd...>]`** — run a command in the VM via `--`
 3. **Instance context** — `--instance`/`-i` flag, env var, `.clawctl` file, global context
@@ -27,21 +28,42 @@ Migrate all instance commands from positional `<name>` to resolved context.
 
 ## Steps
 
-- [ ] Create shell-quote.ts
-- [ ] Create shell-quote.test.ts
-- [ ] Create instance-context.ts
-- [ ] Create instance-context.test.ts
-- [ ] Create require-instance.ts
-- [ ] Create commands/openclaw.ts
-- [ ] Create commands/use.ts
-- [ ] Modify commands/shell.ts
-- [ ] Modify commands/start.ts
-- [ ] Modify commands/stop.ts
-- [ ] Modify commands/restart.ts
-- [ ] Modify commands/delete.ts
-- [ ] Modify commands/status.ts
-- [ ] Update commands/index.ts
-- [ ] Modify bin/cli.tsx
-- [ ] Run tests
+- [x] Create shell-quote.ts
+- [x] Create shell-quote.test.ts
+- [x] Create instance-context.ts
+- [x] Create instance-context.test.ts
+- [x] Create require-instance.ts
+- [x] Create commands/openclaw.ts
+- [x] Create commands/use.ts
+- [x] Modify commands/shell.ts
+- [x] Modify commands/start.ts
+- [x] Modify commands/stop.ts
+- [x] Modify commands/restart.ts
+- [x] Modify commands/delete.ts
+- [x] Modify commands/status.ts
+- [x] Update commands/index.ts
+- [x] Modify bin/cli.tsx
+- [x] Run tests
 
 ## Notes
+
+- Used `entry.name` instead of the old `name` parameter in log messages for start/stop/restart,
+  since the resolved name comes from the registry entry now.
+- Commander's `passThroughOptions()` + third `command` argument in the action handler captures
+  args after `--` for shell pass-through.
+- The `openclaw` command uses `allowUnknownOption()` + `passThroughOptions()` so arbitrary
+  openclaw subcommands and flags pass through without Commander rejecting them.
+
+## Outcome
+
+All three features implemented as planned:
+1. `clawctl openclaw` / `clawctl oc` — proxies openclaw commands into the VM
+2. `clawctl shell -- <cmd>` — runs a command in the VM
+3. Instance context with 4-level resolution (flag → env → .clawctl → global)
+
+All instance commands (status, start, stop, restart, delete, shell) migrated from
+positional `<name>` to optional `[name]` with `-i`/`--instance` flag support.
+
+Added `clawctl use` for setting/showing context.
+
+269 tests pass, lint and formatting clean. No changes to VMDriver, LimaDriver, or registry.ts.
