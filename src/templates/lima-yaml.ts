@@ -1,5 +1,5 @@
 import dedent from "dedent";
-import type { VMConfig } from "../types.js";
+import type { VMConfig, MountSpec } from "../types.js";
 import { UBUNTU_IMAGE_URL, PROJECT_MOUNT_POINT, GATEWAY_PORT } from "./constants.js";
 
 export interface LimaYamlOptions {
@@ -7,21 +7,8 @@ export interface LimaYamlOptions {
   forwardGateway?: boolean;
   /** Host port for the gateway forward. Default: GATEWAY_PORT (18789). */
   gatewayPort?: number;
-  /** Extra host directories to mount read-only (e.g. ["~", "~/.ssh"]). */
-  extraMounts?: string[];
-}
-
-/**
- * Derive the guest mount point for a host path.
- * - "~"        → "/mnt/host"
- * - "~/.ssh"   → "/mnt/host/.ssh"
- * - "/opt/data" → "/mnt/host/opt/data"
- */
-export function guestMountPoint(hostPath: string): string {
-  if (hostPath === "~") return "/mnt/host";
-  if (hostPath.startsWith("~/")) return `/mnt/host/${hostPath.slice(2)}`;
-  // Absolute path: strip leading slash and nest under /mnt/host
-  return `/mnt/host/${hostPath.replace(/^\//, "")}`;
+  /** Extra host directories to mount into the VM. */
+  extraMounts?: MountSpec[];
 }
 
 export function generateLimaYaml(config: VMConfig, options: LimaYamlOptions = {}): string {
@@ -56,19 +43,19 @@ export function generateLimaYaml(config: VMConfig, options: LimaYamlOptions = {}
     `,
   ];
 
-  // Append extra read-only mounts
+  // Append extra mounts
   if (extraMounts && extraMounts.length > 0) {
     const mountLines = extraMounts
       .map(
-        (hostPath) => dedent`
-          - location: "${hostPath}"
-            mountPoint: "${guestMountPoint(hostPath)}"
-            writable: false
+        (mount) => dedent`
+          - location: "${mount.location}"
+            mountPoint: "${mount.mountPoint}"
+            writable: ${mount.writable ?? false}
         `,
       )
       .join("\n");
 
-    // Replace the trailing section to continue the mounts block
+    // Continue the mounts block
     sections[0] += "\n" + mountLines;
   }
 

@@ -136,13 +136,23 @@ forward compatibility. Currently accepted but ignored.
 
 ## `mounts`
 
-Extra host directories to mount read-only into the VM. Each path is mounted
-under `/mnt/host/` in the guest (e.g. `"~"` → `/mnt/host`, `"~/.ssh"` →
-`/mnt/host/.ssh`). In the wizard, an interactive prompt offers to mount `~`.
+Extra host directories to mount into the VM. Each entry is an object with
+explicit `location` (host path) and `mountPoint` (guest path). Set `writable`
+to `true` for read-write access (default: read-only). In the wizard, an
+interactive prompt offers to mount `~` at `/mnt/host`.
 
 ```json
-"mounts": ["~"]
+"mounts": [
+  { "location": "~", "mountPoint": "/mnt/host" },
+  { "location": "/opt/data", "mountPoint": "/mnt/data", "writable": true }
+]
 ```
+
+| Field        | Type    | Default | Description                      |
+| ------------ | ------- | ------- | -------------------------------- |
+| `location`   | string  | —       | Host path to mount (required).   |
+| `mountPoint` | string  | —       | Guest mount point (required).    |
+| `writable`   | boolean | `false` | Whether the mount is read-write. |
 
 ## `provider`
 

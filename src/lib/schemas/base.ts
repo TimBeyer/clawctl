@@ -43,4 +43,10 @@ export const toolsSchema = z.record(
   z.union([z.boolean(), z.record(z.string(), z.unknown())]),
 );
 
-export const mountsSchema = z.array(z.string());
+export const mountsSchema = z.array(
+  z.object({
+    location: z.string().min(1, "'mounts[].location' must be a non-empty string"),
+    mountPoint: z.string().min(1, "'mounts[].mountPoint' must be a non-empty string"),
+    writable: z.boolean().optional(),
+  }),
+);

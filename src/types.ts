@@ -1,11 +1,21 @@
+/** Explicit host→guest mount pair. */
+export interface MountSpec {
+  /** Host path to mount (e.g. "~", "/opt/data"). */
+  location: string;
+  /** Guest mount point (e.g. "/mnt/host", "/mnt/data"). */
+  mountPoint: string;
+  /** Whether the mount is writable. Default: false (read-only). */
+  writable?: boolean;
+}
+
 export interface VMConfig {
   projectDir: string;
   vmName: string;
   cpus: number;
   memory: string;
   disk: string;
-  /** Extra host directories to mount read-only (e.g. ["~", "~/.ssh"]). */
-  extraMounts?: string[];
+  /** Extra host directories to mount into the VM. */
+  extraMounts?: MountSpec[];
 }
 
 export interface PrereqStatus {
@@ -74,8 +84,8 @@ export interface InstanceConfig {
   /** Additional tools to install (future). */
   tools?: Record<string, boolean | Record<string, unknown>>;
 
-  /** Extra host directories to mount read-only (future). */
-  mounts?: string[];
+  /** Extra host directories to mount into the VM. */
+  mounts?: MountSpec[];
 
   /** Agent behavior. */
   agent?: {

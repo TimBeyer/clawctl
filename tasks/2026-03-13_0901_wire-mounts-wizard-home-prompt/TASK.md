@@ -47,6 +47,7 @@ Out of scope: writable extra mounts, mount-point customization.
 ## Outcome
 
 All planned changes delivered:
+
 - `extraMounts` wired end-to-end through types, template, wizard, headless, and
   config paths
 - `guestMountPoint()` helper exported for mapping host paths to guest mount
@@ -57,3 +58,14 @@ All planned changes delivered:
   ignored)
 - Stale docs fixed
 - 10 new tests added (3 guestMountPoint, 4 extra mounts YAML, 3 configToVMConfig)
+
+### Follow-up: Replace magic mount derivation with explicit host→guest pairs
+
+Replaced `string[]` mounts with explicit `MountSpec` objects
+(`{ location, mountPoint, writable? }`):
+
+- Removed `guestMountPoint()` — no more magic path derivation
+- `mountsSchema` validates objects instead of strings
+- Wizard hardcodes `{ location: "~", mountPoint: "/mnt/host" }`
+- Docs updated to show object syntax with field table
+- Tests updated to use object syntax, added writable flag coverage

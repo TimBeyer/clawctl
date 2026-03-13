@@ -2,7 +2,6 @@ import { describe, test, expect } from "bun:test";
 import { execa } from "execa";
 import {
   generateLimaYaml,
-  guestMountPoint,
   generateHelpersScript,
   generateProvisionSystemScript,
   generateProvisionUserScript,
@@ -231,22 +230,6 @@ describe("generateLimaYaml", () => {
   });
 });
 
-// -- guestMountPoint ----------------------------------------------------------
-
-describe("guestMountPoint", () => {
-  test("maps ~ to /mnt/host", () => {
-    expect(guestMountPoint("~")).toBe("/mnt/host");
-  });
-
-  test("maps ~/.ssh to /mnt/host/.ssh", () => {
-    expect(guestMountPoint("~/.ssh")).toBe("/mnt/host/.ssh");
-  });
-
-  test("maps absolute path /opt/data to /mnt/host/opt/data", () => {
-    expect(guestMountPoint("/opt/data")).toBe("/mnt/host/opt/data");
-  });
-});
-
 // -- Extra mounts in Lima YAML ------------------------------------------------
 
 describe("generateLimaYaml extra mounts", () => {
@@ -259,18 +242,52 @@ describe("generateLimaYaml extra mounts", () => {
   };
 
   test("includes extra mounts in YAML", () => {
-    const yaml = generateLimaYaml(config, { extraMounts: ["~"] });
+    const yaml = generateLimaYaml(config, {
+      extraMounts: [{ location: "~", mountPoint: "/mnt/host" }],
+    });
     expect(yaml).toContain('location: "~"');
     expect(yaml).toContain('mountPoint: "/mnt/host"');
     expect(yaml).toContain("writable: false");
   });
 
   test("supports multiple extra mounts", () => {
-    const yaml = generateLimaYaml(config, { extraMounts: ["~", "~/.ssh"] });
+    const yaml = generateLimaYaml(config, {
+      extraMounts: [
+        { location: "~", mountPoint: "/mnt/host" },
+        { location: "/opt/data", mountPoint: "/mnt/data", writable: true },
+      ],
+    });
     expect(yaml).toContain('location: "~"');
     expect(yaml).toContain('mountPoint: "/mnt/host"');
-    expect(yaml).toContain('location: "~/.ssh"');
-    expect(yaml).toContain('mountPoint: "/mnt/host/.ssh"');
+    expect(yaml).toContain('location: "/opt/data"');
+    expect(yaml).toContain('mountPoint: "/mnt/data"');
+  });
+
+  test("respects writable flag", () => {
+    const yaml = generateLimaYaml(config, {
+      extraMounts: [{ location: "/opt/data", mountPoint: "/mnt/data", writable: true }],
+    });
+    // Find the extra mount's writable line (not the project mounts)
+    const lines = yaml.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('mountPoint: "/mnt/data"')) {
+        const nearby = lines.slice(Math.max(0, i - 3), i + 3).join("\n");
+        expect(nearby).toContain("writable: true");
+      }
+    }
+  });
+
+  test("defaults writable to false", () => {
+    const yaml = generateLimaYaml(config, {
+      extraMounts: [{ location: "~", mountPoint: "/mnt/host" }],
+    });
+    const lines = yaml.split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes('mountPoint: "/mnt/host"') && !lines[i].includes("/mnt/project")) {
+        const nearby = lines.slice(Math.max(0, i - 3), i + 3).join("\n");
+        expect(nearby).toContain("writable: false");
+      }
+    }
   });
 
   test("does not include extra mounts when undefined", () => {

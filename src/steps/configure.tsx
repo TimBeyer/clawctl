@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Text, Box, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { StepIndicator } from "../components/step-indicator.js";
-import type { VMConfig } from "../types.js";
+import type { VMConfig, MountSpec } from "../types.js";
 import os from "os";
 import { join } from "path";
 
@@ -39,7 +39,7 @@ export function Configure({ onComplete }: ConfigureProps) {
 
   const currentField = FIELDS[fieldIndex];
 
-  function buildConfig(newValues: Record<string, string>, extraMounts?: string[]): VMConfig {
+  function buildConfig(newValues: Record<string, string>, extraMounts?: MountSpec[]): VMConfig {
     const config: VMConfig = {
       projectDir: newValues.projectDir!.replace(/^~/, os.homedir()),
       vmName: newValues.vmName!,
@@ -70,7 +70,7 @@ export function Configure({ onComplete }: ConfigureProps) {
 
     if (input.toLowerCase() === "y") {
       setMountHome(true);
-      onComplete(buildConfig(values, ["~"]));
+      onComplete(buildConfig(values, [{ location: "~", mountPoint: "/mnt/host" }]));
     } else if (input.toLowerCase() === "n" || key.return) {
       setMountHome(false);
       onComplete(buildConfig(values));
