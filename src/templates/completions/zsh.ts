@@ -10,10 +10,27 @@ export function generateZshCompletion(binName: string): string {
     _${binName}_instances() {
       local registry="$HOME/.config/clawctl/instances.json"
       if [[ -f "$registry" ]]; then
-        local instances
-        instances=("\${(@f)$(python3 -c "import json,sys; print(chr(10).join(json.load(open(sys.argv[1])).get('instances',{}).keys()))" "$registry" 2>/dev/null)}")
+        local -a instances
+        instances=(\${(f)"$(python3 -c "import json,sys; print(chr(10).join(json.load(open(sys.argv[1])).get('instances',{}).keys()))" "$registry" 2>/dev/null)"})
         compadd -a instances
       fi
+    }
+
+    _${binName}_openclaw_subcommands() {
+      local -a subcmds
+      subcmds=(
+        'onboard:Run OpenClaw onboarding'
+        'doctor:Run health checks'
+        'config:Manage configuration'
+        'daemon:Manage the daemon'
+        'telegram:Manage Telegram integration'
+        'agent:Manage agents'
+        'workspace:Manage workspaces'
+        'session:Manage sessions'
+        'tool:Manage tools'
+        'skill:Manage skills'
+      )
+      _describe 'openclaw command' subcmds
     }
 
     _${binName}() {
@@ -34,20 +51,6 @@ export function generateZshCompletion(binName: string): string {
         'completions:Generate shell completion script'
       )
 
-      local -a openclaw_subcommands
-      openclaw_subcommands=(
-        'onboard:Run OpenClaw onboarding'
-        'doctor:Run health checks'
-        'config:Manage configuration'
-        'daemon:Manage the daemon'
-        'telegram:Manage Telegram integration'
-        'agent:Manage agents'
-        'workspace:Manage workspaces'
-        'session:Manage sessions'
-        'tool:Manage tools'
-        'skill:Manage skills'
-      )
-
       local state
 
       # Stop completing after --
@@ -65,7 +68,7 @@ export function generateZshCompletion(binName: string): string {
 
       case \$state in
         cmd)
-          _describe -t commands 'command' commands
+          _describe 'command' commands
           ;;
         args)
           case \${words[1]} in
@@ -105,7 +108,7 @@ export function generateZshCompletion(binName: string): string {
             openclaw|oc)
               _arguments ${BS}
                 '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
-                '*:subcommand:_describe -t openclaw-commands "openclaw command" openclaw_subcommands' ${BS}
+                '1:subcommand:_${binName}_openclaw_subcommands' ${BS}
                 '--help[Show help]'
               ;;
             use)
