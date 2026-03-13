@@ -99,10 +99,27 @@ program
   .command("shell [name]")
   .description("Shell into an instance's VM (use -- to pass a command)")
   .option("-i, --instance <name>", "Instance to target")
-  .passThroughOptions()
-  .action(async (name: string | undefined, opts: { instance?: string }, command: Command) => {
-    const args = command.args;
-    await runShell(driver, { instance: opts.instance ?? name }, args.length > 0 ? args : undefined);
+  .allowExcessArguments(true)
+  .action(async (name: string | undefined, opts: { instance?: string }) => {
+    // Commander mixes positionals after -- into the declared args.
+    // Find -- in process.argv and take everything after it as the command.
+    const ddIndex = process.argv.indexOf("--");
+    const passedArgs = ddIndex !== -1 ? process.argv.slice(ddIndex + 1) : undefined;
+    // If -- was used, name may have been filled from args after -- rather than
+    // before it (e.g. `shell -- ls` sets name="ls"). Check whether name
+    // actually appeared before the -- separator.
+    let instanceName = name;
+    if (ddIndex !== -1 && name !== undefined) {
+      const beforeDd = process.argv.slice(0, ddIndex);
+      if (!beforeDd.includes(name)) {
+        instanceName = undefined;
+      }
+    }
+    await runShell(
+      driver,
+      { instance: opts.instance ?? instanceName },
+      passedArgs && passedArgs.length > 0 ? passedArgs : undefined,
+    );
   });
 
 program
