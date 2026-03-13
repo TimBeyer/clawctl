@@ -114,14 +114,14 @@ program
   });
 
 program
-  .command("openclaw")
+  .command("openclaw [args...]")
   .alias("oc")
   .description("Run an openclaw command in the instance VM")
   .option("-i, --instance <name>", "Instance to target")
   .allowUnknownOption()
   .passThroughOptions()
-  .action(async (opts: { instance?: string }, command: Command) => {
-    await runOpenclaw(driver, opts, command.args);
+  .action(async (args: string[], opts: { instance?: string }) => {
+    await runOpenclaw(driver, opts, args);
   });
 
 program
