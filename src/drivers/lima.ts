@@ -156,7 +156,12 @@ export class LimaDriver implements VMDriver {
   }
 
   async shell(name: string): Promise<{ exitCode: number }> {
-    const result = await execa("limactl", ["shell", "--workdir", "~", name], {
+    const homeResult = await exec("limactl", [
+      "shell", "--workdir", "/tmp", name, "bash", "-lc", "echo $HOME",
+    ]);
+    const homeDir = homeResult.stdout.trim() || "/tmp";
+
+    const result = await execa("limactl", ["shell", "--workdir", homeDir, name], {
       stdio: "inherit",
       reject: false,
     });
