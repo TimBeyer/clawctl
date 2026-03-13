@@ -56,7 +56,20 @@ describe("generateBashCompletion", () => {
   });
 
   test("includes openclaw subcommands", () => {
-    for (const sub of ["onboard", "doctor", "config", "gateway", "agents", "channels", "skills", "plugins", "cron", "models", "memory", "browser"]) {
+    for (const sub of [
+      "onboard",
+      "doctor",
+      "config",
+      "gateway",
+      "agents",
+      "channels",
+      "skills",
+      "plugins",
+      "cron",
+      "models",
+      "memory",
+      "browser",
+    ]) {
       expect(script).toContain(sub);
     }
   });
@@ -67,6 +80,15 @@ describe("generateBashCompletion", () => {
     expect(script).toContain("--global");
     expect(script).toContain("--instance");
     expect(script).toContain("--project");
+  });
+
+  test("sources cached oc completions if available", () => {
+    expect(script).toContain("oc-completions.bash");
+    expect(script).toContain("source");
+  });
+
+  test("delegates to cached openclaw completion function when available", () => {
+    expect(script).toContain("_openclaw_completion");
   });
 
   test("passes bash -n syntax check", async () => {
@@ -115,7 +137,20 @@ describe("generateZshCompletion", () => {
   });
 
   test("includes openclaw subcommands with descriptions", () => {
-    for (const sub of ["onboard", "doctor", "config", "gateway", "agents", "channels", "skills", "plugins", "cron", "models", "memory", "browser"]) {
+    for (const sub of [
+      "onboard",
+      "doctor",
+      "config",
+      "gateway",
+      "agents",
+      "channels",
+      "skills",
+      "plugins",
+      "cron",
+      "models",
+      "memory",
+      "browser",
+    ]) {
       expect(script).toContain(sub);
     }
   });
@@ -131,5 +166,14 @@ describe("generateZshCompletion", () => {
   test("uses zsh description annotations", () => {
     expect(script).toContain("_describe");
     expect(script).toContain("_arguments");
+  });
+
+  test("sources cached oc completions if available", () => {
+    expect(script).toContain("oc-completions.zsh");
+    expect(script).toContain("source");
+  });
+
+  test("delegates to _openclaw_root_completion when cached", () => {
+    expect(script).toContain("_openclaw_root_completion");
   });
 });

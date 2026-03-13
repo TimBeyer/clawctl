@@ -16,49 +16,60 @@ export function generateZshCompletion(binName: string): string {
       fi
     }
 
-    _${binName}_openclaw_subcommands() {
-      local -a subcmds
-      subcmds=(
-        'setup:Initialize configuration and workspace'
-        'onboard:Interactive setup wizard'
-        'configure:Interactive configuration wizard'
-        'config:Non-interactive config helpers'
-        'doctor:Health checks and quick fixes'
-        'status:Display session health and recent recipients'
-        'health:Fetch gateway health information'
-        'reset:Reset local configuration and state'
-        'uninstall:Uninstall gateway service and local data'
-        'update:Update the CLI'
-        'gateway:Run or manage the gateway service'
-        'logs:Tail gateway file logs'
-        'daemon:Legacy alias for gateway service commands'
-        'message:Outbound messaging and channel actions'
-        'agent:Run a single agent turn via gateway'
-        'agents:Manage isolated agents'
-        'acp:Run the ACP bridge for IDEs'
-        'channels:Manage chat channel accounts'
-        'pairing:Approve DM pairing requests'
-        'devices:Manage device pairing and tokens'
-        'skills:List and inspect available skills'
-        'plugins:Manage extensions and configuration'
-        'cron:Manage scheduled jobs'
-        'webhooks:Set up webhooks'
-        'system:System event and heartbeat management'
-        'dns:Wide-area discovery DNS helper'
-        'memory:Vector search over memory files'
-        'docs:Search the live documentation index'
-        'node:Run headless node host or manage as service'
-        'nodes:Talk to gateway and target paired nodes'
-        'browser:Browser control for Chrome/Brave/Edge'
-        'models:Manage AI models and authentication'
-        'security:Security auditing and configuration'
-        'secrets:Manage secrets and references'
-        'sessions:List stored conversation sessions'
-        'tui:Open terminal UI connected to gateway'
-        'qr:QR code functionality'
-        'hooks:Manage hooks'
-      )
-      _describe 'openclaw command' subcmds
+    # Source cached openclaw completions if available
+    _${binName}_oc_cache="$HOME/.config/clawctl/oc-completions.zsh"
+    if [[ -f "$_${binName}_oc_cache" ]]; then
+      source "$_${binName}_oc_cache"
+    fi
+
+    _${binName}_openclaw_dispatch() {
+      if (( \$+functions[_openclaw_root_completion] )); then
+        _openclaw_root_completion
+      else
+        # Static fallback — top-level commands only
+        local -a subcmds
+        subcmds=(
+          'setup:Initialize configuration and workspace'
+          'onboard:Interactive setup wizard'
+          'configure:Interactive configuration wizard'
+          'config:Non-interactive config helpers'
+          'doctor:Health checks and quick fixes'
+          'status:Display session health and recent recipients'
+          'health:Fetch gateway health information'
+          'reset:Reset local configuration and state'
+          'uninstall:Uninstall gateway service and local data'
+          'update:Update the CLI'
+          'gateway:Run or manage the gateway service'
+          'logs:Tail gateway file logs'
+          'daemon:Legacy alias for gateway service commands'
+          'message:Outbound messaging and channel actions'
+          'agent:Run a single agent turn via gateway'
+          'agents:Manage isolated agents'
+          'acp:Run the ACP bridge for IDEs'
+          'channels:Manage chat channel accounts'
+          'pairing:Approve DM pairing requests'
+          'devices:Manage device pairing and tokens'
+          'skills:List and inspect available skills'
+          'plugins:Manage extensions and configuration'
+          'cron:Manage scheduled jobs'
+          'webhooks:Set up webhooks'
+          'system:System event and heartbeat management'
+          'dns:Wide-area discovery DNS helper'
+          'memory:Vector search over memory files'
+          'docs:Search the live documentation index'
+          'node:Run headless node host or manage as service'
+          'nodes:Talk to gateway and target paired nodes'
+          'browser:Browser control for Chrome/Brave/Edge'
+          'models:Manage AI models and authentication'
+          'security:Security auditing and configuration'
+          'secrets:Manage secrets and references'
+          'sessions:List stored conversation sessions'
+          'tui:Open terminal UI connected to gateway'
+          'qr:QR code functionality'
+          'hooks:Manage hooks'
+        )
+        _describe 'openclaw command' subcmds
+      fi
     }
 
     _${binName}() {
@@ -133,10 +144,7 @@ export function generateZshCompletion(binName: string): string {
                 '--help[Show help]'
               ;;
             openclaw|oc)
-              _arguments ${BS}
-                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
-                '1:subcommand:_${binName}_openclaw_subcommands' ${BS}
-                '--help[Show help]'
+              _${binName}_openclaw_dispatch
               ;;
             use)
               _arguments ${BS}
