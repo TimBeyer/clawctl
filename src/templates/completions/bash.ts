@@ -9,7 +9,7 @@ export function generateBashCompletion(binName: string): string {
     _${binName}_instances() {
       local registry="$HOME/.config/clawctl/instances.json"
       if [[ -f "$registry" ]]; then
-        python3 -c "import json,sys; print('\\n'.join(json.load(open(sys.argv[1])).get('instances',{}).keys()))" "$registry" 2>/dev/null
+        python3 -c "import json,sys; print(chr(10).join(json.load(open(sys.argv[1])).get('instances',{}).keys()))" "$registry" 2>/dev/null
       fi
     }
 

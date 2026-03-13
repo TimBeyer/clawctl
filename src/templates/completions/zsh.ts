@@ -1,5 +1,7 @@
 import dedent from "dedent";
 
+const BS = "\\";
+
 export function generateZshCompletion(binName: string): string {
   return (
     dedent`
@@ -11,7 +13,7 @@ export function generateZshCompletion(binName: string): string {
       local registry="$HOME/.config/clawctl/instances.json"
       if [[ -f "$registry" ]]; then
         local instances
-        instances=("\${(@f)$(python3 -c "import json,sys; print('\\n'.join(json.load(open(sys.argv[1])).get('instances',{}).keys()))" "$registry" 2>/dev/null)}")
+        instances=("\${(@f)$(python3 -c "import json,sys; print(chr(10).join(json.load(open(sys.argv[1])).get('instances',{}).keys()))" "$registry" 2>/dev/null)}")
         compadd -a instances
       fi
     }
@@ -66,48 +68,48 @@ export function generateZshCompletion(binName: string): string {
 
       case "$cmd" in
         create)
-          _arguments \\
-            '--config[Config file for headless mode]:config file:_files' \\
+          _arguments ${BS}
+            '--config[Config file for headless mode]:config file:_files' ${BS}
             '--help[Show help]'
           ;;
         list)
           _arguments '--help[Show help]'
           ;;
         status|start|stop|restart)
-          _arguments \\
-            '1:instance name:_${binName}_instances' \\
-            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' \\
+          _arguments ${BS}
+            '1:instance name:_${binName}_instances' ${BS}
+            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
             '--help[Show help]'
           ;;
         delete)
-          _arguments \\
-            '1:instance name:_${binName}_instances' \\
-            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' \\
-            '--purge[Also remove the project directory]' \\
+          _arguments ${BS}
+            '1:instance name:_${binName}_instances' ${BS}
+            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
+            '--purge[Also remove the project directory]' ${BS}
             '--help[Show help]'
           ;;
         shell)
-          _arguments \\
-            '1:instance name:_${binName}_instances' \\
-            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' \\
+          _arguments ${BS}
+            '1:instance name:_${binName}_instances' ${BS}
+            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
             '--help[Show help]'
           ;;
         register)
-          _arguments \\
-            '1:instance name:' \\
-            '--project[Path to the project directory]:project dir:_directories' \\
+          _arguments ${BS}
+            '1:instance name:' ${BS}
+            '--project[Path to the project directory]:project dir:_directories' ${BS}
             '--help[Show help]'
           ;;
         openclaw|oc)
-          _arguments \\
-            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' \\
-            '1:subcommand:_describe -t openclaw-commands "openclaw command" openclaw_subcommands' \\
+          _arguments ${BS}
+            '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
+            '1:subcommand:_describe -t openclaw-commands "openclaw command" openclaw_subcommands' ${BS}
             '--help[Show help]'
           ;;
         use)
-          _arguments \\
-            '1:instance name:_${binName}_instances' \\
-            '--global[Set global context instead of local .clawctl file]' \\
+          _arguments ${BS}
+            '1:instance name:_${binName}_instances' ${BS}
+            '--global[Set global context instead of local .clawctl file]' ${BS}
             '--help[Show help]'
           ;;
         completions)
