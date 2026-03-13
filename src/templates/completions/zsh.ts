@@ -17,9 +17,8 @@ export function generateZshCompletion(binName: string): string {
     }
 
     # Source cached openclaw completions if available
-    _${binName}_oc_cache="$HOME/.config/clawctl/oc-completions.zsh"
-    if [[ -f "$_${binName}_oc_cache" ]]; then
-      source "$_${binName}_oc_cache"
+    if [[ -f "$HOME/.config/clawctl/oc-completions.zsh" ]]; then
+      source "$HOME/.config/clawctl/oc-completions.zsh"
     fi
 
     _${binName}_openclaw_dispatch() {

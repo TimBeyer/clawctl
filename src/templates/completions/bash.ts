@@ -11,9 +11,8 @@ export function generateBashCompletion(binName: string): string {
     }
 
     # Source cached openclaw completions if available
-    _${binName}_oc_cache="$HOME/.config/clawctl/oc-completions.bash"
-    if [[ -f "$_${binName}_oc_cache" ]]; then
-      source "$_${binName}_oc_cache"
+    if [[ -f "$HOME/.config/clawctl/oc-completions.bash" ]]; then
+      source "$HOME/.config/clawctl/oc-completions.bash"
     fi
 
     _${binName}_completions() {
