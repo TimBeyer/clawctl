@@ -4,6 +4,8 @@ export interface VMConfig {
   cpus: number;
   memory: string;
   disk: string;
+  /** Extra host directories to mount read-only (e.g. ["~", "~/.ssh"]). */
+  extraMounts?: string[];
 }
 
 export interface PrereqStatus {

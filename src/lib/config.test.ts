@@ -530,6 +530,25 @@ describe("configToVMConfig", () => {
     expect(vm.memory).toBe("8GiB");
     expect(vm.disk).toBe("50GiB");
   });
+
+  test("passes mounts as extraMounts", () => {
+    const vm = configToVMConfig({
+      name: "t",
+      project: "/tmp",
+      mounts: ["~", "~/.ssh"],
+    });
+    expect(vm.extraMounts).toEqual(["~", "~/.ssh"]);
+  });
+
+  test("extraMounts undefined when no mounts", () => {
+    const vm = configToVMConfig({ name: "t", project: "/tmp" });
+    expect(vm.extraMounts).toBeUndefined();
+  });
+
+  test("extraMounts undefined when mounts is empty array", () => {
+    const vm = configToVMConfig({ name: "t", project: "/tmp", mounts: [] });
+    expect(vm.extraMounts).toBeUndefined();
+  });
 });
 
 // -- sanitizeConfig -----------------------------------------------------------

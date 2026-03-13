@@ -1,4 +1,4 @@
-export { generateLimaYaml } from "./lima-yaml.js";
+export { generateLimaYaml, guestMountPoint } from "./lima-yaml.js";
 export { generateHelpersScript } from "./helpers.js";
 export { generateProvisionSystemScript } from "./provision-system.js";
 export { generateProvisionUserScript } from "./provision-user.js";

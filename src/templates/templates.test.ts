@@ -2,6 +2,7 @@ import { describe, test, expect } from "bun:test";
 import { execa } from "execa";
 import {
   generateLimaYaml,
+  guestMountPoint,
   generateHelpersScript,
   generateProvisionSystemScript,
   generateProvisionUserScript,
@@ -227,6 +228,59 @@ describe("generateLimaYaml", () => {
     const customPortYaml = generateLimaYaml(config, { gatewayPort: 28789 });
     expect(customPortYaml).toContain("guestPort: 18789");
     expect(customPortYaml).toContain("hostPort: 28789");
+  });
+});
+
+// -- guestMountPoint ----------------------------------------------------------
+
+describe("guestMountPoint", () => {
+  test("maps ~ to /mnt/host", () => {
+    expect(guestMountPoint("~")).toBe("/mnt/host");
+  });
+
+  test("maps ~/.ssh to /mnt/host/.ssh", () => {
+    expect(guestMountPoint("~/.ssh")).toBe("/mnt/host/.ssh");
+  });
+
+  test("maps absolute path /opt/data to /mnt/host/opt/data", () => {
+    expect(guestMountPoint("/opt/data")).toBe("/mnt/host/opt/data");
+  });
+});
+
+// -- Extra mounts in Lima YAML ------------------------------------------------
+
+describe("generateLimaYaml extra mounts", () => {
+  const config: VMConfig = {
+    projectDir: "/Users/test/my-project",
+    vmName: "test-vm",
+    cpus: 4,
+    memory: "8GiB",
+    disk: "50GiB",
+  };
+
+  test("includes extra mounts in YAML", () => {
+    const yaml = generateLimaYaml(config, { extraMounts: ["~"] });
+    expect(yaml).toContain('location: "~"');
+    expect(yaml).toContain('mountPoint: "/mnt/host"');
+    expect(yaml).toContain("writable: false");
+  });
+
+  test("supports multiple extra mounts", () => {
+    const yaml = generateLimaYaml(config, { extraMounts: ["~", "~/.ssh"] });
+    expect(yaml).toContain('location: "~"');
+    expect(yaml).toContain('mountPoint: "/mnt/host"');
+    expect(yaml).toContain('location: "~/.ssh"');
+    expect(yaml).toContain('mountPoint: "/mnt/host/.ssh"');
+  });
+
+  test("does not include extra mounts when undefined", () => {
+    const yaml = generateLimaYaml(config);
+    expect(yaml).not.toContain("/mnt/host");
+  });
+
+  test("does not include extra mounts when empty array", () => {
+    const yaml = generateLimaYaml(config, { extraMounts: [] });
+    expect(yaml).not.toContain("/mnt/host");
   });
 });
 

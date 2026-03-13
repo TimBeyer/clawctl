@@ -5,6 +5,8 @@ export type OnLine = (line: string) => void;
 export interface VMCreateOptions {
   forwardGateway?: boolean;
   gatewayPort?: number;
+  /** Extra host directories to mount read-only (e.g. ["~", "~/.ssh"]). */
+  extraMounts?: string[];
 }
 
 export interface ExecResult {

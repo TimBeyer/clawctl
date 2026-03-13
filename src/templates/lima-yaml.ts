@@ -7,10 +7,25 @@ export interface LimaYamlOptions {
   forwardGateway?: boolean;
   /** Host port for the gateway forward. Default: GATEWAY_PORT (18789). */
   gatewayPort?: number;
+  /** Extra host directories to mount read-only (e.g. ["~", "~/.ssh"]). */
+  extraMounts?: string[];
+}
+
+/**
+ * Derive the guest mount point for a host path.
+ * - "~"        → "/mnt/host"
+ * - "~/.ssh"   → "/mnt/host/.ssh"
+ * - "/opt/data" → "/mnt/host/opt/data"
+ */
+export function guestMountPoint(hostPath: string): string {
+  if (hostPath === "~") return "/mnt/host";
+  if (hostPath.startsWith("~/")) return `/mnt/host/${hostPath.slice(2)}`;
+  // Absolute path: strip leading slash and nest under /mnt/host
+  return `/mnt/host/${hostPath.replace(/^\//, "")}`;
 }
 
 export function generateLimaYaml(config: VMConfig, options: LimaYamlOptions = {}): string {
-  const { forwardGateway = true, gatewayPort } = options;
+  const { forwardGateway = true, gatewayPort, extraMounts } = options;
   const hostPort = gatewayPort ?? GATEWAY_PORT;
 
   const sections: string[] = [
@@ -38,7 +53,27 @@ export function generateLimaYaml(config: VMConfig, options: LimaYamlOptions = {}
         - location: "${config.projectDir}/data"
           mountPoint: "${PROJECT_MOUNT_POINT}/data"
           writable: true
+    `,
+  ];
 
+  // Append extra read-only mounts
+  if (extraMounts && extraMounts.length > 0) {
+    const mountLines = extraMounts
+      .map(
+        (hostPath) => dedent`
+          - location: "${hostPath}"
+            mountPoint: "${guestMountPoint(hostPath)}"
+            writable: false
+        `,
+      )
+      .join("\n");
+
+    // Replace the trailing section to continue the mounts block
+    sections[0] += "\n" + mountLines;
+  }
+
+  sections.push(
+    dedent`
       ssh:
         localPort: 0
         forwardAgent: true
@@ -46,7 +81,7 @@ export function generateLimaYaml(config: VMConfig, options: LimaYamlOptions = {}
       hostResolver:
         enabled: true
     `,
-  ];
+  );
 
   if (forwardGateway) {
     sections.push(

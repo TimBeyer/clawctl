@@ -136,11 +136,12 @@ forward compatibility. Currently accepted but ignored.
 
 ## `mounts`
 
-Extra host directories to mount read-only into the VM. **Not yet wired up** —
-the type is defined for forward compatibility. Currently accepted but ignored.
+Extra host directories to mount read-only into the VM. Each path is mounted
+under `/mnt/host/` in the guest (e.g. `"~"` → `/mnt/host`, `"~/.ssh"` →
+`/mnt/host/.ssh`). In the wizard, an interactive prompt offers to mount `~`.
 
 ```json
-"mounts": ["~/.ssh", "~/.gitconfig"]
+"mounts": ["~"]
 ```
 
 ## `provider`

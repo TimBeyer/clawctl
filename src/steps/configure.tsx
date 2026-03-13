@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Text, Box } from "ink";
+import { Text, Box, useInput } from "ink";
 import TextInput from "ink-text-input";
 import { StepIndicator } from "../components/step-indicator.js";
 import type { VMConfig } from "../types.js";
@@ -28,12 +28,28 @@ const FIELDS: Field[] = [
   { key: "disk", label: "Disk (GiB)", defaultValue: "50GiB" },
 ];
 
+type Phase = "fields" | "mount-home";
+
 export function Configure({ onComplete }: ConfigureProps) {
+  const [phase, setPhase] = useState<Phase>("fields");
   const [fieldIndex, setFieldIndex] = useState(0);
   const [values, setValues] = useState<Record<string, string>>({});
   const [currentValue, setCurrentValue] = useState(FIELDS[0].defaultValue);
+  const [mountHome, setMountHome] = useState<boolean | undefined>(undefined);
 
   const currentField = FIELDS[fieldIndex];
+
+  function buildConfig(newValues: Record<string, string>, extraMounts?: string[]): VMConfig {
+    const config: VMConfig = {
+      projectDir: newValues.projectDir!.replace(/^~/, os.homedir()),
+      vmName: newValues.vmName!,
+      cpus: parseInt(newValues.cpus!, 10),
+      memory: newValues.memory!,
+      disk: newValues.disk!,
+    };
+    if (extraMounts) config.extraMounts = extraMounts;
+    return config;
+  }
 
   function handleSubmit(value: string) {
     const finalValue = value || currentField.defaultValue;
@@ -45,16 +61,21 @@ export function Configure({ onComplete }: ConfigureProps) {
       setFieldIndex(nextIndex);
       setCurrentValue(FIELDS[nextIndex].defaultValue);
     } else {
-      const config: VMConfig = {
-        projectDir: newValues.projectDir!.replace(/^~/, os.homedir()),
-        vmName: newValues.vmName!,
-        cpus: parseInt(newValues.cpus!, 10),
-        memory: newValues.memory!,
-        disk: newValues.disk!,
-      };
-      onComplete(config);
+      setPhase("mount-home");
     }
   }
+
+  useInput((input, key) => {
+    if (phase !== "mount-home") return;
+
+    if (input.toLowerCase() === "y") {
+      setMountHome(true);
+      onComplete(buildConfig(values, ["~"]));
+    } else if (input.toLowerCase() === "n" || key.return) {
+      setMountHome(false);
+      onComplete(buildConfig(values));
+    }
+  });
 
   return (
     <Box flexDirection="column">
@@ -68,13 +89,38 @@ export function Configure({ onComplete }: ConfigureProps) {
           </Text>
         ))}
 
-        {/* Current field */}
-        <Box>
-          <Text>
-            <Text color="yellow">?</Text> {currentField.label}:{" "}
-          </Text>
-          <TextInput value={currentValue} onChange={setCurrentValue} onSubmit={handleSubmit} />
-        </Box>
+        {/* Current field (only during fields phase) */}
+        {phase === "fields" && (
+          <Box>
+            <Text>
+              <Text color="yellow">?</Text> {currentField.label}:{" "}
+            </Text>
+            <TextInput value={currentValue} onChange={setCurrentValue} onSubmit={handleSubmit} />
+          </Box>
+        )}
+
+        {/* Show all fields as completed when in mount-home phase */}
+        {phase === "mount-home" && (
+          <>
+            <Text key={FIELDS[FIELDS.length - 1].key}>
+              <Text color="green">✓</Text> {FIELDS[FIELDS.length - 1].label}:{" "}
+              <Text bold>{values[FIELDS[FIELDS.length - 1].key]}</Text>
+            </Text>
+            <Text> </Text>
+            {mountHome === undefined && (
+              <Text>
+                <Text color="yellow">?</Text> Mount home directory in VM? (read-only){" "}
+                <Text dimColor>[y/N]</Text>
+              </Text>
+            )}
+            {mountHome === true && (
+              <Text>
+                <Text color="green">✓</Text> Home directory will be mounted at /mnt/host
+              </Text>
+            )}
+            {mountHome === false && <Text dimColor>○ Home directory not mounted</Text>}
+          </>
+        )}
       </Box>
     </Box>
   );

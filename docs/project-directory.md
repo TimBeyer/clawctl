@@ -63,9 +63,6 @@ mounts:
   - location: "<projectDir>/data" # Writable
     mountPoint: "/mnt/project/data"
     writable: true
-  - location: "~" # Host home, read-only
-    mountPoint: "/mnt/host"
-    writable: false
 
 portForwards:
   - guestPort: 18789 # OpenClaw gateway
