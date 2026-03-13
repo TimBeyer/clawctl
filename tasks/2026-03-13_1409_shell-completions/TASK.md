@@ -6,7 +6,7 @@
 
 Add bash and zsh tab-completion support for clawctl via a new `clawctl completions <shell>` command. Covers all existing commands, per-command options, dynamic instance name completion, and openclaw subcommand completion.
 
-Does **not** cover: dynamic openclaw subcommand discovery (uses a hardcoded list), fish shell, or automatic installation of completions.
+Does **not** cover: fish shell or automatic installation of completions into shell rc files.
 
 ## Plan
 
@@ -33,6 +33,10 @@ Does **not** cover: dynamic openclaw subcommand discovery (uses a hardcoded list
 - [x] Update `docs/getting-started.md`
 - [x] Update `src/steps/finish.tsx`
 - [x] Run tests and verify
+- [x] Cache openclaw's own completion scripts via `clawctl completions update-oc`
+- [x] Auto-populate cache on first `completions` invocation if a VM is running
+- [x] Background refresh on VM-interacting commands when cache is stale (>24h)
+- [x] Add refresh to `start.ts`, `restart.ts`, `shell.ts`, `openclaw.ts`, `create.ts`
 
 ## Notes
 
@@ -43,11 +47,13 @@ Does **not** cover: dynamic openclaw subcommand discovery (uses a hardcoded list
 
 ## Outcome
 
-Delivered all planned functionality:
+Delivered all planned functionality plus openclaw completion caching:
 
 - **Bash completions**: `complete -F` based, with dynamic instance names via python3, per-command option completion, openclaw subcommand completion, and `--` pass-through detection
 - **Zsh completions**: `compdef`/`_arguments` based with description annotations on commands and options, same dynamic instance and openclaw completion
 - **`clawctl completions <shell>` command**: prints script to stdout, install hints to stderr when TTY
-- **18 unit tests**: all passing, including bash `-n` syntax validation
+- **Openclaw completion caching**: `clawctl completions update-oc` fetches completion scripts from the VM; cached at `~/.config/clawctl/oc-completions.{bash,zsh}`
+- **Auto-refresh**: cache auto-populates on first `completions` invocation if a running VM is available; stale caches (>24h) refresh in the background on `start`, `restart`, `shell`, `openclaw`, and `create` commands
+- **22 unit tests**: all passing, including bash `-n` syntax validation
 - **Documentation**: README commands table + section, getting-started next steps, install.sh hint, finish step hint
 - No deferred or descoped items

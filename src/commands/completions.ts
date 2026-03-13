@@ -1,14 +1,77 @@
-import { mkdir } from "node:fs/promises";
+import { mkdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import type { VMDriver } from "../drivers/types.js";
 import { BIN_NAME } from "../lib/bin-name.js";
 import { requireInstance } from "../lib/require-instance.js";
+import { listInstances } from "../lib/registry.js";
 import { generateBashCompletion, generateZshCompletion } from "../templates/completions/index.js";
 
 const OC_CACHE_DIR = join(homedir(), ".config", "clawctl");
+const STALE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-export async function runCompletions(shell: string): Promise<void> {
+function ocCachePath(shell: string): string {
+  return join(OC_CACHE_DIR, `oc-completions.${shell}`);
+}
+
+async function cacheExists(shell: string): Promise<boolean> {
+  try {
+    await stat(ocCachePath(shell));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function cacheIsStale(): Promise<boolean> {
+  try {
+    const info = await stat(ocCachePath("zsh"));
+    return Date.now() - info.mtimeMs > STALE_MS;
+  } catch {
+    return true; // missing = stale
+  }
+}
+
+/**
+ * Fetch openclaw completion scripts from a VM and write them to the cache.
+ * Returns true if at least one shell was cached successfully.
+ */
+async function fetchAndCacheOcCompletions(driver: VMDriver, vmName: string): Promise<boolean> {
+  await mkdir(OC_CACHE_DIR, { recursive: true });
+  let updated = 0;
+  for (const shell of ["zsh", "bash"] as const) {
+    try {
+      const result = await driver.exec(vmName, `openclaw completion --shell ${shell}`);
+      if (result.exitCode === 0 && result.stdout.trim()) {
+        await Bun.write(ocCachePath(shell), result.stdout);
+        updated++;
+      }
+    } catch {
+      // VM might have gone away — ignore
+    }
+  }
+  return updated > 0;
+}
+
+/**
+ * Find a running VM from the registry, returns the vmName or undefined.
+ */
+async function findRunningVm(driver: VMDriver): Promise<string | undefined> {
+  const entries = await listInstances();
+  for (const entry of entries) {
+    try {
+      const s = await driver.status(entry.vmName);
+      if (s === "Running") return entry.vmName;
+    } catch {
+      continue;
+    }
+  }
+  return undefined;
+}
+
+// -- Public API ---------------------------------------------------------------
+
+export async function runCompletions(shell: string, driver: VMDriver): Promise<void> {
   let script: string;
   let rcFile: string;
 
@@ -25,6 +88,16 @@ export async function runCompletions(shell: string): Promise<void> {
       console.error(`Unsupported shell: ${shell}`);
       console.error("Supported shells: bash, zsh");
       process.exit(1);
+  }
+
+  // On first invocation (no cache), try to populate from a running VM.
+  // This adds a one-time delay on first shell startup but gives full
+  // openclaw completions from the start.
+  if (!(await cacheExists(shell))) {
+    const vmName = await findRunningVm(driver);
+    if (vmName) {
+      await fetchAndCacheOcCompletions(driver, vmName);
+    }
   }
 
   // Print the script to stdout (for eval or piping)
@@ -50,23 +123,24 @@ export async function runCompletionsUpdateOc(
     process.exit(1);
   }
 
-  await mkdir(OC_CACHE_DIR, { recursive: true });
-
-  let updated = 0;
-  for (const shell of ["zsh", "bash"] as const) {
-    const result = await driver.exec(entry.vmName, `openclaw completion --shell ${shell}`);
-    if (result.exitCode !== 0 || !result.stdout.trim()) {
-      console.error(`Warning: failed to get ${shell} completions from openclaw`);
-      if (result.stderr.trim()) console.error(result.stderr.trim());
-      continue;
-    }
-    const cachePath = join(OC_CACHE_DIR, `oc-completions.${shell}`);
-    await Bun.write(cachePath, result.stdout);
-    updated++;
-    console.log(`Cached ${shell} completions → ${cachePath}`);
+  const updated = await fetchAndCacheOcCompletions(driver, entry.vmName);
+  if (updated) {
+    console.log("Cached openclaw completions for bash and zsh.");
+    console.log("Reload your shell to pick up the changes.");
   }
+}
 
-  if (updated > 0) {
-    console.log(`\nReload your shell to pick up openclaw completions.`);
+/**
+ * Refresh oc completions cache if stale or missing. Intended to be called
+ * after commands that already interact with the VM (oc, shell, start, restart)
+ * so the extra exec is negligible. Failures are silently ignored.
+ */
+export async function refreshOcCompletionsIfStale(driver: VMDriver, vmName: string): Promise<void> {
+  try {
+    if (await cacheIsStale()) {
+      await fetchAndCacheOcCompletions(driver, vmName);
+    }
+  } catch {
+    // Best-effort — never interfere with the main command
   }
 }

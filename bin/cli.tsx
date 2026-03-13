@@ -157,14 +157,14 @@ completionsCmd
   .command("bash")
   .description("Generate bash completion script")
   .action(async () => {
-    await runCompletions("bash");
+    await runCompletions("bash", driver);
   });
 
 completionsCmd
   .command("zsh")
   .description("Generate zsh completion script")
   .action(async () => {
-    await runCompletions("zsh");
+    await runCompletions("zsh", driver);
   });
 
 completionsCmd
