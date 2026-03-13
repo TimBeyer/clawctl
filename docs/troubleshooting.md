@@ -43,7 +43,7 @@ The wizard skips creation if a VM with the same name already exists. To start
 fresh:
 
 ```bash
-clawctl delete <vmName>
+clawctl delete
 clawctl create
 ```
 
@@ -125,18 +125,17 @@ If `openclaw onboard` fails during the wizard, the instance is still registered.
 You can retry manually:
 
 ```bash
-clawctl shell <vmName>
-openclaw onboard --install-daemon
+clawctl shell -- openclaw onboard --install-daemon
 ```
 
 ### Dashboard not accessible
 
 If `http://localhost:18789` doesn't load after onboarding:
 
-1. Check that the VM is running: `clawctl status <vmName>`
+1. Check that the VM is running: `clawctl status`
 2. Check that the daemon is running inside the VM:
    ```bash
-   limactl shell <vmName> -- openclaw daemon status
+   clawctl oc daemon status
    ```
 3. Check port forwarding — the Lima config forwards guest port 18789 to the
    host. If you changed `gatewayPort`, use that port instead.
@@ -149,7 +148,7 @@ If `http://localhost:18789` doesn't load after onboarding:
 When things are in a bad state, delete and recreate:
 
 ```bash
-clawctl delete <vmName>
+clawctl delete
 clawctl create --config <projectDir>/clawctl.json
 ```
 

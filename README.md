@@ -70,34 +70,83 @@ provisioning, and — optionally — credential setup and OpenClaw onboarding.
 
 ## Commands
 
-| Command                                    | Description                                   |
-| ------------------------------------------ | --------------------------------------------- |
-| `clawctl create`                           | Interactive wizard                            |
-| `clawctl create --config <path>`           | Headless mode (config-file-driven)            |
-| `clawctl list`                             | List all instances with live status           |
-| `clawctl status <name>`                    | Detailed info for one instance                |
-| `clawctl start <name>`                     | Start a stopped instance                      |
-| `clawctl stop <name>`                      | Stop a running instance                       |
-| `clawctl restart <name>`                   | Stop + start + health checks                  |
-| `clawctl delete <name> [--purge]`          | Delete VM; `--purge` also removes project dir |
-| `clawctl shell <name>`                     | Shell into the VM                             |
-| `clawctl register <name> --project <path>` | Register an existing (pre-registry) instance  |
+| Command                                    | Description                                       |
+| ------------------------------------------ | ------------------------------------------------- |
+| `clawctl create`                           | Interactive wizard                                |
+| `clawctl create --config <path>`           | Headless mode (config-file-driven)                |
+| `clawctl list`                             | List all instances with live status               |
+| `clawctl status [name]`                    | Detailed info for one instance                    |
+| `clawctl start [name]`                     | Start a stopped instance                          |
+| `clawctl stop [name]`                      | Stop a running instance                           |
+| `clawctl restart [name]`                   | Stop + start + health checks                      |
+| `clawctl delete [name] [--purge]`          | Delete VM; `--purge` also removes project dir     |
+| `clawctl shell [name]`                     | Interactive shell into the VM                     |
+| `clawctl shell [name] -- <cmd...>`         | Run a command in the VM                           |
+| `clawctl openclaw <subcommand...>`         | Run an `openclaw` command in the VM (alias: `oc`) |
+| `clawctl use [name] [--global]`            | Set or show the current instance context          |
+| `clawctl register <name> --project <path>` | Register an existing (pre-registry) instance      |
 
-Run `clawctl --help` for the full list.
+All instance commands (`status`, `start`, `stop`, `restart`, `delete`, `shell`,
+`openclaw`) accept an optional positional name, a `-i`/`--instance` flag, or
+resolve the instance automatically via context. Run `clawctl --help` for
+details.
+
+### Instance context
+
+You don't have to type the instance name every time. clawctl resolves the
+target instance in this order:
+
+1. `--instance` / `-i` flag — `clawctl status -i my-agent`
+2. `CLAWCTL_INSTANCE` env var — `export CLAWCTL_INSTANCE=my-agent`
+3. `.clawctl` file — walks up from your current directory (like `.nvmrc`)
+4. Global context — `~/.config/clawctl/context.json`
+
+Set context with `clawctl use`:
+
+```bash
+clawctl use my-agent            # write .clawctl in current directory
+clawctl use my-agent --global   # set global default
+clawctl use                     # show current context and its source
+```
+
+### Running openclaw commands from the host
+
+No need to shell in for routine operations — `clawctl openclaw` (or `oc` for
+short) runs any `openclaw` subcommand inside the VM:
+
+```bash
+clawctl oc doctor               # health check
+clawctl oc config get gateway.name
+clawctl oc daemon status
+clawctl oc telegram list
+```
+
+For arbitrary commands, use `clawctl shell --`:
+
+```bash
+clawctl shell -- whoami
+clawctl shell -- systemctl --user status openclaw-gateway
+```
 
 ### Day-to-day management
 
 clawctl isn't just an installer — it's how you manage your gateways after setup too.
 
 ```bash
+# Set your default instance once
+clawctl use my-agent
+
 # See what's running
 clawctl list
 
-# Spin up a second gateway for a different project
-clawctl create
+# Quick health check — no need to shell in
+clawctl oc doctor
 
 # Restart one that's acting up
-clawctl restart my-agent
+clawctl restart
+
+# Spin up a second gateway for a different project
+clawctl create
 
 # Tear it down when you're done (keeps your project dir by default)
 clawctl delete my-agent

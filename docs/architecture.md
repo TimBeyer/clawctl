@@ -73,7 +73,9 @@ src/
     stop.ts              Stop a running instance
     restart.ts           Restart with health checks
     delete.ts            Delete VM + optional project purge
-    shell.ts             Shell into VM
+    shell.ts             Shell into VM or run a command via --
+    openclaw.ts          Proxy openclaw commands into the VM
+    use.ts               Set or show instance context
     register.ts          Register existing instance
     index.ts             Barrel export
   drivers/               VM backend abstraction
@@ -93,6 +95,9 @@ src/
     bootstrap.ts         Post-provisioning openclaw setup (onboard, config, telegram)
     config.ts            Config loading, validation, sanitization, VMConfig conversion
     registry.ts          Instance registry CRUD (~/.config/clawctl/instances.json)
+    instance-context.ts  Instance resolution (.clawctl files, env var, global context)
+    require-instance.ts  Shared helper: resolve + validate instance for commands
+    shell-quote.ts       Shell-safe argument quoting
     providers.ts         Provider registry + onboard command builder
     schemas/             Composable zod schemas, one per config section
       index.ts           Assembles instanceConfigSchema from parts

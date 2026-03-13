@@ -18,25 +18,12 @@ so they don't get lost.
 
 - [x] **Headless / preconfigured provisioning (skip the wizard)** _(done: 14b93d1)_
 
-- [ ] **Instance registry — track all created openclaws**
-      The tool should maintain a registry of all VMs it has created (name,
-      project dir, Lima instance name, status). Something like
-      `~/.config/clawctl/instances.json`. Enables `list`, `status`,
-      and multi-instance management from a single place.
+- [x] **Instance registry — track all created openclaws** _(done: v0.4.0)_
 
-- [ ] **Host-side CLI proxy for openclaw commands**
-      Mirror the key `openclaw` subcommands on the host so you don't have to
-      shell into the VM for routine operations. The host CLI looks up the
-      instance, calls `limactl shell <vm> bash -lc "openclaw <subcommand>"`
-      under the hood. Priority commands:
-  - `telegram approve` / `telegram list` — user management
-  - `config get` / `config set` — configuration
-  - `doctor` — health check
-  - `daemon start` / `stop` / `restart` / `status`
-  - `tui` — interactive chat (needs PTY passthrough)
-
-  Doesn't need to be exhaustive — cover the common ones and fall back to
-  `limactl shell` for the rest.
+- [x] **Host-side CLI proxy for openclaw commands** _(done: `clawctl openclaw` / `clawctl oc`)_
+      Proxies any `openclaw` subcommand into the VM. Also added `clawctl shell -- <cmd>`
+      for arbitrary commands, and instance context resolution (`-i` flag, env var,
+      `.clawctl` file, global context) so you don't have to type the instance name.
 
 - [ ] **Pre-installed tooling — web browsing, dev tools, etc.**
       Ship the VM with useful software beyond the bare minimum so openclaw
@@ -81,17 +68,7 @@ so they don't get lost.
     These reuse the same provisioning logic from the wizard steps but
     can target an existing instance.
 
-- [ ] **`clawctl restart` with health verification**
-      Restart a VM and verify everything comes back healthy. Should:
-  - `limactl stop` + `limactl start`
-  - Wait for the VM to be SSH-ready
-  - Verify systemd user services are running (gateway daemon)
-  - Run `openclaw doctor` inside the VM
-  - Check port forwarding is active (gateway reachable on host)
-  - Report pass/fail for each check
-    Useful after host reboots, sleep/wake, or when things feel broken.
-    `clawctl stop` and `clawctl start` as separate commands too, with
-    `start` doing the same health checks.
+- [x] **`clawctl restart` with health verification** _(done: v0.4.0)_
 
 - [ ] **In-place upgrades**
       When openclaw ships a new version, update the VM without rebuilding.
@@ -149,8 +126,9 @@ so they don't get lost.
   (JSON or exit codes) so the host can parse reliably. This replaces the
   current pattern of regex-parsing shell output.
 
-  **What this subsumes:** The "host-side CLI proxy" item above becomes
-  `clawctl <command>` → `limactl shell ... claw <command>`. The proxy
+  **What this subsumes:** The host-side CLI proxy (`clawctl openclaw` / `oc`)
+  already exists. With `claw` on the VM side, it would become
+  `clawctl oc <command>` → `limactl shell ... claw <command>`. The proxy
   logic is just dispatch, `claw` does the real work.
 
   **Naming rationale:** `clawctl` = control plane (host), `claw` = the
