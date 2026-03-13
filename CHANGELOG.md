@@ -1,5 +1,17 @@
 # Changelog
 
+# [0.5.0](https://github.com/TimBeyer/clawctl/compare/v0.4.10...v0.5.0) (2026-03-13)
+
+
+### Bug Fixes
+
+* correct YAML indentation for extra mount entries ([73a29fc](https://github.com/TimBeyer/clawctl/commit/73a29fcbb34065f34e06a3026f0e52857c7db6d1))
+
+
+### Features
+
+* wire up extra mounts and add wizard home dir prompt ([cbf666a](https://github.com/TimBeyer/clawctl/commit/cbf666a669abd7ec9c85890282b93229b87d77ec)), closes [#13](https://github.com/TimBeyer/clawctl/issues/13)
+
 ## [0.4.10](https://github.com/TimBeyer/clawctl/compare/v0.4.9...v0.4.10) (2026-03-13)
 
 
