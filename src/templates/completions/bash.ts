@@ -23,7 +23,7 @@ export function generateBashCompletion(binName: string): string {
         fi
       done
 
-      local commands="create list status start stop restart delete shell register openclaw oc use completions"
+      local commands="create list status start stop restart delete shell register openclaw oc use"
 
       local openclaw_subcommands="setup onboard configure config doctor status health reset uninstall update gateway logs daemon message agent agents acp channels pairing devices skills plugins cron webhooks system dns memory docs node nodes browser models security secrets sessions tui qr hooks"
 

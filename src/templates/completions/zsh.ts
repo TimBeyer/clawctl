@@ -76,7 +76,6 @@ export function generateZshCompletion(binName: string): string {
         'openclaw:Run an openclaw command in the VM'
         'oc:Run an openclaw command in the VM (alias)'
         'use:Set or show the current instance context'
-        'completions:Generate shell completion script'
       )
 
       local state
