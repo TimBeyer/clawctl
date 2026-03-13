@@ -1,5 +1,6 @@
 import type { VMDriver } from "../drivers/types.js";
 import { requireInstance } from "../lib/require-instance.js";
+import { refreshOcCompletionsIfStale } from "./completions.js";
 
 const HEALTH_RETRIES = 5;
 const HEALTH_DELAY_MS = 2000;
@@ -56,4 +57,6 @@ export async function runRestart(driver: VMDriver, opts: { instance?: string }):
   console.log(`  SSH:     ready`);
   console.log(`  Doctor:  ${doctorResult.exitCode === 0 ? "passed" : "issues detected"}`);
   console.log(`  Gateway: ${gatewayActive ? "active" : "inactive"}`);
+
+  await refreshOcCompletionsIfStale(driver, entry.vmName);
 }

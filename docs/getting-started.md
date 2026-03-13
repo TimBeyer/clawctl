@@ -150,3 +150,4 @@ the [README](../README.md#instance-context) for the full resolution order.
 - [Tailscale Setup](tailscale-setup.md) — access your dashboard from any device
 - [Snapshots and Rebuilds](snapshots-and-rebuilds.md) — back up and restore VMs
 - [Troubleshooting](troubleshooting.md) — common issues and fixes
+- Shell completions — run `clawctl completions --help` for tab completion setup

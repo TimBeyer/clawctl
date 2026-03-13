@@ -64,6 +64,9 @@ export function Finish({ config, onboardSkipped, tailscaleMode }: FinishProps) {
 
         <Text dimColor># Enter the VM</Text>
         <Text color="cyan">{BIN_NAME} shell</Text>
+        <Text> </Text>
+
+        <Text dimColor># Enable tab completions: {BIN_NAME} completions --help</Text>
       </Box>
     </Box>
   );

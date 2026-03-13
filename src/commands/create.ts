@@ -8,6 +8,7 @@ import { GATEWAY_PORT } from "../templates/constants.js";
 import { getTailscaleHostname } from "../lib/tailscale.js";
 import type { RegistryEntry } from "../lib/registry.js";
 import { BIN_NAME } from "../lib/bin-name.js";
+import { refreshOcCompletionsIfStale } from "./completions.js";
 
 /**
  * Run the headless create path: load config, provision, register.
@@ -27,6 +28,7 @@ export async function runCreateHeadless(driver: VMDriver, configPath: string): P
     tailscaleUrl: result.tailscaleUrl,
   };
   await addInstance(entry);
+  await refreshOcCompletionsIfStale(driver, result.vmName);
 }
 
 /**
@@ -208,6 +210,7 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
       console.error("Failed to run onboarding:", err);
       console.log(`   You can retry: ${BIN_NAME} oc onboard`);
     }
+    await refreshOcCompletionsIfStale(driver, vmName);
   } else if (
     result &&
     typeof result === "object" &&
@@ -225,5 +228,6 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
 
     await registerWizardInstance(vmName, projectDir, tailscaleUrl);
     await writeMinimalConfig(vmName, projectDir);
+    await refreshOcCompletionsIfStale(driver, vmName);
   }
 }
