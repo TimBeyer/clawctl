@@ -57,10 +57,9 @@ describe("generateBashCompletion", () => {
   });
 
   test("includes openclaw subcommands", () => {
-    expect(script).toContain("onboard");
-    expect(script).toContain("doctor");
-    expect(script).toContain("config");
-    expect(script).toContain("daemon");
+    for (const sub of ["onboard", "doctor", "config", "gateway", "agents", "channels", "skills", "plugins", "cron", "models", "memory", "browser"]) {
+      expect(script).toContain(sub);
+    }
   });
 
   test("includes per-command options", () => {
@@ -117,10 +116,9 @@ describe("generateZshCompletion", () => {
   });
 
   test("includes openclaw subcommands with descriptions", () => {
-    expect(script).toContain("onboard");
-    expect(script).toContain("doctor");
-    expect(script).toContain("config");
-    expect(script).toContain("daemon");
+    for (const sub of ["onboard", "doctor", "config", "gateway", "agents", "channels", "skills", "plugins", "cron", "models", "memory", "browser"]) {
+      expect(script).toContain(sub);
+    }
   });
 
   test("includes per-command options", () => {

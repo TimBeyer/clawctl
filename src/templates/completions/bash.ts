@@ -25,7 +25,7 @@ export function generateBashCompletion(binName: string): string {
 
       local commands="create list status start stop restart delete shell register openclaw oc use completions"
 
-      local openclaw_subcommands="onboard doctor config daemon telegram agent workspace session tool skill"
+      local openclaw_subcommands="setup onboard configure config doctor status health reset uninstall update gateway logs daemon message agent agents acp channels pairing devices skills plugins cron webhooks system dns memory docs node nodes browser models security secrets sessions tui qr hooks"
 
       # Complete command name at position 1
       if [[ \$COMP_CWORD -eq 1 ]]; then
