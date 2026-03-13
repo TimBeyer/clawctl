@@ -4,6 +4,7 @@ import { StepIndicator } from "../components/step-indicator.js";
 import type { VMConfig } from "../types.js";
 import type { VMDriver } from "../drivers/types.js";
 import { GATEWAY_PORT } from "../templates/constants.js";
+import { BIN_NAME } from "../lib/bin-name.js";
 
 export interface FinishResult {
   action: "finish";
@@ -19,7 +20,7 @@ interface FinishProps {
   tailscaleMode?: "off" | "serve" | "funnel";
 }
 
-export function Finish({ driver, config, onboardSkipped, tailscaleMode }: FinishProps) {
+export function Finish({ config, onboardSkipped, tailscaleMode }: FinishProps) {
   const { exit } = useApp();
   const exited = useRef(false);
 
@@ -49,11 +50,8 @@ export function Finish({ driver, config, onboardSkipped, tailscaleMode }: Finish
       <Box flexDirection="column" marginLeft={4}>
         {onboardSkipped ? (
           <>
-            <Text dimColor># Run OpenClaw onboarding inside the VM</Text>
-            <Text>
-              <Text color="cyan">{driver.shellCommand(config.vmName)}</Text>
-              <Text color="cyan"> -- openclaw onboard</Text> --install-daemon
-            </Text>
+            <Text dimColor># Run OpenClaw onboarding</Text>
+            <Text color="cyan">{BIN_NAME} oc onboard --install-daemon</Text>
             <Text> </Text>
           </>
         ) : (
@@ -65,7 +63,7 @@ export function Finish({ driver, config, onboardSkipped, tailscaleMode }: Finish
         )}
 
         <Text dimColor># Enter the VM</Text>
-        <Text color="cyan">{driver.shellCommand(config.vmName)}</Text>
+        <Text color="cyan">{BIN_NAME} shell</Text>
       </Box>
     </Box>
   );

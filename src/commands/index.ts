@@ -7,3 +7,5 @@ export { runRestart } from "./restart.js";
 export { runDelete } from "./delete.js";
 export { runShell } from "./shell.js";
 export { runRegister } from "./register.js";
+export { runOpenclaw } from "./openclaw.js";
+export { runUse } from "./use.js";

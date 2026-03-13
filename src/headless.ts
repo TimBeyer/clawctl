@@ -203,13 +203,13 @@ export async function runHeadless(driver: VMDriver, configPath: string): Promise
       if (tailscaleUrl) {
         log("done", `Tailscale: ${tailscaleUrl}`);
         log("done", "First tailnet connection requires device approval:");
-        log("done", `  ${BIN_NAME} shell ${config.name}`);
-        log("done", "  openclaw devices list && openclaw devices approve <requestId>");
+        log("done", `  ${BIN_NAME} oc devices list`);
+        log("done", `  ${BIN_NAME} oc devices approve <requestId>`);
       }
     } else {
       log("done", `Instance "${config.name}" is ready`);
-      log("done", `Enter VM: ${driver.shellCommand(config.name)}`);
-      log("done", "No provider configured — run 'openclaw onboard' in the VM when ready");
+      log("done", `Enter VM: ${BIN_NAME} shell`);
+      log("done", `No provider configured — run '${BIN_NAME} oc onboard' when ready`);
     }
 
     // Write clawctl.json (sanitized config) to project dir

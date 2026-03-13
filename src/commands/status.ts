@@ -1,14 +1,8 @@
 import type { VMDriver } from "../drivers/types.js";
-import { getInstance } from "../lib/registry.js";
-import { BIN_NAME } from "../lib/bin-name.js";
+import { requireInstance } from "../lib/require-instance.js";
 
-export async function runStatus(driver: VMDriver, name: string): Promise<void> {
-  const entry = await getInstance(name);
-  if (!entry) {
-    console.error(`Instance "${name}" not found in registry.`);
-    console.error(`Run '${BIN_NAME} list' to see registered instances.`);
-    process.exit(1);
-  }
+export async function runStatus(driver: VMDriver, opts: { instance?: string }): Promise<void> {
+  const entry = await requireInstance(opts);
 
   const liveStatus = await driver.status(entry.vmName);
 

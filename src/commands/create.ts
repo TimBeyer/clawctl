@@ -114,7 +114,7 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
 
       if (onboardResult.exitCode !== 0) {
         console.log(`Warning: Onboarding exited with code ${onboardResult.exitCode}`);
-        console.log(`   You can retry: ${driver.shellCommand(vmName)} -- openclaw onboard`);
+        console.log(`   You can retry: ${BIN_NAME} oc onboard`);
       } else {
         console.log("Installing gateway service...");
         const installResult = await driver.exec(
@@ -123,9 +123,7 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
         );
         if (installResult.exitCode !== 0) {
           console.log("Warning: Gateway service install failed. You can retry:");
-          console.log(
-            `   ${driver.shellCommand(vmName)} -- openclaw daemon install --runtime node --force`,
-          );
+          console.log(`   ${BIN_NAME} oc daemon install --runtime node --force`);
         } else {
           console.log("Starting gateway...");
           await driver.exec(vmName, "openclaw daemon start");
@@ -171,7 +169,7 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
           } else {
             console.log(`Dashboard: http://localhost:${GATEWAY_PORT}`);
           }
-          console.log(`Enter VM:  ${driver.shellCommand(vmName)}`);
+          console.log(`Enter VM:  ${BIN_NAME} shell`);
 
           // Update registry with Tailscale URL if serve/funnel mode
           if (tailscaleMode && tailscaleMode !== "off") {
@@ -180,8 +178,8 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
               const tsBaseUrl = `https://${tsHostnameForRegistry}`;
               console.log(`Tailscale: ${tsBaseUrl}`);
               console.log("  First tailnet connection requires device approval:");
-              console.log(`  ${BIN_NAME} shell ${vmName}`);
-              console.log("  openclaw devices list && openclaw devices approve <requestId>");
+              console.log(`  ${BIN_NAME} oc devices list`);
+              console.log(`  ${BIN_NAME} oc devices approve <requestId>`);
               const { loadRegistry, saveRegistry } = await import("../lib/registry.js");
               const registry = await loadRegistry();
               if (registry.instances[vmName]) {
@@ -208,7 +206,7 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
       }
     } catch (err) {
       console.error("Failed to run onboarding:", err);
-      console.log(`   You can retry: ${driver.shellCommand(vmName)} -- openclaw onboard`);
+      console.log(`   You can retry: ${BIN_NAME} oc onboard`);
     }
   } else if (
     result &&

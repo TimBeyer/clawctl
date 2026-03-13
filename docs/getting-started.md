@@ -126,12 +126,22 @@ clawctl list
 # Access the dashboard
 open http://localhost:18789
 
-# Shell into the VM
-clawctl shell <vmName>
+# Run a health check — no need to shell in
+clawctl oc doctor
 
-# Check OpenClaw inside the VM
-openclaw doctor
+# Or shell into the VM interactively
+clawctl shell
 ```
+
+The first time, you'll need to specify the instance name (e.g.,
+`clawctl oc doctor -i my-agent`). To avoid repeating it, set a default:
+
+```bash
+clawctl use my-agent
+```
+
+After that, all instance commands resolve the target automatically. See
+the [README](../README.md#instance-context) for the full resolution order.
 
 ## Next steps
 

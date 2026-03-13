@@ -15,6 +15,8 @@ import {
   runDelete,
   runShell,
   runRegister,
+  runOpenclaw,
+  runUse,
 } from "../src/commands/index.js";
 
 const driver = new LimaDriver();
@@ -23,6 +25,7 @@ const program = new Command()
   .name(BIN_NAME)
   .description("Full-lifecycle management tool for OpenClaw instances")
   .version(pkg.version)
+  .enablePositionalOptions()
   .action(() => {
     program.help();
   });
@@ -52,46 +55,71 @@ program
   });
 
 program
-  .command("status <name>")
+  .command("status [name]")
   .description("Show detailed info for an instance")
-  .action(async (name: string) => {
-    await runStatus(driver, name);
+  .option("-i, --instance <name>", "Instance to target")
+  .action(async (name: string | undefined, opts: { instance?: string }) => {
+    await runStatus(driver, { instance: opts.instance ?? name });
   });
 
 program
-  .command("start <name>")
+  .command("start [name]")
   .description("Start a stopped instance")
-  .action(async (name: string) => {
-    await runStart(driver, name);
+  .option("-i, --instance <name>", "Instance to target")
+  .action(async (name: string | undefined, opts: { instance?: string }) => {
+    await runStart(driver, { instance: opts.instance ?? name });
   });
 
 program
-  .command("stop <name>")
+  .command("stop [name]")
   .description("Stop a running instance")
-  .action(async (name: string) => {
-    await runStop(driver, name);
+  .option("-i, --instance <name>", "Instance to target")
+  .action(async (name: string | undefined, opts: { instance?: string }) => {
+    await runStop(driver, { instance: opts.instance ?? name });
   });
 
 program
-  .command("restart <name>")
+  .command("restart [name]")
   .description("Restart an instance with health checks")
-  .action(async (name: string) => {
-    await runRestart(driver, name);
+  .option("-i, --instance <name>", "Instance to target")
+  .action(async (name: string | undefined, opts: { instance?: string }) => {
+    await runRestart(driver, { instance: opts.instance ?? name });
   });
 
 program
-  .command("delete <name>")
+  .command("delete [name]")
   .description("Delete an instance")
+  .option("-i, --instance <name>", "Instance to target")
   .option("--purge", "Also remove the project directory")
-  .action(async (name: string, opts: { purge?: boolean }) => {
-    await runDelete(driver, name, opts);
+  .action(async (name: string | undefined, opts: { instance?: string; purge?: boolean }) => {
+    await runDelete(driver, { instance: opts.instance ?? name, purge: opts.purge });
   });
 
 program
-  .command("shell <name>")
-  .description("Shell into an instance's VM")
-  .action(async (name: string) => {
-    await runShell(driver, name);
+  .command("shell [name]")
+  .description("Shell into an instance's VM (use -- to pass a command)")
+  .option("-i, --instance <name>", "Instance to target")
+  .allowExcessArguments(true)
+  .action(async (name: string | undefined, opts: { instance?: string }) => {
+    // Commander mixes positionals after -- into the declared args.
+    // Find -- in process.argv and take everything after it as the command.
+    const ddIndex = process.argv.indexOf("--");
+    const passedArgs = ddIndex !== -1 ? process.argv.slice(ddIndex + 1) : undefined;
+    // If -- was used, name may have been filled from args after -- rather than
+    // before it (e.g. `shell -- ls` sets name="ls"). Check whether name
+    // actually appeared before the -- separator.
+    let instanceName = name;
+    if (ddIndex !== -1 && name !== undefined) {
+      const beforeDd = process.argv.slice(0, ddIndex);
+      if (!beforeDd.includes(name)) {
+        instanceName = undefined;
+      }
+    }
+    await runShell(
+      driver,
+      { instance: opts.instance ?? instanceName },
+      passedArgs && passedArgs.length > 0 ? passedArgs : undefined,
+    );
   });
 
 program
@@ -100,6 +128,25 @@ program
   .requiredOption("--project <path>", "Path to the project directory")
   .action(async (name: string, opts: { project: string }) => {
     await runRegister(driver, name, opts);
+  });
+
+program
+  .command("openclaw [args...]")
+  .alias("oc")
+  .description("Run an openclaw command in the instance VM")
+  .option("-i, --instance <name>", "Instance to target")
+  .allowUnknownOption()
+  .passThroughOptions()
+  .action(async (args: string[], opts: { instance?: string }) => {
+    await runOpenclaw(driver, opts, args);
+  });
+
+program
+  .command("use [name]")
+  .description("Set or show the current instance context")
+  .option("--global", "Set global context instead of local .clawctl file")
+  .action(async (name: string | undefined, opts: { global?: boolean }) => {
+    await runUse(name, opts);
   });
 
 await program.parseAsync();
