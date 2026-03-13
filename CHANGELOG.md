@@ -1,5 +1,19 @@
 # Changelog
 
+# [0.6.0](https://github.com/TimBeyer/clawctl/compare/v0.5.0...v0.6.0) (2026-03-13)
+
+
+### Bug Fixes
+
+* catch instance resolution error for clean error output ([e991978](https://github.com/TimBeyer/clawctl/commit/e9919780f425e34c2cbaceda9cb6d85db286923e))
+* declare variadic args on openclaw command ([386ec20](https://github.com/TimBeyer/clawctl/commit/386ec20085fa94d357df53b9e2401a1e56e27e0f))
+* handle shell -- pass-through args correctly ([04b75fb](https://github.com/TimBeyer/clawctl/commit/04b75fbd9ad28e4cedb1f040361dc1dc29861efd))
+
+
+### Features
+
+* add instance context, openclaw proxy, and shell pass-through ([9060f2d](https://github.com/TimBeyer/clawctl/commit/9060f2da4665955a1825a3a5525be38f0dd18265))
+
 # [0.5.0](https://github.com/TimBeyer/clawctl/compare/v0.4.10...v0.5.0) (2026-03-13)
 
 
