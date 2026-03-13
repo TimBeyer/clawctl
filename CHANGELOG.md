@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.10](https://github.com/TimBeyer/clawctl/compare/v0.4.9...v0.4.10) (2026-03-13)
+
+
+### Bug Fixes
+
+* resolve VM $HOME instead of passing literal ~ to limactl --workdir ([5ff50a5](https://github.com/TimBeyer/clawctl/commit/5ff50a5f04d855cc98b6fc1400a15ed8ce938382))
+
 ## [0.4.9](https://github.com/TimBeyer/clawctl/compare/v0.4.8...v0.4.9) (2026-03-12)
 
 
