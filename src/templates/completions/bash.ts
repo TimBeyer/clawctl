@@ -1,0 +1,130 @@
+import dedent from "dedent";
+
+export function generateBashCompletion(binName: string): string {
+  return (
+    dedent`
+    # bash completion for ${binName}
+    # eval "$(${binName} completions bash)"
+
+    _${binName}_instances() {
+      local registry="$HOME/.config/clawctl/instances.json"
+      if [[ -f "$registry" ]]; then
+        python3 -c "import json,sys; print('\\n'.join(json.load(open(sys.argv[1])).get('instances',{}).keys()))" "$registry" 2>/dev/null
+      fi
+    }
+
+    _${binName}_completions() {
+      local cur prev
+      cur="\${COMP_WORDS[COMP_CWORD]}"
+      prev="\${COMP_WORDS[COMP_CWORD-1]}"
+
+      # Stop completing after --
+      local i
+      for (( i=1; i < COMP_CWORD; i++ )); do
+        if [[ "\${COMP_WORDS[i]}" == "--" ]]; then
+          return
+        fi
+      done
+
+      local commands="create list status start stop restart delete shell register openclaw oc use completions"
+
+      local openclaw_subcommands="onboard doctor config daemon telegram agent workspace session tool skill"
+
+      # Complete command name at position 1
+      if [[ \$COMP_CWORD -eq 1 ]]; then
+        COMPREPLY=( $(compgen -W "$commands" -- "$cur") )
+        return
+      fi
+
+      local cmd="\${COMP_WORDS[1]}"
+
+      case "$cmd" in
+        create)
+          COMPREPLY=( $(compgen -W "--config --help" -- "$cur") )
+          ;;
+        list)
+          COMPREPLY=( $(compgen -W "--help" -- "$cur") )
+          ;;
+        status|start|stop|restart)
+          case "$prev" in
+            -i|--instance)
+              COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              ;;
+            *)
+              if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $(compgen -W "-i --instance --help" -- "$cur") )
+              else
+                COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              fi
+              ;;
+          esac
+          ;;
+        delete)
+          case "$prev" in
+            -i|--instance)
+              COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              ;;
+            *)
+              if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $(compgen -W "-i --instance --purge --help" -- "$cur") )
+              else
+                COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              fi
+              ;;
+          esac
+          ;;
+        shell)
+          case "$prev" in
+            -i|--instance)
+              COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              ;;
+            *)
+              if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $(compgen -W "-i --instance --help" -- "$cur") )
+              else
+                COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              fi
+              ;;
+          esac
+          ;;
+        register)
+          COMPREPLY=( $(compgen -W "--project --help" -- "$cur") )
+          ;;
+        openclaw|oc)
+          case "$prev" in
+            -i|--instance)
+              COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              ;;
+            *)
+              if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $(compgen -W "-i --instance --help" -- "$cur") )
+              else
+                COMPREPLY=( $(compgen -W "$openclaw_subcommands" -- "$cur") )
+              fi
+              ;;
+          esac
+          ;;
+        use)
+          case "$prev" in
+            use)
+              if [[ "$cur" == -* ]]; then
+                COMPREPLY=( $(compgen -W "--global --help" -- "$cur") )
+              else
+                COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              fi
+              ;;
+            *)
+              COMPREPLY=( $(compgen -W "--global --help" -- "$cur") )
+              ;;
+          esac
+          ;;
+        completions)
+          COMPREPLY=( $(compgen -W "bash zsh --help" -- "$cur") )
+          ;;
+      esac
+    }
+
+    complete -F _${binName}_completions ${binName}
+  ` + "\n"
+  );
+}

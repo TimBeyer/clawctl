@@ -17,6 +17,7 @@ import {
   runRegister,
   runOpenclaw,
   runUse,
+  runCompletions,
 } from "../src/commands/index.js";
 
 const driver = new LimaDriver();
@@ -147,6 +148,13 @@ program
   .option("--global", "Set global context instead of local .clawctl file")
   .action(async (name: string | undefined, opts: { global?: boolean }) => {
     await runUse(name, opts);
+  });
+
+program
+  .command("completions <shell>")
+  .description("Generate shell completion script (bash or zsh)")
+  .action(async (shell: string) => {
+    await runCompletions(shell);
   });
 
 await program.parseAsync();

@@ -182,6 +182,7 @@ verify_install() {
   esac
 
   info "run '${BINARY_NAME} create' to get started"
+  info "enable tab completions: ${BINARY_NAME} completions --help"
 }
 
 # --- Main ---

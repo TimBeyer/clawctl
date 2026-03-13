@@ -1,6 +1,6 @@
 # Shell Completions for clawctl
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -21,18 +21,18 @@ Does **not** cover: dynamic openclaw subcommand discovery (uses a hardcoded list
 
 ## Steps
 
-- [ ] Create `src/templates/completions/bash.ts`
-- [ ] Create `src/templates/completions/zsh.ts`
-- [ ] Create `src/templates/completions/index.ts`
-- [ ] Create `src/commands/completions.ts`
-- [ ] Update `src/commands/index.ts`
-- [ ] Update `bin/cli.tsx`
-- [ ] Create `src/templates/completions/completions.test.ts`
-- [ ] Update `install.sh`
-- [ ] Update `README.md`
-- [ ] Update `docs/getting-started.md`
-- [ ] Update `src/steps/finish.tsx`
-- [ ] Run tests and verify
+- [x] Create `src/templates/completions/bash.ts`
+- [x] Create `src/templates/completions/zsh.ts`
+- [x] Create `src/templates/completions/index.ts`
+- [x] Create `src/commands/completions.ts`
+- [x] Update `src/commands/index.ts`
+- [x] Update `bin/cli.tsx`
+- [x] Create `src/templates/completions/completions.test.ts`
+- [x] Update `install.sh`
+- [x] Update `README.md`
+- [x] Update `docs/getting-started.md`
+- [x] Update `src/steps/finish.tsx`
+- [x] Run tests and verify
 
 ## Notes
 
@@ -43,4 +43,11 @@ Does **not** cover: dynamic openclaw subcommand discovery (uses a hardcoded list
 
 ## Outcome
 
-(to be filled on completion)
+Delivered all planned functionality:
+
+- **Bash completions**: `complete -F` based, with dynamic instance names via python3, per-command option completion, openclaw subcommand completion, and `--` pass-through detection
+- **Zsh completions**: `compdef`/`_arguments` based with description annotations on commands and options, same dynamic instance and openclaw completion
+- **`clawctl completions <shell>` command**: prints script to stdout, install hints to stderr when TTY
+- **18 unit tests**: all passing, including bash `-n` syntax validation
+- **Documentation**: README commands table + section, getting-started next steps, install.sh hint, finish step hint
+- No deferred or descoped items

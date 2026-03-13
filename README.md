@@ -85,6 +85,7 @@ provisioning, and — optionally — credential setup and OpenClaw onboarding.
 | `clawctl openclaw <subcommand...>`         | Run an `openclaw` command in the VM (alias: `oc`) |
 | `clawctl use [name] [--global]`            | Set or show the current instance context          |
 | `clawctl register <name> --project <path>` | Register an existing (pre-registry) instance      |
+| `clawctl completions <shell>`              | Generate shell completion script (bash or zsh)    |
 
 All instance commands (`status`, `start`, `stop`, `restart`, `delete`, `shell`,
 `openclaw`) accept an optional positional name, a `-i`/`--instance` flag, or
@@ -150,6 +151,18 @@ clawctl create
 
 # Tear it down when you're done (keeps your project dir by default)
 clawctl delete my-agent
+```
+
+### Shell completions
+
+Enable tab completion for commands, options, and instance names:
+
+```bash
+# Bash — add to ~/.bashrc:
+eval "$(clawctl completions bash)"
+
+# Zsh — add to ~/.zshrc:
+eval "$(clawctl completions zsh)"
 ```
 
 Instances are tracked in `~/.config/clawctl/instances.json` and registered

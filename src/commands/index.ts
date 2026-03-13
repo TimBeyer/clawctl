@@ -9,3 +9,4 @@ export { runShell } from "./shell.js";
 export { runRegister } from "./register.js";
 export { runOpenclaw } from "./openclaw.js";
 export { runUse } from "./use.js";
+export { runCompletions } from "./completions.js";
