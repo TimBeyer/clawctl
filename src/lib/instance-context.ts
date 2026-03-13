@@ -6,13 +6,42 @@ import { BIN_NAME } from "./bin-name.js";
 
 const CONTEXT_FILENAME = ".clawctl";
 const GLOBAL_CONFIG_DIR = join(homedir(), ".config", "clawctl");
-const GLOBAL_CONTEXT_FILE = join(GLOBAL_CONFIG_DIR, "context");
+const GLOBAL_CONTEXT_FILE = join(GLOBAL_CONFIG_DIR, "context.json");
+
+export interface ContextFile {
+  instance: string;
+}
+
+function parseContextFile(raw: string): string | undefined {
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+
+  // Try JSON first
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+      if (typeof parsed.instance === "string" && parsed.instance) {
+        return parsed.instance;
+      }
+      return undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  // Fall back to plain text (legacy)
+  return trimmed;
+}
+
+function serializeContextFile(name: string): string {
+  const data: ContextFile = { instance: name };
+  return JSON.stringify(data, null, 2) + "\n";
+}
 
 export async function readContextFile(dir: string): Promise<string | undefined> {
   try {
     const content = await readFile(join(dir, CONTEXT_FILENAME), "utf-8");
-    const trimmed = content.trim();
-    return trimmed || undefined;
+    return parseContextFile(content);
   } catch {
     return undefined;
   }
@@ -32,8 +61,7 @@ export async function walkUpForContext(startDir: string): Promise<string | undef
 export async function readGlobalContext(): Promise<string | undefined> {
   try {
     const content = await readFile(GLOBAL_CONTEXT_FILE, "utf-8");
-    const trimmed = content.trim();
-    return trimmed || undefined;
+    return parseContextFile(content);
   } catch {
     return undefined;
   }
@@ -41,12 +69,12 @@ export async function readGlobalContext(): Promise<string | undefined> {
 
 export async function writeLocalContext(name: string, dir?: string): Promise<void> {
   const target = dir ?? process.cwd();
-  await writeFile(join(target, CONTEXT_FILENAME), name + "\n");
+  await writeFile(join(target, CONTEXT_FILENAME), serializeContextFile(name));
 }
 
 export async function writeGlobalContext(name: string): Promise<void> {
   await mkdir(GLOBAL_CONFIG_DIR, { recursive: true });
-  await writeFile(GLOBAL_CONTEXT_FILE, name + "\n");
+  await writeFile(GLOBAL_CONTEXT_FILE, serializeContextFile(name));
 }
 
 export interface ResolvedContext {
@@ -54,7 +82,7 @@ export interface ResolvedContext {
   source: "flag" | "env" | "local" | "global";
 }
 
-export async function resolveInstance(flag?: string): Promise<ResolvedContext> {
+export async function resolveInstance(flag?: string, cwd?: string): Promise<ResolvedContext> {
   // 1. Explicit flag
   if (flag) {
     return { name: flag, source: "flag" };
@@ -67,7 +95,7 @@ export async function resolveInstance(flag?: string): Promise<ResolvedContext> {
   }
 
   // 3. Walk up from cwd for .clawctl file
-  const localName = await walkUpForContext(process.cwd());
+  const localName = await walkUpForContext(cwd ?? process.cwd());
   if (localName) {
     return { name: localName, source: "local" };
   }

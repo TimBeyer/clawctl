@@ -6,7 +6,7 @@ const SOURCE_LABELS: Record<string, string> = {
   flag: "--instance flag",
   env: "CLAWCTL_INSTANCE env var",
   local: ".clawctl file",
-  global: "global context (~/.config/clawctl/context)",
+  global: "global context (~/.config/clawctl/context.json)",
 };
 
 export async function runUse(name?: string, opts: { global?: boolean } = {}): Promise<void> {

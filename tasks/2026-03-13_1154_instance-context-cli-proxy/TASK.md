@@ -57,6 +57,7 @@ Migrate all instance commands from positional `<name>` to resolved context.
 ## Outcome
 
 All three features implemented as planned:
+
 1. `clawctl openclaw` / `clawctl oc` — proxies openclaw commands into the VM
 2. `clawctl shell -- <cmd>` — runs a command in the VM
 3. Instance context with 4-level resolution (flag → env → .clawctl → global)
