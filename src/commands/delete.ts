@@ -1,17 +1,13 @@
 import { rm } from "fs/promises";
 import type { VMDriver } from "../drivers/types.js";
-import { getInstance, removeInstance } from "../lib/registry.js";
+import { removeInstance } from "../lib/registry.js";
+import { requireInstance } from "../lib/require-instance.js";
 
 export async function runDelete(
   driver: VMDriver,
-  name: string,
-  opts: { purge?: boolean },
+  opts: { instance?: string; purge?: boolean },
 ): Promise<void> {
-  const entry = await getInstance(name);
-  if (!entry) {
-    console.error(`Instance "${name}" not found in registry.`);
-    process.exit(1);
-  }
+  const entry = await requireInstance(opts);
 
   // Delete VM if it exists
   if (await driver.exists(entry.vmName)) {
@@ -23,7 +19,7 @@ export async function runDelete(
   }
 
   // Remove from registry
-  await removeInstance(name);
+  await removeInstance(entry.name);
   console.log("Removed from registry.");
 
   // Optionally purge project directory

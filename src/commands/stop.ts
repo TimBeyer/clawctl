@@ -1,20 +1,16 @@
 import type { VMDriver } from "../drivers/types.js";
-import { getInstance } from "../lib/registry.js";
+import { requireInstance } from "../lib/require-instance.js";
 
-export async function runStop(driver: VMDriver, name: string): Promise<void> {
-  const entry = await getInstance(name);
-  if (!entry) {
-    console.error(`Instance "${name}" not found in registry.`);
-    process.exit(1);
-  }
+export async function runStop(driver: VMDriver, opts: { instance?: string }): Promise<void> {
+  const entry = await requireInstance(opts);
 
   const currentStatus = await driver.status(entry.vmName);
   if (currentStatus === "Stopped") {
-    console.log(`Instance "${name}" is already stopped.`);
+    console.log(`Instance "${entry.name}" is already stopped.`);
     return;
   }
 
-  console.log(`Stopping "${name}"...`);
+  console.log(`Stopping "${entry.name}"...`);
   await driver.stop(entry.vmName);
-  console.log(`Instance "${name}" stopped.`);
+  console.log(`Instance "${entry.name}" stopped.`);
 }

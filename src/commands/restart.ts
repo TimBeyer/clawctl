@@ -1,5 +1,5 @@
 import type { VMDriver } from "../drivers/types.js";
-import { getInstance } from "../lib/registry.js";
+import { requireInstance } from "../lib/require-instance.js";
 
 const HEALTH_RETRIES = 5;
 const HEALTH_DELAY_MS = 2000;
@@ -8,22 +8,18 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function runRestart(driver: VMDriver, name: string): Promise<void> {
-  const entry = await getInstance(name);
-  if (!entry) {
-    console.error(`Instance "${name}" not found in registry.`);
-    process.exit(1);
-  }
+export async function runRestart(driver: VMDriver, opts: { instance?: string }): Promise<void> {
+  const entry = await requireInstance(opts);
 
   // Stop (if running)
   const currentStatus = await driver.status(entry.vmName);
   if (currentStatus === "Running") {
-    console.log(`Stopping "${name}"...`);
+    console.log(`Stopping "${entry.name}"...`);
     await driver.stop(entry.vmName);
   }
 
   // Start
-  console.log(`Starting "${name}"...`);
+  console.log(`Starting "${entry.name}"...`);
   await driver.start(entry.vmName);
 
   // Verify SSH ready
@@ -56,7 +52,7 @@ export async function runRestart(driver: VMDriver, name: string): Promise<void> 
 
   // Print summary
   console.log("");
-  console.log(`Instance "${name}" restarted.`);
+  console.log(`Instance "${entry.name}" restarted.`);
   console.log(`  SSH:     ready`);
   console.log(`  Doctor:  ${doctorResult.exitCode === 0 ? "passed" : "issues detected"}`);
   console.log(`  Gateway: ${gatewayActive ? "active" : "inactive"}`);
