@@ -1,0 +1,10 @@
+{
+  "name": "@clawctl/types",
+  "version": "0.7.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  }
+}

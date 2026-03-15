@@ -30,6 +30,44 @@
         "typescript-eslint": "^8.56.1",
       },
     },
+    "packages/cli": {
+      "name": "@clawctl/cli",
+      "version": "0.7.0",
+      "dependencies": {
+        "@clawctl/host-core": "workspace:*",
+        "@clawctl/templates": "workspace:*",
+        "@clawctl/types": "workspace:*",
+        "commander": "^14.0.3",
+        "ink": "^6.0.0",
+        "ink-select-input": "^6.0.0",
+        "ink-text-input": "^6.0.0",
+        "react": "^19.0.0",
+        "react-devtools-core": "^7.0.1",
+      },
+    },
+    "packages/host-core": {
+      "name": "@clawctl/host-core",
+      "version": "0.7.0",
+      "dependencies": {
+        "@clawctl/templates": "workspace:*",
+        "@clawctl/types": "workspace:*",
+        "execa": "^9.0.0",
+      },
+    },
+    "packages/templates": {
+      "name": "@clawctl/templates",
+      "version": "0.7.0",
+      "dependencies": {
+        "@clawctl/types": "workspace:*",
+        "dedent": "^1.7.2",
+        "yaml": "^2.8.2",
+        "zod": "^4.3.6",
+      },
+    },
+    "packages/types": {
+      "name": "@clawctl/types",
+      "version": "0.7.0",
+    },
   },
   "packages": {
     "@alcalzone/ansi-tokenize": ["@alcalzone/ansi-tokenize@0.2.5", "", { "dependencies": { "ansi-styles": "^6.2.1", "is-fullwidth-code-point": "^5.0.0" } }, "sha512-3NX/MpTdroi0aKz134A6RC2Gb2iXVECN4QaAXnvCIxxIm3C3AVB1mkUe8NaaiyvOpDfsrqWhYtj+Q6a62RrTsw=="],
@@ -37,6 +75,14 @@
     "@babel/code-frame": ["@babel/code-frame@7.29.0", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.28.5", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw=="],
 
     "@babel/helper-validator-identifier": ["@babel/helper-validator-identifier@7.28.5", "", {}, "sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q=="],
+
+    "@clawctl/cli": ["@clawctl/cli@workspace:packages/cli"],
+
+    "@clawctl/host-core": ["@clawctl/host-core@workspace:packages/host-core"],
+
+    "@clawctl/templates": ["@clawctl/templates@workspace:packages/templates"],
+
+    "@clawctl/types": ["@clawctl/types@workspace:packages/types"],
 
     "@commitlint/cli": ["@commitlint/cli@20.4.3", "", { "dependencies": { "@commitlint/format": "^20.4.3", "@commitlint/lint": "^20.4.3", "@commitlint/load": "^20.4.3", "@commitlint/read": "^20.4.3", "@commitlint/types": "^20.4.3", "tinyexec": "^1.0.0", "yargs": "^17.0.0" }, "bin": { "commitlint": "./cli.js" } }, "sha512-Z37EMoDT7+Upg500vlr/vZrgRsb6Xc5JAA3Tv7BYbobnN/ZpqUeZnSLggBg2+1O+NptRDtyujr2DD1CPV2qwhA=="],
 

@@ -1,19 +1,9 @@
 {
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "jsx": "react-jsx",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
     "outDir": "./dist",
-    "rootDir": ".",
-    "declaration": true,
-    "resolveJsonModule": true,
-    "types": ["bun"]
+    "rootDir": "."
   },
-  "include": ["bin/**/*", "src/**/*"],
+  "include": ["packages/*/src/**/*", "packages/*/bin/**/*", "packages/*/tests/**/*"],
   "exclude": ["node_modules", "dist"]
 }
