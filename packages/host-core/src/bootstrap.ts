@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import { mkdir } from "fs/promises";
+import { mkdir, rm } from "fs/promises";
 import { join } from "path";
 import type { VMDriver, OnLine } from "./drivers/types.js";
 import { GATEWAY_PORT } from "@clawctl/types";
@@ -10,6 +10,7 @@ import {
   generateOpWrapperScript,
   generateExecApprovals,
   generateBootstrapPrompt,
+  generateCheckpointSkill,
 } from "@clawctl/templates";
 import { redactSecrets } from "./redact.js";
 import { getTailscaleHostname } from "./tailscale.js";
@@ -64,6 +65,11 @@ export async function bootstrapOpenclaw(
     }
     onLine?.("Onboard exited with warnings but config was written — continuing");
   }
+
+  // OpenClaw's onboard creates a nested .git in the workspace — remove it.
+  // The project repo tracks data/workspace/ directly; no nested repos.
+  const wsGit = join(workspaceDir, ".git");
+  await rm(wsGit, { recursive: true, force: true });
 
   // c) Post-onboard config (including gateway token — must be before daemon
   //    restart so the daemon picks it up)
@@ -180,6 +186,13 @@ export async function bootstrapOpenclaw(
 
     onLine?.("Secret management skill installed");
   }
+
+  // e2) Install checkpoint skill (unconditional — every agent gets checkpointing)
+  onLine?.("Installing checkpoint skill...");
+  const cpSkillDir = "/mnt/project/data/workspace/skills/checkpoint";
+  await driver.exec(vmName, `mkdir -p ${cpSkillDir}`);
+  const cpContent = generateCheckpointSkill();
+  await driver.exec(vmName, `cat > ${cpSkillDir}/SKILL.md << 'SKILL_EOF'\n${cpContent}\nSKILL_EOF`);
 
   // f) Migrate to file provider SecretRefs (removes plaintext from mount).
   //    Runs AFTER all plaintext config (c, d, e) so it can patch the final state.

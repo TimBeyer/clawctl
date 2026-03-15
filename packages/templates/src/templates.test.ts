@@ -4,6 +4,7 @@ import YAML from "yaml";
 import {
   generateLimaYaml,
   generateSecretManagementSkill,
+  generateCheckpointSkill,
   generateOpWrapperScript,
   generateExecApprovals,
   generateBootstrapPrompt,
@@ -105,6 +106,17 @@ describe("generateLimaYaml", () => {
     expect(skill).toContain("Never expose secrets");
     expect(skill).toContain("supersedes the built-in 1password skill");
     expect(skill).toContain("Exec approval");
+  });
+
+  test("generates checkpoint SKILL.md with frontmatter and expected content", () => {
+    const skill = generateCheckpointSkill();
+    expect(skill).toStartWith("---\nname: checkpoint");
+    expect(skill).toContain("description: Save workspace changes");
+    expect(skill).toContain("claw checkpoint --message");
+    expect(skill).toContain("When to checkpoint");
+    expect(skill).toContain("When NOT to checkpoint");
+    expect(skill).toContain("What happens");
+    expect(skill).toContain(".checkpoint-request");
   });
 
   test("omits port forwards when forwardGateway is false", () => {
