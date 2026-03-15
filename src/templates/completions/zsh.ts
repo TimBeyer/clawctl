@@ -170,7 +170,7 @@ export function generateZshCompletion(binName: string): string {
                 '--help[Show help]'
               ;;
             completions)
-              _arguments '1:shell:(bash zsh update-oc)' '--help[Show help]'
+              _arguments '1:shell:(bash zsh)' '--help[Show help]'
               ;;
           esac
           ;;

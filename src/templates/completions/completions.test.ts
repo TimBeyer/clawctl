@@ -197,7 +197,4 @@ describe("generateZshCompletion", () => {
     expect(script).toContain("completions update-oc");
   });
 
-  test("includes update-oc in completions subcommand list", () => {
-    expect(script).toContain("update-oc");
-  });
 });
