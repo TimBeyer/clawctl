@@ -3,11 +3,12 @@ import dedent from "dedent";
 const BS = "\\";
 
 export function generateZshCompletion(binName: string): string {
+  const fnName = binName.replace(/-/g, "_");
   return (
     dedent`
     #compdef ${binName}
 
-    _${binName}_instances() {
+    _${fnName}_instances() {
       local registry="$HOME/.config/clawctl/instances.json"
       if [[ -f "$registry" ]]; then
         local -a instances
@@ -21,7 +22,24 @@ export function generateZshCompletion(binName: string): string {
       source "$HOME/.config/clawctl/oc-completions.zsh"
     fi
 
-    _${binName}_openclaw_dispatch() {
+    # Refresh stale oc completion cache in background (once per day)
+    _${fnName}_maybe_refresh_oc_cache() {
+      local cache="$HOME/.config/clawctl/oc-completions.zsh"
+      local stale_seconds=86400
+      if [[ ! -f "$cache" ]]; then
+        ${binName} completions update-oc &>/dev/null &!
+      elif command -v python3 &>/dev/null; then
+        local mtime now
+        mtime=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$cache" 2>/dev/null)
+        now=$(date +%s)
+        if [[ -n "$mtime" ]] && (( now - mtime > stale_seconds )); then
+          ${binName} completions update-oc &>/dev/null &!
+        fi
+      fi
+    }
+    _${fnName}_maybe_refresh_oc_cache
+
+    _${fnName}_openclaw_dispatch() {
       if (( \$+functions[_openclaw_root_completion] )); then
         _openclaw_root_completion
       else
@@ -71,7 +89,7 @@ export function generateZshCompletion(binName: string): string {
       fi
     }
 
-    _${binName}() {
+    _${fnName}() {
       local -a commands
       commands=(
         'create:Create a new OpenClaw instance'
@@ -119,21 +137,21 @@ export function generateZshCompletion(binName: string): string {
               ;;
             status|start|stop|restart)
               _arguments ${BS}
-                '1:instance name:_${binName}_instances' ${BS}
-                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
+                '1:instance name:_${fnName}_instances' ${BS}
+                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${fnName}_instances' ${BS}
                 '--help[Show help]'
               ;;
             delete)
               _arguments ${BS}
-                '1:instance name:_${binName}_instances' ${BS}
-                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
+                '1:instance name:_${fnName}_instances' ${BS}
+                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${fnName}_instances' ${BS}
                 '--purge[Also remove the project directory]' ${BS}
                 '--help[Show help]'
               ;;
             shell)
               _arguments ${BS}
-                '1:instance name:_${binName}_instances' ${BS}
-                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${binName}_instances' ${BS}
+                '1:instance name:_${fnName}_instances' ${BS}
+                '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${fnName}_instances' ${BS}
                 '--help[Show help]'
               ;;
             register)
@@ -143,23 +161,23 @@ export function generateZshCompletion(binName: string): string {
                 '--help[Show help]'
               ;;
             openclaw|oc)
-              _${binName}_openclaw_dispatch
+              _${fnName}_openclaw_dispatch
               ;;
             use)
               _arguments ${BS}
-                '1:instance name:_${binName}_instances' ${BS}
+                '1:instance name:_${fnName}_instances' ${BS}
                 '--global[Set global context instead of local .clawctl file]' ${BS}
                 '--help[Show help]'
               ;;
             completions)
-              _arguments '1:shell:(bash zsh)' '--help[Show help]'
+              _arguments '1:shell:(bash zsh update-oc)' '--help[Show help]'
               ;;
           esac
           ;;
       esac
     }
 
-    compdef _${binName} ${binName}
+    compdef _${fnName} ${binName}
   ` + "\n"
   );
 }

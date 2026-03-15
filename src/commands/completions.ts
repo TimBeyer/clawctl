@@ -8,7 +8,6 @@ import { listInstances } from "../lib/registry.js";
 import { generateBashCompletion, generateZshCompletion } from "../templates/completions/index.js";
 
 const OC_CACHE_DIR = join(homedir(), ".config", "clawctl");
-const STALE_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 function ocCachePath(shell: string): string {
   return join(OC_CACHE_DIR, `oc-completions.${shell}`);
@@ -20,15 +19,6 @@ async function cacheExists(shell: string): Promise<boolean> {
     return true;
   } catch {
     return false;
-  }
-}
-
-async function cacheIsStale(): Promise<boolean> {
-  try {
-    const info = await stat(ocCachePath("zsh"));
-    return Date.now() - info.mtimeMs > STALE_MS;
-  } catch {
-    return true; // missing = stale
   }
 }
 
@@ -127,20 +117,5 @@ export async function runCompletionsUpdateOc(
   if (updated) {
     console.log("Cached openclaw completions for bash and zsh.");
     console.log("Reload your shell to pick up the changes.");
-  }
-}
-
-/**
- * Refresh oc completions cache if stale or missing. Intended to be called
- * after commands that already interact with the VM (oc, shell, start, restart)
- * so the extra exec is negligible. Failures are silently ignored.
- */
-export async function refreshOcCompletionsIfStale(driver: VMDriver, vmName: string): Promise<void> {
-  try {
-    if (await cacheIsStale()) {
-      await fetchAndCacheOcCompletions(driver, vmName);
-    }
-  } catch {
-    // Best-effort — never interfere with the main command
   }
 }

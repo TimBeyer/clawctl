@@ -35,11 +35,11 @@ describe("generateBashCompletion", () => {
     expect(script).toContain("complete -F _clawctl_completions clawctl");
   });
 
-  test("uses custom binName", () => {
+  test("uses custom binName with sanitized function names", () => {
     const custom = generateBashCompletion("clawctl-dev");
-    expect(custom).toContain("_clawctl-dev_completions");
-    expect(custom).toContain("_clawctl-dev_instances");
-    expect(custom).toContain("complete -F _clawctl-dev_completions clawctl-dev");
+    expect(custom).toContain("_clawctl_dev_completions");
+    expect(custom).toContain("_clawctl_dev_instances");
+    expect(custom).toContain("complete -F _clawctl_dev_completions clawctl-dev");
   });
 
   test("contains complete -F registration", () => {
@@ -91,10 +91,24 @@ describe("generateBashCompletion", () => {
     expect(script).toContain("_openclaw_completion");
   });
 
+  test("includes background cache refresh logic", () => {
+    expect(script).toContain("_clawctl_maybe_refresh_oc_cache");
+    expect(script).toContain("stale_seconds");
+    expect(script).toContain("completions update-oc");
+  });
+
   test("passes bash -n syntax check", async () => {
     const result = await execa("bash", ["-n"], { input: script, reject: false });
     if (result.exitCode !== 0) {
       throw new Error(`bash -n failed:\n${result.stderr}`);
+    }
+  });
+
+  test("passes bash -n syntax check with hyphenated binName", async () => {
+    const custom = generateBashCompletion("clawctl-dev");
+    const result = await execa("bash", ["-n"], { input: custom, reject: false });
+    if (result.exitCode !== 0) {
+      throw new Error(`bash -n failed for clawctl-dev:\n${result.stderr}`);
     }
   });
 });
@@ -116,11 +130,11 @@ describe("generateZshCompletion", () => {
     expect(script).toContain("compdef _clawctl clawctl");
   });
 
-  test("uses custom binName", () => {
+  test("uses custom binName with sanitized function names", () => {
     const custom = generateZshCompletion("clawctl-dev");
-    expect(custom).toContain("_clawctl-dev()");
-    expect(custom).toContain("_clawctl-dev_instances");
-    expect(custom).toContain("compdef _clawctl-dev clawctl-dev");
+    expect(custom).toContain("_clawctl_dev()");
+    expect(custom).toContain("_clawctl_dev_instances");
+    expect(custom).toContain("compdef _clawctl_dev clawctl-dev");
   });
 
   test("contains compdef registration", () => {
@@ -175,5 +189,15 @@ describe("generateZshCompletion", () => {
 
   test("delegates to _openclaw_root_completion when cached", () => {
     expect(script).toContain("_openclaw_root_completion");
+  });
+
+  test("includes background cache refresh logic", () => {
+    expect(script).toContain("_clawctl_maybe_refresh_oc_cache");
+    expect(script).toContain("stale_seconds");
+    expect(script).toContain("completions update-oc");
+  });
+
+  test("includes update-oc in completions subcommand list", () => {
+    expect(script).toContain("update-oc");
   });
 });

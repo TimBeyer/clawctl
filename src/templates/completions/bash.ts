@@ -1,9 +1,10 @@
 import dedent from "dedent";
 
 export function generateBashCompletion(binName: string): string {
+  const fnName = binName.replace(/-/g, "_");
   return (
     dedent`
-    _${binName}_instances() {
+    _${fnName}_instances() {
       local registry="$HOME/.config/clawctl/instances.json"
       if [[ -f "$registry" ]]; then
         python3 -c "import json,sys; print(chr(10).join(json.load(open(sys.argv[1])).get('instances',{}).keys()))" "$registry" 2>/dev/null
@@ -15,7 +16,26 @@ export function generateBashCompletion(binName: string): string {
       source "$HOME/.config/clawctl/oc-completions.bash"
     fi
 
-    _${binName}_completions() {
+    # Refresh stale oc completion cache in background (once per day)
+    _${fnName}_maybe_refresh_oc_cache() {
+      local cache="$HOME/.config/clawctl/oc-completions.bash"
+      local stale_seconds=86400
+      if [[ ! -f "$cache" ]]; then
+        ${binName} completions update-oc &>/dev/null &
+        disown 2>/dev/null
+      elif command -v python3 &>/dev/null; then
+        local mtime now
+        mtime=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$cache" 2>/dev/null)
+        now=$(date +%s)
+        if [[ -n "$mtime" ]] && (( now - mtime > stale_seconds )); then
+          ${binName} completions update-oc &>/dev/null &
+          disown 2>/dev/null
+        fi
+      fi
+    }
+    _${fnName}_maybe_refresh_oc_cache
+
+    _${fnName}_completions() {
       local cur prev
       cur="\${COMP_WORDS[COMP_CWORD]}"
       prev="\${COMP_WORDS[COMP_CWORD-1]}"
@@ -50,13 +70,13 @@ export function generateBashCompletion(binName: string): string {
         status|start|stop|restart)
           case "$prev" in
             -i|--instance)
-              COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              COMPREPLY=( $(compgen -W "$(_${fnName}_instances)" -- "$cur") )
               ;;
             *)
               if [[ "$cur" == -* ]]; then
                 COMPREPLY=( $(compgen -W "-i --instance --help" -- "$cur") )
               else
-                COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+                COMPREPLY=( $(compgen -W "$(_${fnName}_instances)" -- "$cur") )
               fi
               ;;
           esac
@@ -64,13 +84,13 @@ export function generateBashCompletion(binName: string): string {
         delete)
           case "$prev" in
             -i|--instance)
-              COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              COMPREPLY=( $(compgen -W "$(_${fnName}_instances)" -- "$cur") )
               ;;
             *)
               if [[ "$cur" == -* ]]; then
                 COMPREPLY=( $(compgen -W "-i --instance --purge --help" -- "$cur") )
               else
-                COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+                COMPREPLY=( $(compgen -W "$(_${fnName}_instances)" -- "$cur") )
               fi
               ;;
           esac
@@ -78,13 +98,13 @@ export function generateBashCompletion(binName: string): string {
         shell)
           case "$prev" in
             -i|--instance)
-              COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+              COMPREPLY=( $(compgen -W "$(_${fnName}_instances)" -- "$cur") )
               ;;
             *)
               if [[ "$cur" == -* ]]; then
                 COMPREPLY=( $(compgen -W "-i --instance --help" -- "$cur") )
               else
-                COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+                COMPREPLY=( $(compgen -W "$(_${fnName}_instances)" -- "$cur") )
               fi
               ;;
           esac
@@ -112,7 +132,7 @@ export function generateBashCompletion(binName: string): string {
             # Static fallback
             case "$prev" in
               -i|--instance)
-                COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+                COMPREPLY=( $(compgen -W "$(_${fnName}_instances)" -- "$cur") )
                 ;;
               *)
                 if [[ "$cur" == -* ]]; then
@@ -130,7 +150,7 @@ export function generateBashCompletion(binName: string): string {
               if [[ "$cur" == -* ]]; then
                 COMPREPLY=( $(compgen -W "--global --help" -- "$cur") )
               else
-                COMPREPLY=( $(compgen -W "$(_${binName}_instances)" -- "$cur") )
+                COMPREPLY=( $(compgen -W "$(_${fnName}_instances)" -- "$cur") )
               fi
               ;;
             *)
@@ -144,7 +164,7 @@ export function generateBashCompletion(binName: string): string {
       esac
     }
 
-    complete -F _${binName}_completions ${binName}
+    complete -F _${fnName}_completions ${binName}
   ` + "\n"
   );
 }
