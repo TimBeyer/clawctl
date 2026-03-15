@@ -25,6 +25,18 @@ This gives us:
 - **Clean error boundaries** — errors are caught and returned as data,
   not swallowed by `set -e` or lost in stderr.
 
+## Design principle: delegate to `claw`
+
+`claw` is both the agent's management CLI and the VM's installer. All
+VM-side setup — system packages, tools, OpenClaw, workspace skills —
+should be provisioned through `claw` rather than generated as shell
+commands on the host. The host's job is to deploy the `claw` binary and
+invoke its provisioning stages; `claw` does the actual work inside the VM.
+
+This keeps the host thin (one binary to deploy, structured JSON back) and
+makes provisioning idempotent and re-runnable from inside the VM for
+debugging or recovery.
+
 ## How the host uses `claw`
 
 During provisioning, `host-core/src/provision.ts` deploys the compiled
@@ -34,6 +46,7 @@ binary into the VM at `/usr/local/bin/claw`, then invokes it:
 driver.exec(vmName, "sudo claw provision system --json")
 driver.exec(vmName, "claw provision tools --json")
 driver.exec(vmName, "claw provision openclaw --json")
+driver.exec(vmName, "claw provision workspace --json")
 ```
 
 After provisioning, the host runs `claw doctor --json` to verify that
@@ -59,12 +72,14 @@ packages/vm-cli/
         system.ts              Stage definition: apt + node + systemd + tailscale
         tools.ts               Stage definition: homebrew + op-cli + shell profile
         openclaw.ts            Stage definition: openclaw + env vars + gateway stub
+        workspace.ts           Stage definition: workspace skills (checkpoint, etc.)
       doctor.ts                Health checks (mounts, env, PATH, services, openclaw)
       checkpoint.ts            Signal host to commit data changes
     tools/                     One module per system tool
       types.ts                 ProvisionResult interface
       fs.ts                    ensureLineInFile, ensureDir
       curl.ts                  downloadFile, downloadAndRun
+      skills.ts                provisionCheckpointSkill (writes SKILL.md files)
       shell-profile.ts         ensureInBashrc, ensureInProfile, ensurePath
       apt.ts                   isInstalled, update, install, ensure
       systemd.ts               findDefaultUser, enableLinger, isEnabled, isActive, ...
@@ -219,18 +234,19 @@ for debugging).
 declares `availableAfter` — the lifecycle phase after which it's
 expected to pass:
 
-| Check           | What it verifies                   | availableAfter     |
-| --------------- | ---------------------------------- | ------------------ |
-| mount-project   | /mnt/project is readable           | vm-created         |
-| mount-data      | /mnt/project/data is writable      | vm-created         |
-| path-claw       | claw on PATH                       | vm-created         |
-| path-node       | node on PATH                       | provision-system   |
-| path-op         | op on PATH                         | provision-tools    |
-| path-brew       | brew on PATH                       | provision-tools    |
-| env-\*          | OPENCLAW_STATE_DIR/CONFIG_PATH set | provision-openclaw |
-| path-openclaw   | openclaw on PATH                   | provision-openclaw |
-| service-gateway | openclaw-gateway.service is active | bootstrap          |
-| openclaw-doctor | `openclaw doctor` passes           | bootstrap          |
+| Check            | What it verifies                   | availableAfter      |
+| ---------------- | ---------------------------------- | ------------------- |
+| mount-project    | /mnt/project is readable           | vm-created          |
+| mount-data       | /mnt/project/data is writable      | vm-created          |
+| path-claw        | claw on PATH                       | vm-created          |
+| path-node        | node on PATH                       | provision-system    |
+| path-op          | op on PATH                         | provision-tools     |
+| path-brew        | brew on PATH                       | provision-tools     |
+| env-\*           | OPENCLAW_STATE_DIR/CONFIG_PATH set | provision-openclaw  |
+| path-openclaw    | openclaw on PATH                   | provision-openclaw  |
+| skill-checkpoint | checkpoint skill installed         | provision-workspace |
+| service-gateway  | openclaw-gateway.service is active | bootstrap           |
+| openclaw-doctor  | `openclaw doctor` passes           | bootstrap           |
 
 ### `--after` flag
 

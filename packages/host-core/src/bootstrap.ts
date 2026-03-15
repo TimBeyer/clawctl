@@ -5,13 +5,7 @@ import type { VMDriver, OnLine } from "./drivers/types.js";
 import { GATEWAY_PORT } from "@clawctl/types";
 import { buildOnboardCommand } from "./providers.js";
 import { patchMainConfig, patchAuthProfiles } from "./infra-secrets.js";
-import {
-  generateSecretManagementSkill,
-  generateOpWrapperScript,
-  generateExecApprovals,
-  generateBootstrapPrompt,
-  generateCheckpointSkill,
-} from "@clawctl/templates";
+import { generateBootstrapPrompt } from "@clawctl/templates";
 import { redactSecrets } from "./redact.js";
 import { getTailscaleHostname } from "./tailscale.js";
 import type { InstanceConfig } from "@clawctl/types";
@@ -153,49 +147,9 @@ export async function bootstrapOpenclaw(
     }
   }
 
-  // e) Install secret management skill + op wrapper + exec-approvals
-  if (config.services?.onePassword) {
-    onLine?.("Installing secret management skill...");
-    const skillDir = "/mnt/project/data/workspace/skills/secret-management";
-    await driver.exec(vmName, `mkdir -p ${skillDir}`);
-    const skillContent = generateSecretManagementSkill();
-    await driver.exec(
-      vmName,
-      `cat > ${skillDir}/SKILL.md << 'SKILL_EOF'\n${skillContent}\nSKILL_EOF`,
-    );
-
-    // Install op wrapper — the exec tool doesn't source ~/.profile, so the
-    // service account token isn't available. The wrapper reads it from the
-    // secrets file and execs the real binary.
-    onLine?.("Installing op wrapper...");
-    await driver.exec(vmName, "mv ~/.local/bin/op ~/.local/bin/.op-real");
-    const wrapperContent = generateOpWrapperScript();
-    await driver.exec(
-      vmName,
-      `cat > ~/.local/bin/op << 'WRAPPER_EOF'\n${wrapperContent}\nWRAPPER_EOF`,
-    );
-    await driver.exec(vmName, "chmod +x ~/.local/bin/op");
-
-    // Configure exec-approvals — gate op behind user approval on first use
-    onLine?.("Configuring exec-approvals for op...");
-    const execApprovals = generateExecApprovals();
-    await driver.exec(
-      vmName,
-      `cat > ~/.openclaw/exec-approvals.json << 'APPROVALS_EOF'\n${execApprovals}\nAPPROVALS_EOF`,
-    );
-
-    onLine?.("Secret management skill installed");
-  }
-
-  // e2) Install checkpoint skill (unconditional — every agent gets checkpointing)
-  onLine?.("Installing checkpoint skill...");
-  const cpSkillDir = "/mnt/project/data/workspace/skills/checkpoint";
-  await driver.exec(vmName, `mkdir -p ${cpSkillDir}`);
-  const cpContent = generateCheckpointSkill();
-  await driver.exec(vmName, `cat > ${cpSkillDir}/SKILL.md << 'SKILL_EOF'\n${cpContent}\nSKILL_EOF`);
-
-  // f) Migrate to file provider SecretRefs (removes plaintext from mount).
-  //    Runs AFTER all plaintext config (c, d, e) so it can patch the final state.
+  // e) Migrate to file provider SecretRefs (removes plaintext from mount).
+  //    Runs AFTER all plaintext config (c, d) so it can patch the final state.
+  //    Skills, op wrapper, and exec-approvals are installed by `claw provision workspace`.
   if (resolvedMap?.length) {
     onLine?.("Migrating infrastructure secrets to file provider...");
     await patchMainConfig(driver, vmName, resolvedMap, config, onLine);

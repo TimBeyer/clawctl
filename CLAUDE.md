@@ -67,9 +67,10 @@ packages/
 
 ### Internal CLI (`claw`) conventions
 
-- The `claw` binary runs inside the VM — it is the provisioning and health-check
-  surface. The host CLI invokes it via `driver.exec()`, never by generating shell
-  scripts. See `docs/vm-cli.md` for the full architecture.
+- `claw` is both the agent's management CLI and the VM's installer. All VM-side
+  setup — system packages, tools, OpenClaw, workspace skills — is provisioned
+  through `claw` stages. The host deploys the binary and invokes stages; `claw`
+  does the work inside the VM. See `docs/vm-cli.md` for the full architecture.
 - Tool wrappers in `packages/vm-cli/src/tools/` — one module per system tool,
   plain functions (not classes). Provision stages import and compose them.
 - **Operational functions** (`apt.install()`, `systemd.enable()`) throw on failure.

@@ -4,6 +4,7 @@ import { runStage } from "./stages.js";
 import { systemStage } from "./system.js";
 import { toolsStage } from "./tools.js";
 import { openclawStage } from "./openclaw.js";
+import { workspaceStage } from "./workspace.js";
 
 export function registerProvisionCommand(program: Command): void {
   const provision = program.command("provision").description("Provision the VM environment");
@@ -33,5 +34,14 @@ export function registerProvisionCommand(program: Command): void {
     .action(async (opts: { json?: boolean }) => {
       if (opts.json) setJsonMode(true);
       await runStage(openclawStage);
+    });
+
+  provision
+    .command("workspace")
+    .description("Install workspace skills and agent configuration")
+    .option("--json", "Output structured JSON")
+    .action(async (opts: { json?: boolean }) => {
+      if (opts.json) setJsonMode(true);
+      await runStage(workspaceStage);
     });
 }

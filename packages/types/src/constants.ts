@@ -18,6 +18,7 @@ export const LIFECYCLE_PHASES = [
   "provision-system",
   "provision-tools",
   "provision-openclaw",
+  "provision-workspace",
   "bootstrap",
 ] as const;
 

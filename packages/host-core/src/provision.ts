@@ -137,5 +137,8 @@ export async function provisionVM(
   await runClawProvision(driver, config.vmName, "openclaw", false, onLine);
   onStep?.("OpenClaw installed");
 
+  await runClawProvision(driver, config.vmName, "workspace", false, onLine);
+  onStep?.("Workspace configured");
+
   onPhase?.("done");
 }
