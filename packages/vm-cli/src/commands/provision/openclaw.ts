@@ -1,9 +1,8 @@
 import { exec, commandExists } from "../../exec.js";
 import { log, ok, fail } from "../../output.js";
-import { ensureInProfile, ensureDir } from "./helpers.js";
+import { ensureInProfile } from "./helpers.js";
 import { PROJECT_MOUNT_POINT } from "@clawctl/types";
-import { writeFile, mkdir, access } from "fs/promises";
-import { constants } from "fs";
+import { writeFile, mkdir } from "fs/promises";
 
 const OPENCLAW_INSTALL_URL = "https://openclaw.ai/install.sh";
 

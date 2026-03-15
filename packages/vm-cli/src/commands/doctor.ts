@@ -78,11 +78,7 @@ async function checkPath(): Promise<DoctorCheck[]> {
 }
 
 async function checkService(): Promise<DoctorCheck[]> {
-  const result = await exec("systemctl", [
-    "--user",
-    "is-active",
-    "openclaw-gateway.service",
-  ]);
+  const result = await exec("systemctl", ["--user", "is-active", "openclaw-gateway.service"]);
   const active = result.exitCode === 0 && result.stdout.trim() === "active";
   return [
     {

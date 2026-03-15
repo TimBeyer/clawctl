@@ -9,6 +9,7 @@ inside the VM as a compiled Bun binary. Adds structured output, health checks
 (`claw doctor`), and a checkpoint signaling mechanism.
 
 **In scope:**
+
 - New `@clawctl/vm-cli` package with Commander-based CLI
 - `claw provision system|tools|openclaw` — replace bash template scripts
 - `claw doctor` — structured health checks
@@ -20,6 +21,7 @@ inside the VM as a compiled Bun binary. Adds structured output, health checks
 - Build script for cross-compiling to linux-arm64
 
 **Out of scope:**
+
 - Agent integration beyond checkpoint signaling
 - Tailscale `up` configuration (separate from install)
 - Changes to the wizard UI flow

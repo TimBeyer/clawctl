@@ -5,9 +5,7 @@ import { runProvisionTools } from "./tools.js";
 import { runProvisionOpenclaw } from "./openclaw.js";
 
 export function registerProvisionCommand(program: Command): void {
-  const provision = program
-    .command("provision")
-    .description("Provision the VM environment");
+  const provision = program.command("provision").description("Provision the VM environment");
 
   provision
     .command("system")

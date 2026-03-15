@@ -47,7 +47,8 @@ export async function ensureLineInFile(filePath: string, line: string): Promise<
     return false; // already present
   }
 
-  const newContent = content.endsWith("\n") || content === "" ? content + line + "\n" : content + "\n" + line + "\n";
+  const newContent =
+    content.endsWith("\n") || content === "" ? content + line + "\n" : content + "\n" + line + "\n";
   await writeFile(filePath, newContent);
   return true;
 }
