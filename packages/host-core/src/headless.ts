@@ -84,16 +84,18 @@ export async function runHeadless(driver: VMDriver, configPath: string): Promise
     // 4. Verify provisioning
     log("verify", "Verifying installed tools...");
     const results = await verifyProvisioning(driver, vmConfig.vmName);
-    let allPassed = true;
+    const errors: string[] = [];
     for (const r of results) {
       if (r.passed) {
         log("verify", `✓ ${r.label}`);
+      } else if (r.warn) {
+        log("verify", `⚠ ${r.label}: ${r.error} (warning, expected before bootstrap)`);
       } else {
         log("verify", `✗ ${r.label}: ${r.error}`);
-        allPassed = false;
+        errors.push(r.label);
       }
     }
-    if (!allPassed) {
+    if (errors.length > 0) {
       throw new Error("Some tools failed to install — check logs above");
     }
 

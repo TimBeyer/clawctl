@@ -4,12 +4,15 @@ import type { VMDriver, OnLine } from "./drivers/types.js";
 export interface VerifyResult {
   label: string;
   passed: boolean;
+  /** If true, a failure is informational — not a hard error. */
+  warn?: boolean;
   error?: string;
 }
 
 interface DoctorCheck {
   name: string;
   passed: boolean;
+  warn?: boolean;
   detail?: string;
   error?: string;
 }
@@ -44,6 +47,7 @@ export async function verifyProvisioning(
     return output.data.checks.map((check) => ({
       label: check.name,
       passed: check.passed,
+      warn: check.warn,
       error: check.error,
     }));
   } catch {
