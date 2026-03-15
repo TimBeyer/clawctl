@@ -1,5 +1,26 @@
 # Changelog
 
+# [0.7.0](https://github.com/TimBeyer/clawctl/compare/v0.6.0...v0.7.0) (2026-03-15)
+
+
+### Bug Fixes
+
+* avoid hyphenated variable names in completion scripts ([8a8eccc](https://github.com/TimBeyer/clawctl/commit/8a8eccc2b52933040f3bf937a50c408ae7041694))
+* escape handling in completion templates for dedent v1 ([ff37608](https://github.com/TimBeyer/clawctl/commit/ff3760835e26512e2a0b439e2e65fab2347908cc))
+* hide completions command from tab completion suggestions ([0a1f91d](https://github.com/TimBeyer/clawctl/commit/0a1f91d4b7c6c27d1ea2dd83ce176c1a6f2124bd))
+* remove update-oc from completions suggestions ([5395c2e](https://github.com/TimBeyer/clawctl/commit/5395c2e0f1adbada03409c2cc696824b6374e22d))
+* restructure zsh completions to use _arguments -C with state ([436f5aa](https://github.com/TimBeyer/clawctl/commit/436f5aa6fa3d6a42f9135fb6b5cac8dd0acc86e3))
+* suppress completion hints during eval and shell startup ([4e39a85](https://github.com/TimBeyer/clawctl/commit/4e39a85d28511867b194690389d55bcece821bb5))
+* update openclaw subcommands from docs.openclaw.ai/cli ([57f0a77](https://github.com/TimBeyer/clawctl/commit/57f0a77571b3c666c623067ab83d6ae9ad9f16a6))
+* zsh completion errors with _describe and variable scoping ([edb46cc](https://github.com/TimBeyer/clawctl/commit/edb46cc3c19b98eeda4ce9bb582280c9d1811dc7))
+
+
+### Features
+
+* add shell completions for bash and zsh ([2c77c9b](https://github.com/TimBeyer/clawctl/commit/2c77c9b8de22c1f561b1ead967ef1367e759679c))
+* auto-refresh openclaw completion cache on VM commands ([f198b78](https://github.com/TimBeyer/clawctl/commit/f198b78249ee1f4784128a32714fc6ff4d944d6e))
+* cache openclaw completions from VM for deep subcommand support ([a0476d2](https://github.com/TimBeyer/clawctl/commit/a0476d2f76ac34d1cedeacac79a2ffaac92664c3))
+
 # [0.6.0](https://github.com/TimBeyer/clawctl/compare/v0.5.0...v0.6.0) (2026-03-13)
 
 
