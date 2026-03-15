@@ -1,0 +1,14 @@
+{
+  "name": "@clawctl/vm-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "claw": "./bin/claw.ts"
+  },
+  "dependencies": {
+    "@clawctl/types": "workspace:*",
+    "commander": "^14.0.3",
+    "execa": "^9.0.0"
+  }
+}

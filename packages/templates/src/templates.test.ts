@@ -3,18 +3,6 @@ import { execa } from "execa";
 import YAML from "yaml";
 import {
   generateLimaYaml,
-  generateHelpersScript,
-  generateProvisionSystemScript,
-  generateProvisionUserScript,
-  generateAptPackagesScript,
-  generateNodejsScript,
-  generateTailscaleScript,
-  generateSystemdLingerScript,
-  generateHomebrewScript,
-  generateOpCliScript,
-  generateShellProfileScript,
-  generateOpenclawScript,
-  generateGatewayServiceStubScript,
   generateSecretManagementSkill,
   generateOpWrapperScript,
   generateExecApprovals,
@@ -24,12 +12,6 @@ import type { VMConfig } from "@clawctl/types";
 
 // -- Helpers ------------------------------------------------------------------
 
-/** Assert a generated bash script starts with the expected preamble. */
-function expectBashPreamble(script: string) {
-  expect(script).toStartWith("#!/bin/bash");
-  expect(script).toContain("set -euo pipefail");
-}
-
 /** Run `bash -n` on a script string to validate syntax. */
 async function expectValidBashSyntax(script: string) {
   const result = await execa("bash", ["-n"], { input: script, reject: false });
@@ -37,82 +19,6 @@ async function expectValidBashSyntax(script: string) {
     throw new Error(`bash -n failed:\n${result.stderr}`);
   }
 }
-
-// -- Bash script generators ---------------------------------------------------
-
-const bashGenerators: [string, () => string, string[]][] = [
-  [
-    "generateProvisionSystemScript",
-    generateProvisionSystemScript,
-    ["install-apt-packages.sh", "install-nodejs.sh"],
-  ],
-  [
-    "generateProvisionUserScript",
-    generateProvisionUserScript,
-    ["install-homebrew.sh", "install-openclaw.sh"],
-  ],
-  [
-    "generateAptPackagesScript",
-    generateAptPackagesScript,
-    ["build-essential", "git", "curl", "jq"],
-  ],
-  ["generateNodejsScript", generateNodejsScript, ["Node.js", "nodesource", "22"]],
-  ["generateTailscaleScript", generateTailscaleScript, ["tailscale.com/install.sh"]],
-  ["generateSystemdLingerScript", generateSystemdLingerScript, ["loginctl enable-linger"]],
-  ["generateHomebrewScript", generateHomebrewScript, ["Homebrew", "linuxbrew"]],
-  ["generateOpCliScript", generateOpCliScript, ["1Password CLI", "cache.agilebits.com", "arm64"]],
-  ["generateShellProfileScript", generateShellProfileScript, [".local/bin"]],
-  ["generateOpenclawScript", generateOpenclawScript, ["openclaw.ai/install.sh", "npm-global"]],
-  [
-    "generateGatewayServiceStubScript",
-    generateGatewayServiceStubScript,
-    ["openclaw-gateway.service", "systemctl --user"],
-  ],
-];
-
-describe("bash script generators", () => {
-  for (const [name, generator, expectedContent] of bashGenerators) {
-    describe(name, () => {
-      const script = generator();
-
-      test("starts with shebang and set -euo pipefail", () => {
-        expectBashPreamble(script);
-      });
-
-      test("contains expected content", () => {
-        for (const content of expectedContent) {
-          expect(script).toContain(content);
-        }
-      });
-
-      test("passes bash -n syntax check", async () => {
-        await expectValidBashSyntax(script);
-      });
-    });
-  }
-});
-
-// -- Helpers script (sourced library, no set -euo pipefail) -------------------
-
-describe("generateHelpersScript", () => {
-  const script = generateHelpersScript();
-
-  test("starts with shebang", () => {
-    expect(script).toStartWith("#!/bin/bash");
-  });
-
-  test("contains expected helper functions", () => {
-    expect(script).toContain("command_exists");
-    expect(script).toContain("ensure_apt_packages");
-    expect(script).toContain("ensure_in_bashrc");
-    expect(script).toContain("ensure_in_profile");
-    expect(script).toContain("ensure_dir");
-  });
-
-  test("passes bash -n syntax check", async () => {
-    await expectValidBashSyntax(script);
-  });
-});
 
 // -- Lima YAML generator ------------------------------------------------------
 

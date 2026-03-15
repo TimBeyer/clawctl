@@ -71,6 +71,18 @@
       "name": "@clawctl/types",
       "version": "0.7.0",
     },
+    "packages/vm-cli": {
+      "name": "@clawctl/vm-cli",
+      "version": "0.1.0",
+      "bin": {
+        "claw": "./bin/claw.ts",
+      },
+      "dependencies": {
+        "@clawctl/types": "workspace:*",
+        "commander": "^14.0.3",
+        "execa": "^9.0.0",
+      },
+    },
   },
   "packages": {
     "@alcalzone/ansi-tokenize": ["@alcalzone/ansi-tokenize@0.2.5", "", { "dependencies": { "ansi-styles": "^6.2.1", "is-fullwidth-code-point": "^5.0.0" } }, "sha512-3NX/MpTdroi0aKz134A6RC2Gb2iXVECN4QaAXnvCIxxIm3C3AVB1mkUe8NaaiyvOpDfsrqWhYtj+Q6a62RrTsw=="],
@@ -86,6 +98,8 @@
     "@clawctl/templates": ["@clawctl/templates@workspace:packages/templates"],
 
     "@clawctl/types": ["@clawctl/types@workspace:packages/types"],
+
+    "@clawctl/vm-cli": ["@clawctl/vm-cli@workspace:packages/vm-cli"],
 
     "@commitlint/cli": ["@commitlint/cli@20.4.3", "", { "dependencies": { "@commitlint/format": "^20.4.3", "@commitlint/lint": "^20.4.3", "@commitlint/load": "^20.4.3", "@commitlint/read": "^20.4.3", "@commitlint/types": "^20.4.3", "tinyexec": "^1.0.0", "yargs": "^17.0.0" }, "bin": { "commitlint": "./cli.js" } }, "sha512-Z37EMoDT7+Upg500vlr/vZrgRsb6Xc5JAA3Tv7BYbobnN/ZpqUeZnSLggBg2+1O+NptRDtyujr2DD1CPV2qwhA=="],
 

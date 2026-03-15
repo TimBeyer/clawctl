@@ -1,22 +1,13 @@
-import { mkdir } from "fs/promises";
-import { join } from "path";
+import { access, mkdir } from "fs/promises";
+import { constants } from "fs";
+import { join, resolve } from "path";
 import type { VMConfig } from "@clawctl/types";
+import { CLAW_BIN_PATH } from "@clawctl/types";
 import type { VMDriver, VMCreateOptions, OnLine } from "./drivers/types.js";
-import {
-  generateProvisionSystemScript,
-  generateProvisionUserScript,
-  generateHelpersScript,
-  generateAptPackagesScript,
-  generateNodejsScript,
-  generateTailscaleScript,
-  generateSystemdLingerScript,
-  generateHomebrewScript,
-  generateOpCliScript,
-  generateShellProfileScript,
-  generateOpenclawScript,
-  generateGatewayServiceStubScript,
-} from "@clawctl/templates";
 import { initGitRepo } from "./git.js";
+
+/** Resolve the claw binary path from the monorepo root (host-core/src/ → ../../.. → dist/claw). */
+const DEFAULT_CLAW_BINARY = resolve(import.meta.dir, "..", "..", "..", "dist", "claw");
 
 export interface ProvisionCallbacks {
   onPhase?: (phase: string) => void;
@@ -25,14 +16,79 @@ export interface ProvisionCallbacks {
 }
 
 /**
+ * Copy the claw binary from the host into the VM and install it on PATH.
+ * Uses `driver.copy()` (limactl copy) to transfer the file, then moves
+ * it to /usr/local/bin with sudo.
+ */
+async function deployClaw(
+  driver: VMDriver,
+  vmName: string,
+  clawBinaryPath: string,
+  onLine?: OnLine,
+): Promise<void> {
+  try {
+    await access(clawBinaryPath, constants.R_OK);
+  } catch {
+    throw new Error(`Claw binary not found at ${clawBinaryPath}. Run 'bun run build:claw' first.`);
+  }
+
+  await driver.copy(vmName, clawBinaryPath, "/tmp/claw");
+  const result = await driver.exec(
+    vmName,
+    `sudo mv /tmp/claw ${CLAW_BIN_PATH} && sudo chmod +x ${CLAW_BIN_PATH}`,
+    onLine,
+  );
+  if (result.exitCode !== 0) {
+    throw new Error(`Failed to install claw binary: ${result.stderr}`);
+  }
+}
+
+/**
+ * Run a claw provision subcommand and parse its JSON output.
+ */
+async function runClawProvision(
+  driver: VMDriver,
+  vmName: string,
+  subcommand: string,
+  asRoot: boolean,
+  onLine?: OnLine,
+): Promise<void> {
+  const prefix = asRoot ? "sudo " : "";
+  const result = await driver.exec(
+    vmName,
+    `${prefix}${CLAW_BIN_PATH} provision ${subcommand} --json`,
+    onLine,
+  );
+  if (result.exitCode !== 0) {
+    // Try to parse structured error from stdout
+    let errorMsg = `claw provision ${subcommand} failed (exit ${result.exitCode})`;
+    try {
+      const output = JSON.parse(result.stdout);
+      if (output.errors?.length) {
+        errorMsg += `: ${output.errors.join("; ")}`;
+      }
+    } catch {
+      if (result.stderr) {
+        errorMsg += `: ${result.stderr}`;
+      }
+    }
+    throw new Error(errorMsg);
+  }
+}
+
+/**
  * Full VM provisioning sequence:
- * create dirs → generate scripts → create VM → run provisioning scripts.
+ * create dirs → init git → create VM → deploy claw → run claw provision commands.
+ *
+ * @param clawBinaryPath - Path to the compiled claw binary on the host.
+ *   Defaults to `<repo>/dist/claw`. Build with `bun run build:claw`.
  */
 export async function provisionVM(
   driver: VMDriver,
   config: VMConfig,
   callbacks: ProvisionCallbacks = {},
   createOptions: VMCreateOptions = {},
+  clawBinaryPath: string = DEFAULT_CLAW_BINARY,
 ): Promise<void> {
   const { onPhase, onStep, onLine } = callbacks;
 
@@ -41,25 +97,8 @@ export async function provisionVM(
   await mkdir(join(config.projectDir, "data", "state"), { recursive: true });
   onStep?.("Created project directory");
 
-  // Phase 2: Generate scripts
+  // Phase 2: Init git
   onPhase?.("generating");
-
-  const scripts: Record<string, string> = {
-    "helpers.sh": generateHelpersScript(),
-    "provision-system.sh": generateProvisionSystemScript(),
-    "provision-user.sh": generateProvisionUserScript(),
-    "install-apt-packages.sh": generateAptPackagesScript(),
-    "install-nodejs.sh": generateNodejsScript(),
-    "enable-systemd-linger.sh": generateSystemdLingerScript(),
-    "install-tailscale.sh": generateTailscaleScript(),
-    "install-homebrew.sh": generateHomebrewScript(),
-    "install-op-cli.sh": generateOpCliScript(),
-    "setup-shell-profile.sh": generateShellProfileScript(),
-    "install-openclaw.sh": generateOpenclawScript(),
-    "setup-gateway-stub.sh": generateGatewayServiceStubScript(),
-  };
-
-  // Init git
   await initGitRepo(config.projectDir);
   onStep?.("Initialized git repository");
 
@@ -82,46 +121,21 @@ export async function provisionVM(
   }
   onStep?.("VM created and started");
 
-  // Deploy provisioning scripts into VM as ephemeral temp files.
-  // This mirrors the heredoc pattern used in bootstrap.ts for skill files.
-  const vmScriptsDir = "/tmp/clawctl-provision";
-  await driver.exec(config.vmName, `mkdir -p ${vmScriptsDir}`);
-  for (const [name, content] of Object.entries(scripts)) {
-    await driver.exec(
-      config.vmName,
-      `cat > ${vmScriptsDir}/${name} << 'CLAWCTL_SCRIPT'\n${content}\nCLAWCTL_SCRIPT`,
-    );
-  }
-  onStep?.("Deployed provisioning scripts to VM");
+  // Phase 4: Deploy claw binary
+  onPhase?.("deploying");
+  await deployClaw(driver, config.vmName, clawBinaryPath, onLine);
+  onStep?.("Deployed claw binary to VM");
 
-  // Phase 4: Provision
+  // Phase 5: Provision via claw
   onPhase?.("provisioning");
-  const systemResult = await driver.runScript(
-    config.vmName,
-    `${vmScriptsDir}/provision-system.sh`,
-    true,
-    onLine,
-  );
-  if (systemResult.exitCode !== 0) {
-    throw new Error(
-      `System provisioning failed (exit ${systemResult.exitCode}): ${systemResult.stderr}`,
-    );
-  }
+  await runClawProvision(driver, config.vmName, "system", true, onLine);
   onStep?.("System packages installed");
 
-  const userResult = await driver.runScript(
-    config.vmName,
-    `${vmScriptsDir}/provision-user.sh`,
-    false,
-    onLine,
-  );
-  if (userResult.exitCode !== 0) {
-    throw new Error(`User provisioning failed (exit ${userResult.exitCode}): ${userResult.stderr}`);
-  }
+  await runClawProvision(driver, config.vmName, "tools", false, onLine);
   onStep?.("User tools installed");
 
-  // Clean up ephemeral scripts
-  await driver.exec(config.vmName, `rm -rf ${vmScriptsDir}`);
+  await runClawProvision(driver, config.vmName, "openclaw", false, onLine);
+  onStep?.("OpenClaw installed");
 
   onPhase?.("done");
 }

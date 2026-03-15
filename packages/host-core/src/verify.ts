@@ -1,35 +1,69 @@
+import { CLAW_BIN_PATH } from "@clawctl/types";
+import type { LifecyclePhase } from "@clawctl/types";
 import type { VMDriver, OnLine } from "./drivers/types.js";
 
 export interface VerifyResult {
   label: string;
   passed: boolean;
+  /** Lifecycle phase after which this check is expected to pass. */
+  availableAfter?: LifecyclePhase;
+  /** If true, a failure is informational — not a hard error. */
+  warn?: boolean;
   error?: string;
 }
 
-/** Verify that all expected tools are installed in the VM. */
+interface DoctorCheck {
+  name: string;
+  passed: boolean;
+  availableAfter?: LifecyclePhase;
+  warn?: boolean;
+  detail?: string;
+  error?: string;
+}
+
+interface ClawDoctorOutput {
+  status: "ok" | "error";
+  data: { checks: DoctorCheck[] };
+  errors: string[];
+}
+
+/** Verify VM health by delegating to `claw doctor --json`. */
 export async function verifyProvisioning(
   driver: VMDriver,
   vmName: string,
   onLine?: OnLine,
+  afterPhase?: LifecyclePhase,
 ): Promise<VerifyResult[]> {
-  const checks: { label: string; command: string; check: (stdout: string) => boolean }[] = [
-    { label: "Node.js 22", command: "node --version", check: (out) => out.includes("v22") },
-    { label: "Tailscale", command: "tailscale --version", check: () => true },
-    { label: "Homebrew", command: "brew --version", check: () => true },
-    { label: "1Password CLI", command: "op --version", check: () => true },
-    { label: "OpenClaw", command: "openclaw --version", check: () => true },
-  ];
+  const afterFlag = afterPhase ? ` --after ${afterPhase}` : "";
+  const result = await driver.exec(vmName, `${CLAW_BIN_PATH} doctor --json${afterFlag}`, onLine);
 
-  const results: VerifyResult[] = [];
-
-  for (const { label, command, check } of checks) {
-    const result = await driver.exec(vmName, command, onLine);
-    if (result.exitCode === 0 && check(result.stdout)) {
-      results.push({ label, passed: true });
-    } else {
-      results.push({ label, passed: false, error: `${label} not found` });
-    }
+  // If claw itself failed to run, return a single failed check
+  if (result.exitCode !== 0 && !result.stdout.trim()) {
+    return [
+      {
+        label: "claw doctor",
+        passed: false,
+        error: result.stderr || "claw doctor failed to run",
+      },
+    ];
   }
 
-  return results;
+  try {
+    const output: ClawDoctorOutput = JSON.parse(result.stdout);
+    return output.data.checks.map((check) => ({
+      label: check.name,
+      passed: check.passed,
+      availableAfter: check.availableAfter,
+      warn: check.warn,
+      error: check.error,
+    }));
+  } catch {
+    return [
+      {
+        label: "claw doctor",
+        passed: false,
+        error: `Failed to parse claw doctor output: ${result.stdout.slice(0, 200)}`,
+      },
+    ];
+  }
 }

@@ -106,6 +106,10 @@ export { shellQuote } from "./shell-quote.js";
 // Redact
 export { redact, redactSecrets } from "./redact.js";
 
+// Cleanup
+export { cleanupVM, onSignalCleanup } from "./cleanup.js";
+export type { CleanupTarget } from "./cleanup.js";
+
 // Headless
 export { runHeadless } from "./headless.js";
 export type { HeadlessResult } from "./headless.js";

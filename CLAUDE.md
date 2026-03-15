@@ -29,7 +29,7 @@ lifecycle (VM, networking, credentials); OpenClaw manages the agents inside.
 
 ## Workspace Structure
 
-Bun workspaces monorepo with four packages:
+Bun workspaces monorepo with five packages:
 
 ```
 packages/
@@ -37,29 +37,49 @@ packages/
   templates/    @clawctl/templates   — Pure script/config generators (string in → string out)
   host-core/    @clawctl/host-core   — Host-side VM management library (drivers, exec, provision)
   cli/          @clawctl/cli         — Host CLI (commands + Ink wizard UI)
+  vm-cli/       @clawctl/vm-cli      — Guest CLI (claw) — runs inside the VM
 ```
 
 ### Key Directories
 
-- `packages/cli/bin/cli.tsx` — entry point
+- `packages/cli/bin/cli.tsx` — host CLI entry point
 - `packages/cli/src/commands/` — CLI command handlers
 - `packages/cli/src/steps/` — wizard step components (each self-contained, calls onComplete)
 - `packages/cli/src/components/` — reusable UI components (spinner, progress, log output)
 - `packages/host-core/src/` — non-UI logic (drivers, exec, provision, registry)
+- `packages/vm-cli/bin/claw.ts` — guest CLI entry point (compiled to binary, deployed into VM)
+- `packages/vm-cli/src/tools/` — typed wrappers for system tools (apt, systemd, node, etc.)
+- `packages/vm-cli/src/commands/` — guest CLI commands (provision, doctor, checkpoint)
 - `packages/templates/src/` — template generators, one file per generated artifact
 - `packages/types/src/` — shared types, schemas, constants
 - `docs/` — detailed documentation for each subsystem
 
 ## Conventions
 
-- All provisioning scripts must be idempotent
-- Use execa (not child_process) for subprocess execution
+- All provisioning is idempotent
+- Use execa (not child_process) for subprocess execution on the host
 - Each wizard step is a React component that receives `onComplete` callback
 - Templates use TypeScript template literals with `dedent`, not string files
 - lima.yaml is generated dynamically based on user configuration choices
-- Constants (URLs, versions, package lists) are colocated in the template that uses them — not centralized — unless genuinely shared across multiple templates
+- Constants (URLs, versions, package lists) are colocated in the module that uses them — not centralized — unless genuinely shared across multiple packages
 - Only cross-cutting values (mount points, ports, image URLs) go in `packages/types/src/constants.ts`
 - Dynamic URLs use arrow functions: `const FOO_URL = (version: string) => \`...\``
+
+### Internal CLI (`claw`) conventions
+
+- The `claw` binary runs inside the VM — it is the provisioning and health-check
+  surface. The host CLI invokes it via `driver.exec()`, never by generating shell
+  scripts. See `docs/vm-cli.md` for the full architecture.
+- Tool wrappers in `packages/vm-cli/src/tools/` — one module per system tool,
+  plain functions (not classes). Provision stages import and compose them.
+- **Operational functions** (`apt.install()`, `systemd.enable()`) throw on failure.
+  **Provision functions** (`apt.ensure()`, `homebrew.provision()`) catch errors and
+  return `ProvisionResult` with `status: "failed"`.
+- Provisioning stages are declarative constants, not imperative functions — see
+  `stages.ts` for the pattern. Doctor checks use lifecycle phases (`availableAfter`)
+  rather than hardcoded `warn` flags.
+- The `claw` binary is compiled with `bun run build:claw` and deployed into the VM
+  at `/usr/local/bin/claw` during provisioning.
 
 ## Dev Setup
 
@@ -81,7 +101,8 @@ clawctl-dev create --config ./vm-bootstrap.json
 
 - `bun packages/cli/bin/cli.tsx` — run the CLI (interactive wizard)
 - `bun packages/cli/bin/cli.tsx create --config <path>` — headless mode (config-file-driven, no prompts)
-- `bun build ./packages/cli/bin/cli.tsx --compile --outfile dist/clawctl` — build standalone binary
+- `bun build ./packages/cli/bin/cli.tsx --compile --outfile dist/clawctl` — build host CLI binary
+- `bun run build:claw` — build guest CLI binary (`dist/claw`, linux-arm64)
 - `bun test` — run unit tests (templates, parsing, hooks, exec)
 - `bun run test:vm` — run VM provisioning tests (requires Lima, slow)
 - `bun run lint` — run ESLint

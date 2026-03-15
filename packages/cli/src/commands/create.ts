@@ -3,8 +3,8 @@ import { openSync } from "node:fs";
 import { ReadStream } from "node:tty";
 import { join } from "path";
 import type { VMDriver } from "@clawctl/host-core";
-import { addInstance, getTailscaleHostname } from "@clawctl/host-core";
-import type { RegistryEntry } from "@clawctl/host-core";
+import { addInstance, getTailscaleHostname, cleanupVM } from "@clawctl/host-core";
+import type { RegistryEntry, CleanupTarget } from "@clawctl/host-core";
 import { GATEWAY_PORT } from "@clawctl/types";
 import { BIN_NAME } from "@clawctl/host-core";
 
@@ -51,6 +51,20 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
     tailscaleMode?: "off" | "serve" | "funnel";
   };
 
+  // Track VM creation so we can clean up on interrupt.
+  // App sets vmName/projectDir when entering the create-vm step.
+  const creationTarget: CleanupTarget = { vmName: "", projectDir: "" };
+
+  // SIGTERM handler (SIGINT is caught by Ink in raw mode, not delivered as a signal)
+  const onTerm = async () => {
+    if (creationTarget.vmName) {
+      console.error("\nCaught SIGTERM, cleaning up...");
+      await cleanupVM(driver, creationTarget.vmName, creationTarget.projectDir);
+    }
+    process.exit(143);
+  };
+  process.on("SIGTERM", onTerm);
+
   // Give Ink its own stdin stream via /dev/tty so it never touches
   // process.stdin. After Ink exits, the subprocess can inherit
   // process.stdin cleanly without competing for bytes on fd 0.
@@ -62,11 +76,28 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
   }
 
   const renderOpts = inkStdin ? { stdin: inkStdin } : undefined;
-  const instance = render(React.createElement(App, { driver }), renderOpts);
+  const instance = render(React.createElement(App, { driver, creationTarget }), renderOpts);
   const result = await instance.waitUntilExit();
 
   // Destroy Ink's private stdin — doesn't affect process.stdin
   inkStdin?.destroy();
+
+  // If the wizard was interrupted (Ctrl+C → Ink exits without an action result),
+  // clean up any partially-created VM and exit.
+  const isNormalExit = result && typeof result === "object" && "action" in result;
+  if (!isNormalExit) {
+    process.off("SIGTERM", onTerm);
+    if (creationTarget.vmName) {
+      console.error("\nInterrupted, cleaning up...");
+      await cleanupVM(driver, creationTarget.vmName, creationTarget.projectDir);
+    }
+    return;
+  }
+
+  // Wizard completed normally — stop cleaning up on SIGTERM.
+  // From here the VM is intentional; post-wizard work (onboarding etc.)
+  // is retryable and shouldn't trigger VM deletion.
+  process.off("SIGTERM", onTerm);
 
   // Write minimal clawctl.json for wizard-created instances
   const writeMinimalConfig = async (vmName: string, projectDir: string) => {
