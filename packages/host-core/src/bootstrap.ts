@@ -1,18 +1,14 @@
 import { randomBytes } from "crypto";
-import { mkdir } from "fs/promises";
+import { mkdir, rm } from "fs/promises";
 import { join } from "path";
 import type { VMDriver, OnLine } from "./drivers/types.js";
 import { GATEWAY_PORT } from "@clawctl/types";
 import { buildOnboardCommand } from "./providers.js";
 import { patchMainConfig, patchAuthProfiles } from "./infra-secrets.js";
-import {
-  generateSecretManagementSkill,
-  generateOpWrapperScript,
-  generateExecApprovals,
-  generateBootstrapPrompt,
-} from "@clawctl/templates";
+import { generateBootstrapPrompt } from "@clawctl/templates";
 import { redactSecrets } from "./redact.js";
 import { getTailscaleHostname } from "./tailscale.js";
+import { patchAgentsMd } from "./agents-md.js";
 import type { InstanceConfig } from "@clawctl/types";
 import type { ResolvedSecretRef } from "./secrets.js";
 
@@ -64,6 +60,11 @@ export async function bootstrapOpenclaw(
     }
     onLine?.("Onboard exited with warnings but config was written — continuing");
   }
+
+  // OpenClaw's onboard creates a nested .git in the workspace — remove it.
+  // The project repo tracks data/workspace/ directly; no nested repos.
+  const wsGit = join(workspaceDir, ".git");
+  await rm(wsGit, { recursive: true, force: true });
 
   // c) Post-onboard config (including gateway token — must be before daemon
   //    restart so the daemon picks it up)
@@ -147,42 +148,9 @@ export async function bootstrapOpenclaw(
     }
   }
 
-  // e) Install secret management skill + op wrapper + exec-approvals
-  if (config.services?.onePassword) {
-    onLine?.("Installing secret management skill...");
-    const skillDir = "/mnt/project/data/workspace/skills/secret-management";
-    await driver.exec(vmName, `mkdir -p ${skillDir}`);
-    const skillContent = generateSecretManagementSkill();
-    await driver.exec(
-      vmName,
-      `cat > ${skillDir}/SKILL.md << 'SKILL_EOF'\n${skillContent}\nSKILL_EOF`,
-    );
-
-    // Install op wrapper — the exec tool doesn't source ~/.profile, so the
-    // service account token isn't available. The wrapper reads it from the
-    // secrets file and execs the real binary.
-    onLine?.("Installing op wrapper...");
-    await driver.exec(vmName, "mv ~/.local/bin/op ~/.local/bin/.op-real");
-    const wrapperContent = generateOpWrapperScript();
-    await driver.exec(
-      vmName,
-      `cat > ~/.local/bin/op << 'WRAPPER_EOF'\n${wrapperContent}\nWRAPPER_EOF`,
-    );
-    await driver.exec(vmName, "chmod +x ~/.local/bin/op");
-
-    // Configure exec-approvals — gate op behind user approval on first use
-    onLine?.("Configuring exec-approvals for op...");
-    const execApprovals = generateExecApprovals();
-    await driver.exec(
-      vmName,
-      `cat > ~/.openclaw/exec-approvals.json << 'APPROVALS_EOF'\n${execApprovals}\nAPPROVALS_EOF`,
-    );
-
-    onLine?.("Secret management skill installed");
-  }
-
-  // f) Migrate to file provider SecretRefs (removes plaintext from mount).
-  //    Runs AFTER all plaintext config (c, d, e) so it can patch the final state.
+  // e) Migrate to file provider SecretRefs (removes plaintext from mount).
+  //    Runs AFTER all plaintext config (c, d) so it can patch the final state.
+  //    Skills, op wrapper, and exec-approvals are installed by `claw provision workspace`.
   if (resolvedMap?.length) {
     onLine?.("Migrating infrastructure secrets to file provider...");
     await patchMainConfig(driver, vmName, resolvedMap, config, onLine);
@@ -249,7 +217,12 @@ export async function bootstrapOpenclaw(
     }
   }
 
-  // k) Return result
+  // k) Patch AGENTS.md with clawctl managed section.
+  //    Runs last — after onboard, daemon restart, and bootstrap prompt have all
+  //    had a chance to create/populate AGENTS.md at the workspace mount.
+  await patchAgentsMd(config.project, onLine);
+
+  // l) Return result
   const hostPort = config.network?.gatewayPort ?? GATEWAY_PORT;
   const dashboardUrl = `http://localhost:${hostPort}`;
   return {

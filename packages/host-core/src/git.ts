@@ -14,9 +14,11 @@ const GITIGNORE_CONTENT = `# VM state
 # OS
 .DS_Store
 
-# Data directory (optional persistent mount)
-# Uncomment to track data/:
-# !data/.gitkeep
+# Config backups (may contain pre-migration plaintext)
+data/config.bak*
+
+# Checkpoint signal (ephemeral)
+data/.checkpoint-request*
 `;
 
 export async function initGitRepo(dir: string): Promise<void> {

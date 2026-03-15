@@ -1,24 +1,7 @@
 import { describe, test, expect } from "bun:test";
-import { execa } from "execa";
 import YAML from "yaml";
-import {
-  generateLimaYaml,
-  generateSecretManagementSkill,
-  generateOpWrapperScript,
-  generateExecApprovals,
-  generateBootstrapPrompt,
-} from "./index.js";
+import { generateLimaYaml, generateBootstrapPrompt } from "./index.js";
 import type { VMConfig } from "@clawctl/types";
-
-// -- Helpers ------------------------------------------------------------------
-
-/** Run `bash -n` on a script string to validate syntax. */
-async function expectValidBashSyntax(script: string) {
-  const result = await execa("bash", ["-n"], { input: script, reject: false });
-  if (result.exitCode !== 0) {
-    throw new Error(`bash -n failed:\n${result.stderr}`);
-  }
-}
 
 // -- Lima YAML generator ------------------------------------------------------
 
@@ -91,20 +74,6 @@ describe("generateLimaYaml", () => {
     const forwards = doc.portForwards as Array<Record<string, unknown>>;
     expect(forwards[0].guestPort).toBe(18789);
     expect(forwards[0].hostPort).toBe(18789);
-  });
-
-  test("generates SKILL.md with frontmatter and expected content", () => {
-    const skill = generateSecretManagementSkill();
-    expect(skill).toStartWith("---\nname: secret-management");
-    expect(skill).toContain("description: Manage credentials");
-    expect(skill).toContain("compatibility:");
-    expect(skill).toContain("1Password Service Account");
-    expect(skill).toContain("op read");
-    expect(skill).toContain("op vault list");
-    expect(skill).toContain("op run");
-    expect(skill).toContain("Never expose secrets");
-    expect(skill).toContain("supersedes the built-in 1password skill");
-    expect(skill).toContain("Exec approval");
   });
 
   test("omits port forwards when forwardGateway is false", () => {
@@ -197,61 +166,6 @@ describe("generateLimaYaml extra mounts", () => {
     const doc = parseLimaYaml(generateLimaYaml(config, { extraMounts: [] }));
     const mounts = doc.mounts as Array<Record<string, unknown>>;
     expect(mounts.length).toBe(2);
-  });
-});
-
-// -- Op wrapper script --------------------------------------------------------
-
-describe("generateOpWrapperScript", () => {
-  const script = generateOpWrapperScript();
-
-  test("starts with sh shebang", () => {
-    expect(script).toStartWith("#!/bin/sh");
-  });
-
-  test("reads token from secrets file", () => {
-    expect(script).toContain(".openclaw/secrets/op-token");
-  });
-
-  test("exports OP_SERVICE_ACCOUNT_TOKEN", () => {
-    expect(script).toContain("export OP_SERVICE_ACCOUNT_TOKEN");
-  });
-
-  test("execs the real op binary", () => {
-    expect(script).toContain("exec");
-    expect(script).toContain(".op-real");
-  });
-
-  test("passes bash -n syntax check", async () => {
-    await expectValidBashSyntax(script);
-  });
-});
-
-// -- Exec-approvals config ----------------------------------------------------
-
-describe("generateExecApprovals", () => {
-  const raw = generateExecApprovals();
-
-  test("is valid JSON", () => {
-    expect(() => JSON.parse(raw)).not.toThrow();
-  });
-
-  const config = JSON.parse(raw);
-
-  test("has version 1", () => {
-    expect(config.version).toBe(1);
-  });
-
-  test("defaults to deny with on-miss ask", () => {
-    expect(config.defaults.security).toBe("deny");
-    expect(config.defaults.ask).toBe("on-miss");
-  });
-
-  test("allowlists op for the main agent", () => {
-    const main = config.agents.main;
-    expect(main.security).toBe("allowlist");
-    expect(main.allowlist).toBeArrayOfSize(1);
-    expect(main.allowlist[0].pattern).toBe("~/.local/bin/op");
   });
 });
 

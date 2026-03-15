@@ -1,13 +1,18 @@
-import { access, mkdir } from "fs/promises";
+import { access, mkdir, writeFile } from "fs/promises";
 import { constants } from "fs";
 import { join, resolve } from "path";
-import type { VMConfig } from "@clawctl/types";
-import { CLAW_BIN_PATH } from "@clawctl/types";
+import type { VMConfig, ProvisionConfig } from "@clawctl/types";
+import { CLAW_BIN_PATH, PROVISION_CONFIG_FILE } from "@clawctl/types";
 import type { VMDriver, VMCreateOptions, OnLine } from "./drivers/types.js";
 import { initGitRepo } from "./git.js";
 
 /** Resolve the claw binary path from the monorepo root (host-core/src/ → ../../.. → dist/claw). */
 const DEFAULT_CLAW_BINARY = resolve(import.meta.dir, "..", "..", "..", "dist", "claw");
+
+export interface ProvisionFeatures {
+  onePassword: boolean;
+  tailscale: boolean;
+}
 
 export interface ProvisionCallbacks {
   onPhase?: (phase: string) => void;
@@ -89,6 +94,7 @@ export async function provisionVM(
   callbacks: ProvisionCallbacks = {},
   createOptions: VMCreateOptions = {},
   clawBinaryPath: string = DEFAULT_CLAW_BINARY,
+  features: ProvisionFeatures = { onePassword: false, tailscale: false },
 ): Promise<void> {
   const { onPhase, onStep, onLine } = callbacks;
 
@@ -96,6 +102,17 @@ export async function provisionVM(
   onPhase?.("project-setup");
   await mkdir(join(config.projectDir, "data", "state"), { recursive: true });
   onStep?.("Created project directory");
+
+  // Write provision config so claw knows which optional tools to install
+  const provisionConfig: ProvisionConfig = {
+    onePassword: features.onePassword,
+    tailscale: features.tailscale,
+  };
+  await writeFile(
+    join(config.projectDir, "data", PROVISION_CONFIG_FILE),
+    JSON.stringify(provisionConfig, null, 2) + "\n",
+  );
+  onStep?.("Wrote provision config");
 
   // Phase 2: Init git
   onPhase?.("generating");
@@ -136,6 +153,9 @@ export async function provisionVM(
 
   await runClawProvision(driver, config.vmName, "openclaw", false, onLine);
   onStep?.("OpenClaw installed");
+
+  await runClawProvision(driver, config.vmName, "workspace", false, onLine);
+  onStep?.("Workspace configured");
 
   onPhase?.("done");
 }

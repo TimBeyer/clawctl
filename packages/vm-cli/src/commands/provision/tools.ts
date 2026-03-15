@@ -1,6 +1,7 @@
 import * as homebrew from "../../tools/homebrew.js";
 import * as opCli from "../../tools/op-cli.js";
 import { ensurePath } from "../../tools/shell-profile.js";
+import { readProvisionConfig } from "../../tools/provision-config.js";
 import { log } from "../../output.js";
 import type { ProvisionResult } from "../../tools/types.js";
 import type { ProvisionStage } from "./stages.js";
@@ -15,12 +16,24 @@ async function provisionShellProfile(): Promise<ProvisionResult> {
   }
 }
 
+async function provisionOpCli(): Promise<ProvisionResult> {
+  const config = await readProvisionConfig();
+  if (!config.onePassword) {
+    return {
+      name: "op-cli",
+      status: "unchanged",
+      detail: "onePassword disabled in provision config",
+    };
+  }
+  return opCli.provision();
+}
+
 export const toolsStage: ProvisionStage = {
   name: "tools",
   phase: "provision-tools",
   steps: [
     { name: "homebrew", label: "Homebrew", run: () => homebrew.provision() },
-    { name: "op-cli", label: "1Password CLI", run: () => opCli.provision() },
+    { name: "op-cli", label: "1Password CLI", run: provisionOpCli },
     { name: "shell-profile", label: "Shell profile", run: provisionShellProfile },
   ],
 };

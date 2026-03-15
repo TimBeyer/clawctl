@@ -31,7 +31,7 @@ export type { SecretRef, ResolvedSecretRef } from "./secrets.js";
 
 // Provision
 export { provisionVM } from "./provision.js";
-export type { ProvisionCallbacks } from "./provision.js";
+export type { ProvisionCallbacks, ProvisionFeatures } from "./provision.js";
 
 // Verify
 export { verifyProvisioning } from "./verify.js";
@@ -109,6 +109,9 @@ export { redact, redactSecrets } from "./redact.js";
 // Cleanup
 export { cleanupVM, onSignalCleanup } from "./cleanup.js";
 export type { CleanupTarget } from "./cleanup.js";
+
+// AGENTS.md managed section
+export { patchAgentsMd } from "./agents-md.js";
 
 // Headless
 export { runHeadless } from "./headless.js";

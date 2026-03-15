@@ -70,7 +70,7 @@ export function ProvisionStatus({ driver, config, onComplete }: ProvisionStatusP
 
   return (
     <Box flexDirection="column">
-      <StepIndicator current={5} total={8} label="Verifying provisioning" />
+      <StepIndicator current={6} total={9} label="Verifying provisioning" />
 
       <Box flexDirection="column" marginLeft={2}>
         {steps.map((step, i) => (

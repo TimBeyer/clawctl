@@ -27,11 +27,24 @@ async function handleCheckpoint(dataDir: string): Promise<void> {
   }
 
   const commitMessage = `checkpoint: ${request.message}`;
+  const projectDir = join(dataDir, "..");
 
   console.log(`[${timestamp()}] Checkpoint: ${request.message}`);
 
+  // Guard: if a nested .git reappears inside the workspace (e.g. openclaw
+  // recreated it), remove it before staging — otherwise git add will fail.
+  const nestedGit = join(dataDir, "workspace", ".git");
+  try {
+    await stat(nestedGit);
+    console.warn(`  Warning: removing nested .git in data/workspace/`);
+    const { rm } = await import("fs/promises");
+    await rm(nestedGit, { recursive: true, force: true });
+  } catch {
+    // No nested .git — expected
+  }
+
   // Stage and commit data/
-  const addResult = await exec("git", ["add", "data/"], { cwd: join(dataDir, "..") });
+  const addResult = await exec("git", ["add", "data/"], { cwd: projectDir });
   if (addResult.exitCode !== 0) {
     console.error(`  git add failed: ${addResult.stderr}`);
     return;
@@ -39,7 +52,7 @@ async function handleCheckpoint(dataDir: string): Promise<void> {
 
   // Check if there are staged changes
   const diffResult = await exec("git", ["diff", "--cached", "--quiet"], {
-    cwd: join(dataDir, ".."),
+    cwd: projectDir,
   });
   if (diffResult.exitCode === 0) {
     console.log(`  No changes to commit`);
@@ -47,8 +60,13 @@ async function handleCheckpoint(dataDir: string): Promise<void> {
     return;
   }
 
+  // Log what's being committed
+  const statResult = await exec("git", ["diff", "--cached", "--stat"], {
+    cwd: projectDir,
+  });
+
   const commitResult = await exec("git", ["commit", "-m", commitMessage], {
-    cwd: join(dataDir, ".."),
+    cwd: projectDir,
   });
   if (commitResult.exitCode !== 0) {
     console.error(`  git commit failed: ${commitResult.stderr}`);
@@ -56,6 +74,9 @@ async function handleCheckpoint(dataDir: string): Promise<void> {
   }
 
   console.log(`  Committed: ${commitMessage}`);
+  if (statResult.stdout) {
+    console.log(`  ${statResult.stdout.trim().split("\n").pop()}`);
+  }
 
   // Remove signal file after successful commit
   await unlink(signalPath).catch(() => {});
