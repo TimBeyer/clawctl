@@ -1,2 +1,2 @@
-export { LimaDriver } from "./lima.js";
-export type { VMDriver, VMCreateOptions, ExecResult, OnLine } from "./types.js";
+export { LimaDriver } from "@clawctl/host-core";
+export type { VMDriver, VMCreateOptions, ExecResult, OnLine } from "@clawctl/host-core";

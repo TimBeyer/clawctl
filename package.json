@@ -19,6 +19,7 @@
     "release": "release-it"
   },
   "dependencies": {
+    "@clawctl/host-core": "workspace:*",
     "@clawctl/templates": "workspace:*",
     "@clawctl/types": "workspace:*",
     "commander": "^14.0.3",
