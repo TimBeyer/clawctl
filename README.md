@@ -155,7 +155,8 @@ clawctl delete my-agent
 
 ### Shell completions
 
-Enable tab completion for commands, options, and instance names:
+Enable tab completion for commands, options, instance names, and openclaw
+subcommands:
 
 ```bash
 # Bash — add to ~/.bashrc:
@@ -164,6 +165,10 @@ eval "$(clawctl completions bash)"
 # Zsh — add to ~/.zshrc:
 eval "$(clawctl completions zsh)"
 ```
+
+openclaw subcommand completions (including deep completion like `oc config set
+<TAB>`) are cached from the VM and refreshed automatically. See [Shell
+Completions](docs/shell-completions.md) for details.
 
 Instances are tracked in `~/.config/clawctl/instances.json` and registered
 automatically on create, or manually via `clawctl register`. Run as many
@@ -179,6 +184,7 @@ directory, and config.
 - [Tailscale Setup](docs/tailscale-setup.md) — auth keys, ACLs, remote dashboard access
 - [Snapshots and Rebuilds](docs/snapshots-and-rebuilds.md) — cloning VMs, data persistence, full rebuilds
 - [Project Directory](docs/project-directory.md) — what the CLI creates and how to customize it
+- [Shell Completions](docs/shell-completions.md) — tab completion setup and openclaw cache mechanics
 - [Troubleshooting](docs/troubleshooting.md) — common issues and fixes
 
 ## Contributing
