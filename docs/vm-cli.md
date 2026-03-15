@@ -55,9 +55,10 @@ packages/vm-cli/
     commands/
       provision/
         index.ts               Registers provision subcommands
-        system.ts              Orchestrator: apt + node + systemd + tailscale
-        tools.ts               Orchestrator: homebrew + op-cli + shell profile
-        openclaw.ts            Orchestrator: openclaw + env vars + gateway stub
+        stages.ts              ProvisionStage type + runStage() runner
+        system.ts              Stage definition: apt + node + systemd + tailscale
+        tools.ts               Stage definition: homebrew + op-cli + shell profile
+        openclaw.ts            Stage definition: openclaw + env vars + gateway stub
       doctor.ts                Health checks (mounts, env, PATH, services, openclaw)
       checkpoint.ts            Signal host to commit data changes
     tools/                     One module per system tool
@@ -147,29 +148,40 @@ steps.push(await openclaw.provisionNpmGlobalPath());
 steps.push(await openclaw.provisionGatewayStub());
 ```
 
-### What orchestrators look like
+### Provisioning stages
 
-Provision commands are thin — they import tools, call provision
-functions, collect results, and report:
+Each orchestrator is defined as a `ProvisionStage` constant — a named
+list of steps with `run` functions. A shared `runStage()` handles all
+the boilerplate (numbered logging, collecting results, checking
+failures, ok/fail output):
 
 ```typescript
 // commands/provision/system.ts
-export async function runProvisionSystem(): Promise<void> {
-  log("=== System Provisioning ===");
-  const steps: ProvisionResult[] = [];
+export const systemStage: ProvisionStage = {
+  name: "system",
+  phase: "provision-system",
+  steps: [
+    { name: "apt-packages", label: "APT packages", run: () => apt.ensure(APT_PACKAGES) },
+    { name: "nodejs", label: "Node.js", run: () => node.provision() },
+    { name: "systemd-linger", label: "systemd linger", run: () => systemd.provisionLinger() },
+    { name: "tailscale", label: "Tailscale", run: () => tailscale.provision() },
+  ],
+};
+```
 
-  steps.push(await apt.ensure(APT_PACKAGES));
-  steps.push(await node.provision());
-  steps.push(await systemd.provisionLinger());
-  steps.push(await tailscale.provision());
+The runner produces numbered, structured output:
 
-  const failed = steps.filter((s) => s.status === "failed");
-  if (failed.length > 0) {
-    fail(failed.map((s) => `${s.name}: ${s.error}`), { steps });
-    process.exit(1);
-  }
-  ok({ steps });
-}
+```
+=== system provisioning ===
+[1/4] APT packages
+      ✓ installed — build-essential, git, curl
+[2/4] Node.js
+      ✓ unchanged — v22.22.1
+[3/4] systemd linger
+      ✓ installed — lima
+[4/4] Tailscale
+      ✓ unchanged
+=== system provisioning complete (4 steps) ===
 ```
 
 ### Adding a new tool
@@ -203,19 +215,33 @@ for debugging).
 
 ## Doctor checks
 
-`claw doctor` verifies the VM's health from the inside:
+`claw doctor` verifies the VM's health from the inside. Each check
+declares `availableAfter` — the lifecycle phase after which it's
+expected to pass:
 
-| Check              | What it verifies                      | Hard error? |
-|--------------------|---------------------------------------|-------------|
-| mount-project      | /mnt/project is readable              | Yes         |
-| mount-data         | /mnt/project/data is writable         | Yes         |
-| env-*              | OPENCLAW_STATE_DIR/CONFIG_PATH set    | Yes         |
-| path-*             | claw, op, node, brew, openclaw on PATH| Yes         |
-| service-gateway    | openclaw-gateway.service is active    | No (warn)   |
-| openclaw-doctor    | `openclaw doctor` passes              | No (warn)   |
+| Check           | What it verifies                   | availableAfter     |
+| --------------- | ---------------------------------- | ------------------ |
+| mount-project   | /mnt/project is readable           | vm-created         |
+| mount-data      | /mnt/project/data is writable      | vm-created         |
+| path-claw       | claw on PATH                       | vm-created         |
+| path-node       | node on PATH                       | provision-system   |
+| path-op         | op on PATH                         | provision-tools    |
+| path-brew       | brew on PATH                       | provision-tools    |
+| env-\*          | OPENCLAW_STATE_DIR/CONFIG_PATH set | provision-openclaw |
+| path-openclaw   | openclaw on PATH                   | provision-openclaw |
+| service-gateway | openclaw-gateway.service is active | bootstrap          |
+| openclaw-doctor | `openclaw doctor` passes           | bootstrap          |
 
-Warning checks are expected to fail before bootstrap completes. The
-host's verify step logs them but doesn't treat them as fatal.
+### `--after` flag
+
+Doctor accepts `--after <phase>` to declare how far the lifecycle has
+progressed. A failing check is a warning if its `availableAfter` phase
+hasn't been reached yet; otherwise it's an error. Without `--after`,
+all failures are errors (strictest mode).
+
+The host passes `--after provision-openclaw` when verifying after
+provisioning, so gateway and openclaw-doctor failures are warnings
+while mount/path/env failures are hard errors.
 
 ## Build and deployment
 

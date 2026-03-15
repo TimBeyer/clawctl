@@ -83,13 +83,19 @@ export async function runHeadless(driver: VMDriver, configPath: string): Promise
 
     // 4. Verify provisioning
     log("verify", "Verifying installed tools...");
-    const results = await verifyProvisioning(driver, vmConfig.vmName);
+    const results = await verifyProvisioning(
+      driver,
+      vmConfig.vmName,
+      undefined,
+      "provision-openclaw",
+    );
     const errors: string[] = [];
     for (const r of results) {
       if (r.passed) {
         log("verify", `✓ ${r.label}`);
       } else if (r.warn) {
-        log("verify", `⚠ ${r.label}: ${r.error} (warning, expected before bootstrap)`);
+        const reason = r.availableAfter ? `expected after ${r.availableAfter}` : "warning";
+        log("verify", `⚠ ${r.label}: ${r.error} (${reason})`);
       } else {
         log("verify", `✗ ${r.label}: ${r.error}`);
         errors.push(r.label);

@@ -31,22 +31,22 @@ everything is installed and healthy.
 
 ### `provision system` (runs as root)
 
-| Tool                  | Method                       | Check                              |
-|-----------------------|------------------------------|------------------------------------|
-| APT packages          | `apt-get install`            | `dpkg -l` per package              |
-| Node.js 22            | NodeSource repo + apt        | `node --version` includes `v22`    |
-| systemd linger        | `loginctl enable-linger`     | linger file exists                 |
-| Tailscale             | Official install script      | `tailscale` on PATH                |
+| Tool           | Method                   | Check                           |
+| -------------- | ------------------------ | ------------------------------- |
+| APT packages   | `apt-get install`        | `dpkg -l` per package           |
+| Node.js 22     | NodeSource repo + apt    | `node --version` includes `v22` |
+| systemd linger | `loginctl enable-linger` | linger file exists              |
+| Tailscale      | Official install script  | `tailscale` on PATH             |
 
 APT packages installed: `build-essential git curl unzip jq ca-certificates gnupg`.
 
 ### `provision tools` (runs as default user)
 
-| Tool                  | Method                       | Check                              |
-|-----------------------|------------------------------|------------------------------------|
-| Homebrew              | Official install script      | `brew` on PATH                     |
-| 1Password CLI         | Direct arm64 binary download | `op` on PATH                       |
-| Shell profile         | Append to `~/.profile`       | Line present in file               |
+| Tool          | Method                       | Check                |
+| ------------- | ---------------------------- | -------------------- |
+| Homebrew      | Official install script      | `brew` on PATH       |
+| 1Password CLI | Direct arm64 binary download | `op` on PATH         |
+| Shell profile | Append to `~/.profile`       | Line present in file |
 
 The 1Password CLI is installed as a direct binary download to
 `~/.local/bin/op` because the 1Password apt repository does not publish
@@ -54,12 +54,12 @@ arm64 packages.
 
 ### `provision openclaw` (runs as default user)
 
-| Tool                  | Method                       | Check                              |
-|-----------------------|------------------------------|------------------------------------|
-| OpenClaw CLI          | `curl \| bash` installer     | `openclaw` on PATH                 |
-| Environment variables | Append to `~/.profile`       | Lines present in file              |
-| npm-global PATH       | Append to `~/.profile`       | Line present in file               |
-| Gateway service stub  | Write systemd unit + enable  | `systemctl is-enabled`             |
+| Tool                  | Method                      | Check                  |
+| --------------------- | --------------------------- | ---------------------- |
+| OpenClaw CLI          | `curl \| bash` installer    | `openclaw` on PATH     |
+| Environment variables | Append to `~/.profile`      | Lines present in file  |
+| npm-global PATH       | Append to `~/.profile`      | Line present in file   |
+| Gateway service stub  | Write systemd unit + enable | `systemctl is-enabled` |
 
 Environment variables set: `OPENCLAW_STATE_DIR` and
 `OPENCLAW_CONFIG_PATH` both point to `/mnt/project/data/`.
@@ -86,11 +86,15 @@ on an already-provisioned VM is a fast no-op.
 
 ## Verification (`claw doctor`)
 
-After provisioning, the host runs `claw doctor --json` inside the VM.
-Doctor checks mounts, environment variables, PATH entries, and services.
-Checks marked `warn: true` (gateway service, openclaw doctor) are
-expected to fail before bootstrap completes — they're logged as warnings
-but don't cause the provisioning run to fail.
+After provisioning, the host runs `claw doctor --json --after provision-openclaw`
+inside the VM. Each check declares `availableAfter` — the lifecycle
+phase after which it should pass. The `--after` flag tells doctor which
+phase has been reached. Checks whose `availableAfter` phase hasn't been
+reached are warnings; all others are errors.
+
+After provisioning (phase `provision-openclaw`), the gateway service and
+openclaw doctor checks are warnings (they require the `bootstrap` phase),
+while mounts, PATH entries, and environment variables are hard errors.
 
 See the doctor checks table in `docs/vm-cli.md`.
 

@@ -1,7 +1,8 @@
 import { Command } from "commander";
 import { commandExists } from "../exec.js";
 import { log, ok, fail, setJsonMode } from "../output.js";
-import { PROJECT_MOUNT_POINT } from "@clawctl/types";
+import { PROJECT_MOUNT_POINT, LIFECYCLE_PHASES, phaseReached } from "@clawctl/types";
+import type { LifecyclePhase } from "@clawctl/types";
 import { access } from "fs/promises";
 import { constants } from "fs";
 import * as systemd from "../tools/systemd.js";
@@ -10,7 +11,9 @@ import * as openclaw from "../tools/openclaw.js";
 export interface DoctorCheck {
   name: string;
   passed: boolean;
-  /** If true, a failure is informational — not a hard error. */
+  /** Lifecycle phase after which this check is expected to pass. */
+  availableAfter: LifecyclePhase;
+  /** Computed: true if the check failed but its phase hasn't been reached yet. */
   warn?: boolean;
   detail?: string;
   error?: string;
@@ -22,11 +25,17 @@ async function checkMount(): Promise<DoctorCheck[]> {
   // /mnt/project readable
   try {
     await access(PROJECT_MOUNT_POINT, constants.R_OK);
-    checks.push({ name: "mount-project", passed: true, detail: `${PROJECT_MOUNT_POINT} readable` });
+    checks.push({
+      name: "mount-project",
+      passed: true,
+      availableAfter: "vm-created",
+      detail: `${PROJECT_MOUNT_POINT} readable`,
+    });
   } catch {
     checks.push({
       name: "mount-project",
       passed: false,
+      availableAfter: "vm-created",
       error: `${PROJECT_MOUNT_POINT} not readable`,
     });
   }
@@ -37,12 +46,14 @@ async function checkMount(): Promise<DoctorCheck[]> {
     checks.push({
       name: "mount-data",
       passed: true,
+      availableAfter: "vm-created",
       detail: `${PROJECT_MOUNT_POINT}/data writable`,
     });
   } catch {
     checks.push({
       name: "mount-data",
       passed: false,
+      availableAfter: "vm-created",
       error: `${PROJECT_MOUNT_POINT}/data not writable`,
     });
   }
@@ -56,9 +67,19 @@ async function checkEnv(): Promise<DoctorCheck[]> {
   for (const varName of ["OPENCLAW_STATE_DIR", "OPENCLAW_CONFIG_PATH"]) {
     const value = process.env[varName];
     if (value) {
-      checks.push({ name: `env-${varName}`, passed: true, detail: value });
+      checks.push({
+        name: `env-${varName}`,
+        passed: true,
+        availableAfter: "provision-openclaw",
+        detail: value,
+      });
     } else {
-      checks.push({ name: `env-${varName}`, passed: false, error: `${varName} not set` });
+      checks.push({
+        name: `env-${varName}`,
+        passed: false,
+        availableAfter: "provision-openclaw",
+        error: `${varName} not set`,
+      });
     }
   }
 
@@ -66,15 +87,26 @@ async function checkEnv(): Promise<DoctorCheck[]> {
 }
 
 async function checkPath(): Promise<DoctorCheck[]> {
-  const tools = ["claw", "op", "node", "brew", "openclaw"];
+  const toolPhases: Array<{ tool: string; availableAfter: LifecyclePhase }> = [
+    { tool: "claw", availableAfter: "vm-created" },
+    { tool: "node", availableAfter: "provision-system" },
+    { tool: "op", availableAfter: "provision-tools" },
+    { tool: "brew", availableAfter: "provision-tools" },
+    { tool: "openclaw", availableAfter: "provision-openclaw" },
+  ];
   const checks: DoctorCheck[] = [];
 
-  for (const tool of tools) {
+  for (const { tool, availableAfter } of toolPhases) {
     const exists = await commandExists(tool);
     if (exists) {
-      checks.push({ name: `path-${tool}`, passed: true });
+      checks.push({ name: `path-${tool}`, passed: true, availableAfter });
     } else {
-      checks.push({ name: `path-${tool}`, passed: false, error: `${tool} not found on PATH` });
+      checks.push({
+        name: `path-${tool}`,
+        passed: false,
+        availableAfter,
+        error: `${tool} not found on PATH`,
+      });
     }
   }
 
@@ -87,7 +119,7 @@ async function checkService(): Promise<DoctorCheck[]> {
     {
       name: "service-gateway",
       passed: active,
-      warn: true, // only active after bootstrap, not after provisioning
+      availableAfter: "bootstrap",
       detail: active ? "openclaw-gateway active" : undefined,
       error: active ? undefined : "openclaw-gateway not active",
     },
@@ -96,7 +128,14 @@ async function checkService(): Promise<DoctorCheck[]> {
 
 async function checkOpenclaw(): Promise<DoctorCheck[]> {
   if (!(await openclaw.isInstalled())) {
-    return [{ name: "openclaw-doctor", passed: false, error: "openclaw not installed" }];
+    return [
+      {
+        name: "openclaw-doctor",
+        passed: false,
+        availableAfter: "bootstrap",
+        error: "openclaw not installed",
+      },
+    ];
   }
 
   const result = await openclaw.doctor();
@@ -104,7 +143,7 @@ async function checkOpenclaw(): Promise<DoctorCheck[]> {
     {
       name: "openclaw-doctor",
       passed: result.exitCode === 0,
-      warn: true, // may fail before onboarding completes
+      availableAfter: "bootstrap",
       detail: result.exitCode === 0 ? result.stdout.trim() : undefined,
       error: result.exitCode !== 0 ? result.stderr.trim() || result.stdout.trim() : undefined,
     },
@@ -116,8 +155,18 @@ export function registerDoctorCommand(program: Command): void {
     .command("doctor")
     .description("Run health checks inside the VM")
     .option("--json", "Output structured JSON")
-    .action(async (opts: { json?: boolean }) => {
+    .option("--after <phase>", "Lifecycle phase reached — checks for later phases become warnings")
+    .action(async (opts: { json?: boolean; after?: string }) => {
       if (opts.json) setJsonMode(true);
+
+      // Validate --after value if provided
+      const afterPhase = opts.after as LifecyclePhase | undefined;
+      if (afterPhase && !LIFECYCLE_PHASES.includes(afterPhase)) {
+        fail([
+          `Unknown lifecycle phase: ${afterPhase}. Valid phases: ${LIFECYCLE_PHASES.join(", ")}`,
+        ]);
+        process.exit(1);
+      }
 
       log("=== claw doctor ===");
 
@@ -138,6 +187,13 @@ export function registerDoctorCommand(program: Command): void {
       log("Checking OpenClaw...");
       checks.push(...(await checkOpenclaw()));
 
+      // Compute warn based on lifecycle phase
+      for (const check of checks) {
+        if (!check.passed) {
+          check.warn = afterPhase ? !phaseReached(afterPhase, check.availableAfter) : false;
+        }
+      }
+
       const errors = checks.filter((c) => !c.passed && !c.warn);
       const warnings = checks.filter((c) => !c.passed && c.warn);
       const passed = checks.filter((c) => c.passed);
@@ -151,7 +207,12 @@ export function registerDoctorCommand(program: Command): void {
         log("");
         log(`${passed.length}/${checks.length} checks passed`);
         if (warnings.length > 0) {
-          log(`${warnings.length} warning(s) (expected before bootstrap)`);
+          log(
+            `${warnings.length} warning(s) (expected before ${warnings
+              .map((w) => w.availableAfter)
+              .filter((v, i, a) => a.indexOf(v) === i)
+              .join(", ")})`,
+          );
         }
       }
 

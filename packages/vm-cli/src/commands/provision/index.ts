@@ -1,8 +1,9 @@
 import { Command } from "commander";
 import { setJsonMode } from "../../output.js";
-import { runProvisionSystem } from "./system.js";
-import { runProvisionTools } from "./tools.js";
-import { runProvisionOpenclaw } from "./openclaw.js";
+import { runStage } from "./stages.js";
+import { systemStage } from "./system.js";
+import { toolsStage } from "./tools.js";
+import { openclawStage } from "./openclaw.js";
 
 export function registerProvisionCommand(program: Command): void {
   const provision = program.command("provision").description("Provision the VM environment");
@@ -13,7 +14,7 @@ export function registerProvisionCommand(program: Command): void {
     .option("--json", "Output structured JSON")
     .action(async (opts: { json?: boolean }) => {
       if (opts.json) setJsonMode(true);
-      await runProvisionSystem();
+      await runStage(systemStage);
     });
 
   provision
@@ -22,7 +23,7 @@ export function registerProvisionCommand(program: Command): void {
     .option("--json", "Output structured JSON")
     .action(async (opts: { json?: boolean }) => {
       if (opts.json) setJsonMode(true);
-      await runProvisionTools();
+      await runStage(toolsStage);
     });
 
   provision
@@ -31,6 +32,6 @@ export function registerProvisionCommand(program: Command): void {
     .option("--json", "Output structured JSON")
     .action(async (opts: { json?: boolean }) => {
       if (opts.json) setJsonMode(true);
-      await runProvisionOpenclaw();
+      await runStage(openclawStage);
     });
 }

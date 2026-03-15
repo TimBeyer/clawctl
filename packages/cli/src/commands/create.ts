@@ -76,10 +76,7 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
   }
 
   const renderOpts = inkStdin ? { stdin: inkStdin } : undefined;
-  const instance = render(
-    React.createElement(App, { driver, creationTarget }),
-    renderOpts,
-  );
+  const instance = render(React.createElement(App, { driver, creationTarget }), renderOpts);
   const result = await instance.waitUntilExit();
 
   // Destroy Ink's private stdin — doesn't affect process.stdin
@@ -87,8 +84,7 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
 
   // If the wizard was interrupted (Ctrl+C → Ink exits without an action result),
   // clean up any partially-created VM and exit.
-  const isNormalExit =
-    result && typeof result === "object" && "action" in result;
+  const isNormalExit = result && typeof result === "object" && "action" in result;
   if (!isNormalExit) {
     process.off("SIGTERM", onTerm);
     if (creationTarget.vmName) {
