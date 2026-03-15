@@ -227,14 +227,18 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
             console.log("");
             console.log("--- First conversation (the agent wants to meet you) ---");
             console.log("");
-            await driver.execInteractive(
-              vmName,
-              "openclaw tui --message 'You just woke up. Time to figure out who you are.'",
-            );
+            try {
+              await driver.execInteractive(
+                vmName,
+                "openclaw tui --message 'You just woke up. Time to figure out who you are.'",
+              );
+            } catch {
+              // User Ctrl-C'd out of the first conversation — that's fine
+            }
           }
 
           // Patch AGENTS.md with clawctl managed section.
-          // Runs last — after onboard, daemon restart, and first conversation
+          // Runs after onboard, daemon restart, and first conversation
           // have all had a chance to create/populate AGENTS.md.
           await patchAgentsMd(projectDir);
         }
