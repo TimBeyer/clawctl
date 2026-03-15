@@ -27,14 +27,27 @@ lifecycle (VM, networking, credentials); OpenClaw manages the agents inside.
 - **VM**: Lima with vz backend + virtiofs mounts on Apple Silicon
 - **Target OS in VM**: Ubuntu 24.04 arm64
 
-## Key Directories
+## Workspace Structure
 
-- `bin/cli.tsx` — entry point
-- `src/steps/` — wizard step components (each self-contained, calls onComplete)
-- `src/lib/` — non-UI logic (lima, homebrew, exec, git)
-- `src/templates/` — template generators, one file per generated artifact
-- `src/templates/installers/` — one installer template per tool
-- `src/components/` — reusable UI components (spinner, progress, log output)
+Bun workspaces monorepo with four packages:
+
+```
+packages/
+  types/        @clawctl/types       — Shared types, schemas, constants, pure functions
+  templates/    @clawctl/templates   — Pure script/config generators (string in → string out)
+  host-core/    @clawctl/host-core   — Host-side VM management library (drivers, exec, provision)
+  cli/          @clawctl/cli         — Host CLI (commands + Ink wizard UI)
+```
+
+### Key Directories
+
+- `packages/cli/bin/cli.tsx` — entry point
+- `packages/cli/src/commands/` — CLI command handlers
+- `packages/cli/src/steps/` — wizard step components (each self-contained, calls onComplete)
+- `packages/cli/src/components/` — reusable UI components (spinner, progress, log output)
+- `packages/host-core/src/` — non-UI logic (drivers, exec, provision, registry)
+- `packages/templates/src/` — template generators, one file per generated artifact
+- `packages/types/src/` — shared types, schemas, constants
 - `docs/` — detailed documentation for each subsystem
 
 ## Conventions
@@ -45,14 +58,14 @@ lifecycle (VM, networking, credentials); OpenClaw manages the agents inside.
 - Templates use TypeScript template literals with `dedent`, not string files
 - lima.yaml is generated dynamically based on user configuration choices
 - Constants (URLs, versions, package lists) are colocated in the template that uses them — not centralized — unless genuinely shared across multiple templates
-- Only cross-cutting values (mount points, ports, image URLs) go in `src/templates/constants.ts`
+- Only cross-cutting values (mount points, ports, image URLs) go in `packages/types/src/constants.ts`
 - Dynamic URLs use arrow functions: `const FOO_URL = (version: string) => \`...\``
 
 ## Dev Setup
 
-`bin/clawctl-dev` is a shell wrapper that resolves its own location and execs
-`bun cli.tsx`, so you can symlink it onto PATH and run the CLI from anywhere
-without building a binary first.
+`bin/clawctl-dev` is a symlink to `packages/cli/bin/clawctl-dev`, which
+resolves its own location and execs `bun cli.tsx`. Symlink it onto PATH
+to run the CLI from anywhere without building a binary first.
 
 ```bash
 ln -s "$(pwd)/bin/clawctl-dev" ~/.local/bin/clawctl-dev
@@ -66,9 +79,9 @@ clawctl-dev create --config ./vm-bootstrap.json
 
 ## Commands
 
-- `bun bin/cli.tsx` — run the CLI (interactive wizard)
-- `bun bin/cli.tsx create --config <path>` — headless mode (config-file-driven, no prompts)
-- `bun build ./bin/cli.tsx --compile --outfile dist/clawctl` — build standalone binary
+- `bun packages/cli/bin/cli.tsx` — run the CLI (interactive wizard)
+- `bun packages/cli/bin/cli.tsx create --config <path>` — headless mode (config-file-driven, no prompts)
+- `bun build ./packages/cli/bin/cli.tsx --compile --outfile dist/clawctl` — build standalone binary
 - `bun test` — run unit tests (templates, parsing, hooks, exec)
 - `bun run test:vm` — run VM provisioning tests (requires Lima, slow)
 - `bun run lint` — run ESLint

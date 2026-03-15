@@ -1,5 +1,1 @@
-#!/usr/bin/env bash
-set -euo pipefail
-SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
-export CLAWCTL_BIN=clawctl-dev
-exec bun "$SCRIPT_DIR/cli.tsx" "$@"
+../packages/cli/bin/clawctl-dev
