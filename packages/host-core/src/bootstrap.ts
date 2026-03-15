@@ -8,6 +8,7 @@ import { patchMainConfig, patchAuthProfiles } from "./infra-secrets.js";
 import { generateBootstrapPrompt } from "@clawctl/templates";
 import { redactSecrets } from "./redact.js";
 import { getTailscaleHostname } from "./tailscale.js";
+import { patchAgentsMd } from "./agents-md.js";
 import type { InstanceConfig } from "@clawctl/types";
 import type { ResolvedSecretRef } from "./secrets.js";
 
@@ -216,7 +217,12 @@ export async function bootstrapOpenclaw(
     }
   }
 
-  // k) Return result
+  // k) Patch AGENTS.md with clawctl managed section.
+  //    Runs last — after onboard, daemon restart, and bootstrap prompt have all
+  //    had a chance to create/populate AGENTS.md at the workspace mount.
+  await patchAgentsMd(config.project, onLine);
+
+  // l) Return result
   const hostPort = config.network?.gatewayPort ?? GATEWAY_PORT;
   const dashboardUrl = `http://localhost:${hostPort}`;
   return {

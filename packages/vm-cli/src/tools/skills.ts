@@ -12,7 +12,7 @@ function checkpointSkillContent(): string {
   return dedent`
     ---
     name: checkpoint
-    description: Save workspace changes to version control using claw checkpoint. Use after meaningful changes like memory updates, identity edits, skill modifications, or completing a task.
+    description: Save workspace changes to version control using claw checkpoint. Use after any write to memory, identity, skill, or workspace files. Think write then checkpoint then done.
     ---
 
     # Checkpoint
@@ -21,13 +21,28 @@ function checkpointSkillContent(): string {
     to git. The host watches for checkpoint signals and runs \`git add data/ &&
     git commit\` — your workspace changes are version-controlled automatically.
 
-    ## When to checkpoint
+    ## Habit
 
-    - After updating memory files (daily notes, MEMORY.md)
-    - After modifying identity files (SOUL.md, USER.md, IDENTITY.md)
-    - After installing or editing skills
+    Treat checkpoint as part of the write. Don't consider a task done until
+    the checkpoint is made. Think: **write → checkpoint → done.**
+
+    A small commit is always better than lost work.
+
+    ## Triggers
+
+    Checkpoint immediately after writing or editing any of these:
+
+    - \`MEMORY.md\` or any file in \`data/workspace/memory/\`
+    - \`SOUL.md\`, \`USER.md\`, \`IDENTITY.md\`
+    - Any \`SKILL.md\` or file in \`data/workspace/skills/\`
+    - Any file in \`data/workspace/\`
+    - \`AGENTS.md\`, \`BOOTSTRAP.md\`
+
+    Also checkpoint:
+
     - After completing a meaningful unit of work
     - Before long idle periods (end of session)
+    - When in doubt — checkpoint
 
     ## When NOT to checkpoint
 

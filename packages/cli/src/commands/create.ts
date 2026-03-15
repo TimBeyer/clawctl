@@ -3,7 +3,7 @@ import { openSync } from "node:fs";
 import { ReadStream } from "node:tty";
 import { join } from "path";
 import type { VMDriver } from "@clawctl/host-core";
-import { addInstance, getTailscaleHostname, cleanupVM } from "@clawctl/host-core";
+import { addInstance, getTailscaleHostname, cleanupVM, patchAgentsMd } from "@clawctl/host-core";
 import type { RegistryEntry, CleanupTarget } from "@clawctl/host-core";
 import { GATEWAY_PORT } from "@clawctl/types";
 import { BIN_NAME } from "@clawctl/host-core";
@@ -232,6 +232,11 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
               "openclaw tui --message 'You just woke up. Time to figure out who you are.'",
             );
           }
+
+          // Patch AGENTS.md with clawctl managed section.
+          // Runs last — after onboard, daemon restart, and first conversation
+          // have all had a chance to create/populate AGENTS.md.
+          await patchAgentsMd(projectDir);
         }
       }
     } catch (err) {
