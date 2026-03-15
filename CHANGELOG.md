@@ -1,5 +1,20 @@
 # Changelog
 
+# [0.9.0](https://github.com/TimBeyer/clawctl/compare/v0.8.0...v0.9.0) (2026-03-15)
+
+
+### Bug Fixes
+
+* remove nested .git after onboard, add checkpoint agent skill ([30623c0](https://github.com/TimBeyer/clawctl/commit/30623c0355d7b15079abc35dd8757410311ce849))
+* wrap openclaw tui so Ctrl-C doesn't skip AGENTS.md patch ([b7940ae](https://github.com/TimBeyer/clawctl/commit/b7940ae7b043fbdb7da5e6e3fcd05a7c153e5ed9))
+
+
+### Features
+
+* add checkpoint rules to AGENTS.md via managed section ([be950ba](https://github.com/TimBeyer/clawctl/commit/be950baa9fd3c6dcc6552e711f122207a80e5940))
+* host writes provision.json to gate optional tool installation ([4111961](https://github.com/TimBeyer/clawctl/commit/4111961d9928e93b14680d5a316beb7352063a1d))
+* reorder wizard — collect credentials before VM creation ([1f4d05d](https://github.com/TimBeyer/clawctl/commit/1f4d05d91930cc5644231316435ee0c25dd9c352))
+
 # [0.8.0](https://github.com/TimBeyer/clawctl/compare/v0.7.1...v0.8.0) (2026-03-15)
 
 
