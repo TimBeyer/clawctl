@@ -18,74 +18,50 @@ export function generateZshCompletion(binName: string): string {
     }
 
     # Source cached openclaw completions if available
+    typeset -g _${fnName}_oc_cache_mtime=0
     if [[ -f "$HOME/.config/clawctl/oc-completions.zsh" ]]; then
       source "$HOME/.config/clawctl/oc-completions.zsh"
+      _${fnName}_oc_cache_mtime=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$HOME/.config/clawctl/oc-completions.zsh" 2>/dev/null || echo 0)
     fi
 
-    # Refresh stale oc completion cache in background (once per day)
-    _${fnName}_maybe_refresh_oc_cache() {
+    _${fnName}_openclaw_dispatch() {
       local cache="$HOME/.config/clawctl/oc-completions.zsh"
       local stale_seconds=86400
-      if [[ ! -f "$cache" ]]; then
-        ${binName} completions update-oc &>/dev/null &!
-      elif command -v python3 &>/dev/null; then
-        local mtime now
-        mtime=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$cache" 2>/dev/null)
-        now=$(date +%s)
-        if [[ -n "$mtime" ]] && (( now - mtime > stale_seconds )); then
-          ${binName} completions update-oc &>/dev/null &!
+
+      if ! (( \$+functions[_openclaw_root_completion] )); then
+        # No completions loaded — try to source or fetch
+        if [[ -f "$cache" ]]; then
+          source "$cache"
+          _${fnName}_oc_cache_mtime=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$cache" 2>/dev/null || echo 0)
+        else
+          # Block and fetch on first use
+          ${binName} completions update-oc &>/dev/null
+          if [[ -f "$cache" ]]; then
+            source "$cache"
+            _${fnName}_oc_cache_mtime=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$cache" 2>/dev/null || echo 0)
+          fi
+        fi
+      else
+        # Completions loaded — re-source if file was updated, background refresh if stale
+        if [[ -f "$cache" ]] && command -v python3 &>/dev/null; then
+          local file_mtime
+          file_mtime=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$cache" 2>/dev/null)
+          if [[ -n "$file_mtime" ]]; then
+            if (( file_mtime > _${fnName}_oc_cache_mtime )); then
+              source "$cache"
+              _${fnName}_oc_cache_mtime=\$file_mtime
+            fi
+            local now=\$(date +%s)
+            if (( now - file_mtime > stale_seconds )); then
+              ${binName} completions update-oc &>/dev/null &!
+            fi
+          fi
         fi
       fi
-    }
-    _${fnName}_maybe_refresh_oc_cache
 
-    _${fnName}_openclaw_dispatch() {
+      # Delegate if available
       if (( \$+functions[_openclaw_root_completion] )); then
         _openclaw_root_completion
-      else
-        # Static fallback — top-level commands only
-        local -a subcmds
-        subcmds=(
-          'setup:Initialize configuration and workspace'
-          'onboard:Interactive setup wizard'
-          'configure:Interactive configuration wizard'
-          'config:Non-interactive config helpers'
-          'doctor:Health checks and quick fixes'
-          'status:Display session health and recent recipients'
-          'health:Fetch gateway health information'
-          'reset:Reset local configuration and state'
-          'uninstall:Uninstall gateway service and local data'
-          'update:Update the CLI'
-          'gateway:Run or manage the gateway service'
-          'logs:Tail gateway file logs'
-          'daemon:Legacy alias for gateway service commands'
-          'message:Outbound messaging and channel actions'
-          'agent:Run a single agent turn via gateway'
-          'agents:Manage isolated agents'
-          'acp:Run the ACP bridge for IDEs'
-          'channels:Manage chat channel accounts'
-          'pairing:Approve DM pairing requests'
-          'devices:Manage device pairing and tokens'
-          'skills:List and inspect available skills'
-          'plugins:Manage extensions and configuration'
-          'cron:Manage scheduled jobs'
-          'webhooks:Set up webhooks'
-          'system:System event and heartbeat management'
-          'dns:Wide-area discovery DNS helper'
-          'memory:Vector search over memory files'
-          'docs:Search the live documentation index'
-          'node:Run headless node host or manage as service'
-          'nodes:Talk to gateway and target paired nodes'
-          'browser:Browser control for Chrome/Brave/Edge'
-          'models:Manage AI models and authentication'
-          'security:Security auditing and configuration'
-          'secrets:Manage secrets and references'
-          'sessions:List stored conversation sessions'
-          'tui:Open terminal UI connected to gateway'
-          'qr:QR code functionality'
-          'hooks:Manage hooks'
-        )
-        _describe 'openclaw command' subcmds
       fi
     }
 

@@ -55,25 +55,6 @@ describe("generateBashCompletion", () => {
     expect(script).toContain('== "--"');
   });
 
-  test("includes openclaw subcommands", () => {
-    for (const sub of [
-      "onboard",
-      "doctor",
-      "config",
-      "gateway",
-      "agents",
-      "channels",
-      "skills",
-      "plugins",
-      "cron",
-      "models",
-      "memory",
-      "browser",
-    ]) {
-      expect(script).toContain(sub);
-    }
-  });
-
   test("includes per-command options", () => {
     expect(script).toContain("--config");
     expect(script).toContain("--purge");
@@ -91,10 +72,19 @@ describe("generateBashCompletion", () => {
     expect(script).toContain("_openclaw_completion");
   });
 
-  test("includes background cache refresh logic", () => {
-    expect(script).toContain("_clawctl_maybe_refresh_oc_cache");
-    expect(script).toContain("stale_seconds");
+  test("blocks and fetches on first use when no cache exists", () => {
     expect(script).toContain("completions update-oc");
+    expect(script).toContain("_clawctl_openclaw_dispatch");
+  });
+
+  test("tracks cache mtime for re-sourcing after background updates", () => {
+    expect(script).toContain("_clawctl_oc_cache_mtime");
+    expect(script).toContain("file_mtime");
+  });
+
+  test("refreshes stale cache in background", () => {
+    expect(script).toContain("stale_seconds");
+    expect(script).toContain("disown");
   });
 
   test("passes bash -n syntax check", async () => {
@@ -150,25 +140,6 @@ describe("generateZshCompletion", () => {
     expect(script).toContain('== "--"');
   });
 
-  test("includes openclaw subcommands with descriptions", () => {
-    for (const sub of [
-      "onboard",
-      "doctor",
-      "config",
-      "gateway",
-      "agents",
-      "channels",
-      "skills",
-      "plugins",
-      "cron",
-      "models",
-      "memory",
-      "browser",
-    ]) {
-      expect(script).toContain(sub);
-    }
-  });
-
   test("includes per-command options", () => {
     expect(script).toContain("--config");
     expect(script).toContain("--purge");
@@ -191,10 +162,17 @@ describe("generateZshCompletion", () => {
     expect(script).toContain("_openclaw_root_completion");
   });
 
-  test("includes background cache refresh logic", () => {
-    expect(script).toContain("_clawctl_maybe_refresh_oc_cache");
-    expect(script).toContain("stale_seconds");
+  test("blocks and fetches on first use when no cache exists", () => {
     expect(script).toContain("completions update-oc");
+    expect(script).toContain("_clawctl_openclaw_dispatch");
   });
 
+  test("tracks cache mtime for re-sourcing after background updates", () => {
+    expect(script).toContain("_clawctl_oc_cache_mtime");
+    expect(script).toContain("file_mtime");
+  });
+
+  test("refreshes stale cache in background", () => {
+    expect(script).toContain("stale_seconds");
+  });
 });
