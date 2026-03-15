@@ -1,2 +1,1 @@
-/** The executable name to use in user-facing command output. */
-export const BIN_NAME = process.env.CLAWCTL_BIN ?? "clawctl";
+export { BIN_NAME } from "@clawctl/types";

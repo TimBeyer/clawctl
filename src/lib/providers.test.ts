@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { buildOnboardCommand, PROVIDERS, PROVIDER_TYPES } from "./providers.js";
+import { buildOnboardCommand, PROVIDERS, PROVIDER_TYPES } from "@clawctl/types";
 
 describe("PROVIDERS registry", () => {
   test("has entries for all expected provider types", () => {
