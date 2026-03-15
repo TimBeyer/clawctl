@@ -150,9 +150,9 @@ need to know these details:
 
 ### Provisioning stages
 
-Each orchestrator is defined as a `ProvisionStage` constant — a named
-list of steps with `run` functions. A shared `runStage()` handles all
-the boilerplate (numbered logging, collecting results, checking
+Each provisioning stage is a declarative `ProvisionStage` constant — a
+named list of steps with `run` functions. A shared `runStage()` handles
+all the boilerplate (numbered logging, collecting results, checking
 failures, ok/fail output):
 
 ```typescript

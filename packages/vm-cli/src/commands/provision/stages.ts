@@ -1,3 +1,21 @@
+/**
+ * Provisioning stage runner.
+ *
+ * Each provisioning stage (system, tools, openclaw) is a declarative
+ * ProvisionStage constant — a named list of steps with `run` functions.
+ * `runStage()` handles the shared boilerplate: numbered logging, result
+ * collection, failure detection, and ok/fail JSON output.
+ *
+ * To add a step, add an entry to the relevant stage's `steps` array.
+ * To add a new stage, create a new ProvisionStage constant and wire it
+ * into provision/index.ts.
+ *
+ * The `phase` field ties the stage to the VM lifecycle (see
+ * LIFECYCLE_PHASES in @clawctl/types). Doctor checks reference these
+ * phases via `availableAfter` to classify failures as warnings or errors
+ * depending on how far provisioning has progressed.
+ */
+
 import type { LifecyclePhase } from "@clawctl/types";
 import { log, ok, fail } from "../../output.js";
 import type { ProvisionResult } from "../../tools/types.js";

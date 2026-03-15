@@ -1,3 +1,13 @@
+/**
+ * VM health checks.
+ *
+ * Each check declares `availableAfter` — the lifecycle phase after which
+ * it's expected to pass. The `--after <phase>` flag tells doctor how far
+ * the lifecycle has progressed. Failures for phases not yet reached are
+ * warnings; all others are errors. Without `--after`, all failures are
+ * errors (strictest mode). See LIFECYCLE_PHASES in @clawctl/types.
+ */
+
 import { Command } from "commander";
 import { commandExists } from "../exec.js";
 import { log, ok, fail, setJsonMode } from "../output.js";
