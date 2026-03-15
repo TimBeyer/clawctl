@@ -16,7 +16,7 @@ export {
 } from "./schemas/index.js";
 
 // Constants
-export { UBUNTU_IMAGE_URL, PROJECT_MOUNT_POINT, GATEWAY_PORT } from "./constants.js";
+export { PROJECT_MOUNT_POINT, GATEWAY_PORT } from "./constants.js";
 
 // Providers
 export type { ProviderDef, ProviderConfig } from "./providers.js";

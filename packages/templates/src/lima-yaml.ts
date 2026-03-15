@@ -1,6 +1,9 @@
 import YAML from "yaml";
 import type { VMConfig, MountSpec } from "@clawctl/types";
-import { UBUNTU_IMAGE_URL, PROJECT_MOUNT_POINT, GATEWAY_PORT } from "@clawctl/types";
+import { PROJECT_MOUNT_POINT, GATEWAY_PORT } from "@clawctl/types";
+
+const UBUNTU_IMAGE_URL =
+  "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img";
 
 export interface LimaYamlOptions {
   /** Whether to include port forwards for the gateway. Default: true. */
