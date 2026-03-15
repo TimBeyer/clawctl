@@ -66,6 +66,10 @@ export async function runHeadless(driver: VMDriver, configPath: string): Promise
   try {
     // 3. Provision VM
     log("provision", "Starting VM provisioning...");
+    const provisionFeatures = {
+      onePassword: !!config.services?.onePassword,
+      tailscale: !!config.network?.tailscale,
+    };
     await provisionVM(
       driver,
       vmConfig,
@@ -79,6 +83,8 @@ export async function runHeadless(driver: VMDriver, configPath: string): Promise
         gatewayPort: config.network?.gatewayPort,
         extraMounts: vmConfig.extraMounts,
       },
+      undefined,
+      provisionFeatures,
     );
 
     // 4. Verify provisioning

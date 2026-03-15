@@ -1,5 +1,5 @@
 // Types and interfaces
-export type { MountSpec, VMConfig, InstanceConfig } from "./types.js";
+export type { MountSpec, VMConfig, InstanceConfig, ProvisionConfig } from "./types.js";
 
 // Schemas
 export {
@@ -20,6 +20,7 @@ export {
   PROJECT_MOUNT_POINT,
   GATEWAY_PORT,
   CHECKPOINT_REQUEST_FILE,
+  PROVISION_CONFIG_FILE,
   CLAW_BIN_PATH,
   LIFECYCLE_PHASES,
   phaseReached,

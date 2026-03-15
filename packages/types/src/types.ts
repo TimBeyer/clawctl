@@ -113,3 +113,11 @@ export interface InstanceConfig {
     groups?: Record<string, { requireMention?: boolean }>;
   };
 }
+
+/** Feature flags telling claw which optional tools to install. */
+export interface ProvisionConfig {
+  /** Install 1Password CLI, wrapper, exec-approvals, and secret-management skill. */
+  onePassword: boolean;
+  /** Install Tailscale. */
+  tailscale: boolean;
+}
