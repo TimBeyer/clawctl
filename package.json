@@ -18,7 +18,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:vm": "CLAWCTL_VM_TESTS=1 bun test packages/host-core/tests/vm/",
-    "build:release": "bun build ./packages/cli/bin/cli.tsx --compile --target=bun-darwin-arm64 --outfile dist/clawctl",
+    "build:release": "bun run build:claw && bun build ./packages/cli/bin/cli.tsx --compile --target=bun-darwin-arm64 --outfile dist/clawctl",
     "release": "release-it"
   },
   "dependencies": {
