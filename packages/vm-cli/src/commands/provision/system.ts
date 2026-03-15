@@ -31,7 +31,7 @@ async function installAptPackages(): Promise<SystemStep> {
 async function installNodejs(): Promise<SystemStep> {
   try {
     if (await commandExists("node")) {
-      const result = await exec("node", ["--version"]);
+      const result = await exec("node", ["--version"], { quiet: true });
       if (result.stdout.includes(`v${NODE_MAJOR_VERSION}`)) {
         log(`Node.js ${result.stdout.trim()} already installed`);
         return { name: "nodejs", status: "already" };
@@ -44,7 +44,7 @@ async function installNodejs(): Promise<SystemStep> {
     if (result.exitCode !== 0) {
       throw new Error(`apt-get install nodejs failed: ${result.stderr}`);
     }
-    const version = await exec("node", ["--version"]);
+    const version = await exec("node", ["--version"], { quiet: true });
     log(`Node.js ${version.stdout.trim()} installed`);
     return { name: "nodejs", status: "installed" };
   } catch (err) {
@@ -57,11 +57,11 @@ async function enableSystemdLinger(): Promise<SystemStep> {
     // Determine the default non-root user
     let user = process.env.SUDO_USER ?? "";
     if (!user) {
-      const result = await exec("awk", [
-        "-F:",
-        "$3 >= 1000 && $3 < 65534 { print $1; exit }",
-        "/etc/passwd",
-      ]);
+      const result = await exec(
+        "awk",
+        ["-F:", "$3 >= 1000 && $3 < 65534 { print $1; exit }", "/etc/passwd"],
+        { quiet: true },
+      );
       user = result.stdout.trim();
     }
 
@@ -69,7 +69,7 @@ async function enableSystemdLinger(): Promise<SystemStep> {
       throw new Error("Could not determine default user for linger");
     }
 
-    const result = await exec("loginctl", ["enable-linger", user]);
+    const result = await exec("loginctl", ["enable-linger", user], { quiet: true });
     if (result.exitCode !== 0) {
       throw new Error(`loginctl enable-linger failed: ${result.stderr}`);
     }

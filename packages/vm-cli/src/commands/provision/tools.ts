@@ -28,7 +28,7 @@ async function installHomebrew(): Promise<ToolStep> {
     const result = await exec("bash", ["/tmp/brew-install.sh"], {
       env: { ...process.env, NONINTERACTIVE: "1" },
     });
-    await exec("rm", ["-f", "/tmp/brew-install.sh"]);
+    await exec("rm", ["-f", "/tmp/brew-install.sh"], { quiet: true });
     if (result.exitCode !== 0) {
       throw new Error(`Homebrew install failed: ${result.stderr}`);
     }
@@ -52,10 +52,10 @@ async function installOpCli(): Promise<ToolStep> {
     log("Installing 1Password CLI...");
     await ensureDir(`${process.env.HOME}/.local/bin`);
     await downloadFile(OP_DOWNLOAD_URL(OP_VERSION), "/tmp/op.zip");
-    await exec("unzip", ["-o", "/tmp/op.zip", "-d", "/tmp/op"]);
-    await exec("mv", ["/tmp/op/op", `${process.env.HOME}/.local/bin/op`]);
-    await exec("chmod", ["+x", `${process.env.HOME}/.local/bin/op`]);
-    await exec("rm", ["-rf", "/tmp/op", "/tmp/op.zip"]);
+    await exec("unzip", ["-o", "/tmp/op.zip", "-d", "/tmp/op"], { quiet: true });
+    await exec("mv", ["/tmp/op/op", `${process.env.HOME}/.local/bin/op`], { quiet: true });
+    await exec("chmod", ["+x", `${process.env.HOME}/.local/bin/op`], { quiet: true });
+    await exec("rm", ["-rf", "/tmp/op", "/tmp/op.zip"], { quiet: true });
 
     log("1Password CLI installed");
     return { name: "op-cli", status: "installed" };

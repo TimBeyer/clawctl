@@ -78,7 +78,9 @@ async function checkPath(): Promise<DoctorCheck[]> {
 }
 
 async function checkService(): Promise<DoctorCheck[]> {
-  const result = await exec("systemctl", ["--user", "is-active", "openclaw-gateway.service"]);
+  const result = await exec("systemctl", ["--user", "is-active", "openclaw-gateway.service"], {
+    quiet: true,
+  });
   const active = result.exitCode === 0 && result.stdout.trim() === "active";
   return [
     {
@@ -95,7 +97,7 @@ async function checkOpenclaw(): Promise<DoctorCheck[]> {
     return [{ name: "openclaw-doctor", passed: false, error: "openclaw not installed" }];
   }
 
-  const result = await exec("openclaw", ["doctor"]);
+  const result = await exec("openclaw", ["doctor"], { quiet: true });
   return [
     {
       name: "openclaw-doctor",

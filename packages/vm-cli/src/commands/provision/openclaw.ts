@@ -19,7 +19,7 @@ async function installOpenclaw(): Promise<OpenclawStep> {
     const pathWithNpmGlobal = `${npmGlobalBin}:${process.env.PATH}`;
 
     if (await commandExists("openclaw")) {
-      const result = await exec("openclaw", ["--version"]);
+      const result = await exec("openclaw", ["--version"], { quiet: true });
       log(`OpenClaw ${result.stdout.trim()} already installed`);
       return { name: "openclaw-install", status: "already" };
     }
@@ -36,6 +36,7 @@ async function installOpenclaw(): Promise<OpenclawStep> {
 
     // Verify installation
     const check = await exec("openclaw", ["--version"], {
+      quiet: true,
       env: { ...process.env, PATH: pathWithNpmGlobal },
     });
     if (check.exitCode !== 0) {
@@ -73,7 +74,9 @@ async function configureNpmGlobalPath(): Promise<OpenclawStep> {
 async function setupGatewayStub(): Promise<OpenclawStep> {
   try {
     // Check if already enabled
-    const check = await exec("systemctl", ["--user", "is-enabled", "openclaw-gateway.service"]);
+    const check = await exec("systemctl", ["--user", "is-enabled", "openclaw-gateway.service"], {
+      quiet: true,
+    });
     if (check.exitCode === 0) {
       log("openclaw-gateway.service already enabled, skipping stub");
       return { name: "gateway-stub", status: "already" };
@@ -94,8 +97,10 @@ WantedBy=default.target
 
     await writeFile(`${unitDir}/openclaw-gateway.service`, unitContent);
 
-    await exec("systemctl", ["--user", "daemon-reload"]);
-    const result = await exec("systemctl", ["--user", "enable", "openclaw-gateway.service"]);
+    await exec("systemctl", ["--user", "daemon-reload"], { quiet: true });
+    const result = await exec("systemctl", ["--user", "enable", "openclaw-gateway.service"], {
+      quiet: true,
+    });
     if (result.exitCode !== 0) {
       throw new Error(`Failed to enable gateway stub: ${result.stderr}`);
     }

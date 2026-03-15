@@ -7,7 +7,7 @@ export { commandExists };
 
 /** Check if an apt package is installed. */
 export async function isAptPackageInstalled(pkg: string): Promise<boolean> {
-  const result = await exec("dpkg", ["-l", pkg]);
+  const result = await exec("dpkg", ["-l", pkg], { quiet: true });
   return result.exitCode === 0 && result.stdout.includes("ii");
 }
 
@@ -84,19 +84,19 @@ export async function ensureDir(dir: string, mode: number = 0o755): Promise<void
 
 /** Download a URL to a file path. */
 export async function downloadFile(url: string, dest: string): Promise<void> {
-  const result = await exec("curl", ["-fsSL", url, "-o", dest]);
+  const result = await exec("curl", ["-fsSL", url, "-o", dest], { quiet: true });
   if (result.exitCode !== 0) {
     throw new Error(`Failed to download ${url}: ${result.stderr}`);
   }
 }
 
-/** Download a URL and pipe to bash. */
+/** Download a URL and pipe to bash. Output from the installer is forwarded. */
 export async function downloadAndRun(url: string, args: string[] = []): Promise<void> {
   // Download first, then execute — more reliable than piping
   const tmpScript = "/tmp/claw-installer.sh";
   await downloadFile(url, tmpScript);
   const result = await exec("bash", [tmpScript, ...args]);
-  await exec("rm", ["-f", tmpScript]);
+  await exec("rm", ["-f", tmpScript], { quiet: true });
   if (result.exitCode !== 0) {
     throw new Error(`Installer script failed: ${result.stderr}`);
   }
