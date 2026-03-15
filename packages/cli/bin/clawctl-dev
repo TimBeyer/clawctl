@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+REPO_ROOT="$SCRIPT_DIR/../../.."
+
+# Build the VM-side claw binary (cross-compiled for linux-arm64).
+# Fast (~0.5s) and ensures the binary is always up to date.
+bun build "$REPO_ROOT/packages/vm-cli/bin/claw.ts" \
+  --compile --target=bun-linux-arm64 \
+  --outfile "$REPO_ROOT/dist/claw" >/dev/null 2>&1
+
 export CLAWCTL_BIN=clawctl-dev
 exec bun "$SCRIPT_DIR/cli.tsx" "$@"
