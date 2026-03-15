@@ -1,5 +1,25 @@
 # Changelog
 
+# [0.8.0](https://github.com/TimBeyer/clawctl/compare/v0.7.1...v0.8.0) (2026-03-15)
+
+
+### Bug Fixes
+
+* deploy claw binary via driver.copy instead of mount ([382e5dc](https://github.com/TimBeyer/clawctl/commit/382e5dc3018dccb513628b9f71a988db5d6e6149))
+* remove bun from doctor PATH checks, make post-bootstrap checks warn-only ([40ca77a](https://github.com/TimBeyer/clawctl/commit/40ca77a7d17556af11c022f2e861dafe552a42f1))
+* verify step treats doctor warnings as fatal errors ([39ec9e5](https://github.com/TimBeyer/clawctl/commit/39ec9e5a7c9c4274939accd500ce4a66e130f024))
+
+
+### Features
+
+* add @clawctl/vm-cli package with claw CLI ([6585407](https://github.com/TimBeyer/clawctl/commit/65854071498a8fe8bce0dc1309cea601c72e06bf))
+* auto-build claw binary in clawctl-dev ([e557f53](https://github.com/TimBeyer/clawctl/commit/e557f53b0f245c3fd5b99d4dc034d64237c19a83))
+* clean up VM on Ctrl+C / SIGTERM during creation ([f75633d](https://github.com/TimBeyer/clawctl/commit/f75633daa7dac5f3d065490745f3c36f98c56ac6))
+* introduce tool abstraction layer for vm-cli provision commands ([ffb72fe](https://github.com/TimBeyer/clawctl/commit/ffb72fe2d6bb1ec539dade836851282eca3049d8))
+* stream subprocess output from claw provision commands ([77dcc5a](https://github.com/TimBeyer/clawctl/commit/77dcc5a6e27aa11ad0ae3aaa116e29e52d99d0d0))
+* structured provisioning stages with lifecycle-based doctor warnings ([1ebdcb6](https://github.com/TimBeyer/clawctl/commit/1ebdcb62e2f756b322e9af1bb0c5ea0f8235d7e8))
+* wire claw into host-side provisioning and add watch command ([9f500e6](https://github.com/TimBeyer/clawctl/commit/9f500e6ef8af27fcff607ebd0db16eb31e5089c0))
+
 ## [0.7.1](https://github.com/TimBeyer/clawctl/compare/v0.7.0...v0.7.1) (2026-03-15)
 
 # [0.7.0](https://github.com/TimBeyer/clawctl/compare/v0.6.0...v0.7.0) (2026-03-15)
