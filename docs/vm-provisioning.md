@@ -1,122 +1,144 @@
 # VM Provisioning
 
-Provisioning scripts are generated from TypeScript templates in `src/templates/` and written directly into the VM at `/tmp/clawctl-provision/` via `shellExec` heredocs during bootstrap. They are ephemeral — cleaned up after provisioning completes.
+Provisioning installs all system packages, user tools, and OpenClaw
+inside the VM. It's driven by the `claw` binary — a compiled TypeScript
+CLI deployed into the VM during setup. The host CLI invokes it via
+`driver.exec()` and gets structured JSON results back.
 
-## Script Execution Order
+For the full architecture of the internal CLI and its tool abstraction
+layer, see `docs/vm-cli.md`.
 
-1. **`provision-system.sh`** -- runs as root (system-level packages)
-2. **`provision-user.sh`** -- runs as the default user (user-level tools)
+## Provisioning sequence
 
-Both scripts source `helpers.sh` for shared idempotency functions.
+The host-side provisioning sequence (`host-core/src/provision.ts`):
 
-## helpers.sh
+1. Create project directory structure on the host
+2. Initialize git repo
+3. Create and start the Lima VM (or start it if it already exists)
+4. Deploy the `claw` binary into the VM at `/usr/local/bin/claw`
+5. `sudo claw provision system --json` — system packages (as root)
+6. `claw provision tools --json` — user tools (as default user)
+7. `claw provision openclaw --json` — OpenClaw and gateway stub
 
-Shared utility functions used by both provisioning scripts:
+Each `claw provision` subcommand returns a JSON envelope with a list of
+`ProvisionResult` steps. The host checks for failures and aborts if any
+step has `status: "failed"`.
 
-- **`command_exists <cmd>`** -- checks if a command is on PATH.
-- **`ensure_apt_packages <pkg...>`** -- installs only missing packages. Checks each package with `dpkg -l` and batches the missing ones into a single `apt-get install`.
-- **`ensure_in_bashrc <line>`** -- appends a line to `~/.bashrc` only if it is not already present (grep -qF).
-- **`ensure_dir <path> [mode]`** -- creates a directory with the given permissions if it does not exist.
+After provisioning, the host runs `claw doctor --json` to verify that
+everything is installed and healthy.
 
-## provision-system.sh (root)
+## What each stage installs
 
-Runs with `set -euo pipefail`. Installs system-level dependencies.
+### `provision system` (runs as root)
 
-### APT Packages
+| Tool                  | Method                       | Check                              |
+|-----------------------|------------------------------|------------------------------------|
+| APT packages          | `apt-get install`            | `dpkg -l` per package              |
+| Node.js 22            | NodeSource repo + apt        | `node --version` includes `v22`    |
+| systemd linger        | `loginctl enable-linger`     | linger file exists                 |
+| Tailscale             | Official install script      | `tailscale` on PATH                |
 
-```
-build-essential git curl unzip jq ca-certificates gnupg
-```
+APT packages installed: `build-essential git curl unzip jq ca-certificates gnupg`.
 
-These are the baseline packages needed for building native modules, fetching resources, and processing JSON.
+### `provision tools` (runs as default user)
 
-### Node.js 22 via NodeSource
+| Tool                  | Method                       | Check                              |
+|-----------------------|------------------------------|------------------------------------|
+| Homebrew              | Official install script      | `brew` on PATH                     |
+| 1Password CLI         | Direct arm64 binary download | `op` on PATH                       |
+| Shell profile         | Append to `~/.profile`       | Line present in file               |
 
-Checks if `node` exists and is version 22. If not:
+The 1Password CLI is installed as a direct binary download to
+`~/.local/bin/op` because the 1Password apt repository does not publish
+arm64 packages.
 
-```bash
-curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
-apt-get install -y nodejs
-```
+### `provision openclaw` (runs as default user)
 
-This adds the NodeSource apt repository and installs Node.js 22.x (includes npm).
+| Tool                  | Method                       | Check                              |
+|-----------------------|------------------------------|------------------------------------|
+| OpenClaw CLI          | `curl \| bash` installer     | `openclaw` on PATH                 |
+| Environment variables | Append to `~/.profile`       | Lines present in file              |
+| npm-global PATH       | Append to `~/.profile`       | Line present in file               |
+| Gateway service stub  | Write systemd unit + enable  | `systemctl is-enabled`             |
 
-### loginctl enable-linger
+Environment variables set: `OPENCLAW_STATE_DIR` and
+`OPENCLAW_CONFIG_PATH` both point to `/mnt/project/data/`.
 
-```bash
-loginctl enable-linger "<username>"
-```
-
-Enables systemd user services to persist after the user logs out. This is required for OpenClaw's daemon process to keep running when you are not connected to the VM via `limactl shell`.
-
-### Tailscale
-
-Checks if `tailscale` is on PATH. If not:
-
-```bash
-curl -fsSL https://tailscale.com/install.sh | bash
-```
-
-Installs the Tailscale client and daemon. Does not run `tailscale up` -- that happens in the credentials step or manually later.
-
-## provision-user.sh (user)
-
-Runs with `set -euo pipefail` as the default Lima user.
-
-### Homebrew (Linuxbrew)
-
-Checks if `brew` is on PATH. If not:
-
-```bash
-NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
-
-Installs Homebrew to `/home/linuxbrew/.linuxbrew/`. Adds the `brew shellenv` eval to `~/.bashrc` for future sessions.
-
-### 1Password CLI (arm64 binary)
-
-Checks if `op` is on PATH. If not, downloads the arm64 Linux binary directly:
-
-```bash
-OP_VERSION="2.30.0"
-curl -fsSL "https://cache.agilebits.com/dist/1P/op2/pkg/v${OP_VERSION}/op_linux_arm64_v${OP_VERSION}.zip" -o /tmp/op.zip
-unzip -o /tmp/op.zip -d /tmp/op
-mv /tmp/op/op ~/.local/bin/op
-chmod +x ~/.local/bin/op
-```
-
-The binary is placed in `~/.local/bin/` rather than installed via apt or brew, since the 1Password apt repository does not publish arm64 packages.
-
-### Shell Profile
-
-Ensures `~/.local/bin` is on PATH by appending the export to `~/.bashrc` if not already present.
+The gateway service stub is a minimal systemd unit (`ExecStart=/bin/true`)
+that gets replaced by the real service during OpenClaw's daemon install.
+It's enabled but not started — `claw doctor` reports this as a warning,
+not an error.
 
 ## Idempotency
 
-Every installation step checks whether the tool is already present before attempting to install it. This means:
+Every tool module checks current state before acting:
 
-- Running the scripts a second time is a no-op if everything is already installed.
-- If a script fails partway through, you can re-run it and it will skip already-completed steps.
-- `ensure_apt_packages` only installs packages not already marked as installed by dpkg.
-- `ensure_in_bashrc` only appends lines not already in the file.
+- `apt.isInstalled(pkg)` checks `dpkg -l` before installing
+- `node.isInstalled()` + `node.version()` checks before running NodeSource
+- `homebrew.isInstalled()` checks before running the installer
+- `systemd.isEnabled(service)` checks before writing the unit file
+- `openclaw.isInstalled()` checks before running the installer
 
-## Re-running Provisioning
+A provision function returns `{ status: "unchanged" }` if everything is
+already in place, `{ status: "installed" }` if it made changes, or
+`{ status: "failed" }` if something went wrong. Re-running provisioning
+on an already-provisioned VM is a fast no-op.
 
-Provisioning scripts are ephemeral and not persisted on the host. To re-provision, delete and recreate the VM:
+## Verification (`claw doctor`)
+
+After provisioning, the host runs `claw doctor --json` inside the VM.
+Doctor checks mounts, environment variables, PATH entries, and services.
+Checks marked `warn: true` (gateway service, openclaw doctor) are
+expected to fail before bootstrap completes — they're logged as warnings
+but don't cause the provisioning run to fail.
+
+See the doctor checks table in `docs/vm-cli.md`.
+
+## Re-running provisioning
+
+Since provisioning is idempotent and the `claw` binary persists in the
+VM, you can re-provision at any time:
 
 ```bash
-limactl stop <vmName>
-limactl delete <vmName>
-# Re-run clawctl to regenerate and provision
-bun bin/cli.tsx create --config <path>
+# Re-run all stages
+clawctl shell -- sudo claw provision system
+clawctl shell -- claw provision tools
+clawctl shell -- claw provision openclaw
+
+# Check health
+clawctl shell -- claw doctor
 ```
 
-Since all provisioning scripts are idempotent, a fresh provision on a new VM is fast and reliable. Data in `<projectDir>/data/` is preserved across VM rebuilds.
+To fully rebuild from scratch:
+
+```bash
+clawctl delete <name> --purge
+clawctl create --config <path>
+```
+
+Data in `<projectDir>/data/` is preserved across VM rebuilds (it lives
+on the host and is mounted into the VM via virtiofs).
+
+## Cleanup on failure
+
+If provisioning fails (error or Ctrl+C), the host automatically cleans
+up by deleting the VM and removing the project directory. This applies
+to both the headless and interactive wizard paths. See
+`host-core/src/cleanup.ts` for the implementation.
 
 ## Troubleshooting
 
-**Node.js version mismatch**: If the NodeSource setup script fails, check whether the Ubuntu version is supported. Ubuntu 24.04 is supported by NodeSource.
+**Node.js version mismatch**: If the NodeSource setup script fails,
+check whether the Ubuntu version is supported. Ubuntu 24.04 is supported.
 
-**Homebrew install hangs**: The Homebrew installer downloads and compiles several packages. On first run this can take several minutes. `NONINTERACTIVE=1` ensures it does not prompt.
+**Homebrew install hangs**: The Homebrew installer downloads and compiles
+packages. On first run this can take several minutes.
+`NONINTERACTIVE=1` ensures it does not prompt.
 
-**1Password CLI version**: The version is pinned to `2.30.0` in `src/templates/installers/op-cli.ts`. To update, change `OP_VERSION` there and recreate the VM.
+**1Password CLI version**: The version is pinned in
+`packages/vm-cli/src/tools/op-cli.ts`. To update, change `OP_VERSION`
+there, rebuild `claw`, and re-provision.
+
+**Gateway service not active**: This is expected after provisioning.
+The stub service runs `/bin/true` and exits immediately. The real
+service is installed during the bootstrap/onboarding phase.

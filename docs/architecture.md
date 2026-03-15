@@ -15,8 +15,10 @@ User runs CLI
   -> Ink wizard collects config
   -> Host: install Lima via Homebrew if missing
   -> Generate project directory (data/)
-  -> limactl create (downloads Ubuntu image, boots VM, runs provision scripts)
-  -> Verify provisioning (Node.js 22, Tailscale, Homebrew, 1Password CLI, OpenClaw)
+  -> limactl create (downloads Ubuntu image, boots VM)
+  -> Deploy claw binary into VM
+  -> Host invokes claw provision {system,tools,openclaw} --json inside VM
+  -> Host invokes claw doctor --json to verify
   -> Optional credential setup (1Password token, Tailscale auth)
   -> OpenClaw onboarding (interactive, runs inside VM via limactl shell)
   -> Register instance + write clawctl.json
@@ -27,7 +29,8 @@ User runs CLI
 
 ```
 Load JSON config -> check prereqs -> install Lima if missing
-  -> provision VM -> verify tools -> setup 1Password? -> connect Tailscale?
+  -> create VM -> deploy claw binary -> claw provision (system/tools/openclaw)
+  -> claw doctor (verify) -> setup 1Password? -> connect Tailscale?
   -> bootstrap openclaw? (if provider configured)
   -> Register instance + write clawctl.json
   -> Done
@@ -59,81 +62,83 @@ See `examples/config.json`, `examples/config.bootstrap.json`, and
 
 ## Directory Structure
 
+The project is a Bun workspaces monorepo. The two most important packages
+are `cli/` (host-side) and `vm-cli/` (guest-side):
+
 ```
-bin/cli.tsx              Entry point -- commander dispatch to subcommands
-src/
-  app.tsx                Root component, wizard state machine
-  headless.ts            Headless orchestrator (config-file-driven provisioning)
-  types.ts               Shared TypeScript interfaces (VMConfig, InstanceConfig, etc.)
-  commands/              CLI command modules (one per subcommand)
-    create.ts            Interactive wizard + headless create
-    list.ts              List instances with live status
-    status.ts            Detailed instance info
-    start.ts             Start a stopped instance
-    stop.ts              Stop a running instance
-    restart.ts           Restart with health checks
-    delete.ts            Delete VM + optional project purge
-    shell.ts             Shell into VM or run a command via --
-    openclaw.ts          Proxy openclaw commands into the VM
-    use.ts               Set or show instance context
-    register.ts          Register existing instance
-    index.ts             Barrel export
-  drivers/               VM backend abstraction
-    types.ts             VMDriver interface
-    lima.ts              LimaDriver implementation (limactl)
-    index.ts             Exports
-  steps/                 One component per wizard step (8 total)
-    welcome.tsx          Prereq checks (macOS, Homebrew, Lima)
-    configure.tsx        VM settings form (name, CPUs, memory, disk, directory)
-    host-setup.tsx       Install Lima via Homebrew
-    create-vm.tsx        Generate files + limactl create
-    provision-status.tsx Verify installations inside VM
-    credentials.tsx      1Password + Tailscale setup
-    onboard.tsx          OpenClaw onboarding (exit Ink + stdio inherit)
-    finish.tsx           Summary and next steps
-  lib/                   Non-UI modules
-    bootstrap.ts         Post-provisioning openclaw setup (onboard, config, telegram)
-    config.ts            Config loading, validation, sanitization, VMConfig conversion
-    registry.ts          Instance registry CRUD (~/.config/clawctl/instances.json)
-    instance-context.ts  Instance resolution (.clawctl files, env var, global context)
-    require-instance.ts  Shared helper: resolve + validate instance for commands
-    shell-quote.ts       Shell-safe argument quoting
-    providers.ts         Provider registry + onboard command builder
-    schemas/             Composable zod schemas, one per config section
-      index.ts           Assembles instanceConfigSchema from parts
-      base.ts            Resources, network, services, agent schemas
-      provider.ts        Provider section schema (validates against registry)
-      telegram.ts        Telegram section schema
-    prereqs.ts           Host prerequisite checks (macOS, arm64, Homebrew, Lima)
-    provision.ts         Full VM provisioning sequence (shared by wizard + headless)
-    verify.ts            Post-provisioning tool verification
-    credentials.ts       1Password + Tailscale setup (shared by wizard + headless)
-    exec.ts              execa wrapper (exec, execStream, commandExists)
-    homebrew.ts          brew operations (install formula, check version)
-    git.ts               Initialize git repo with .gitignore
-  templates/             Template generators (one file per generated artifact)
-    constants.ts         Shared values (image URL, mount points, ports)
-    index.ts             Re-exports all public generators
-    lima-yaml.ts         generateLimaYaml(config, options)
-    helpers.ts           generateHelpersScript()
-    provision-system.ts  Orchestrator: calls system installers in order
-    provision-user.ts    Orchestrator: calls user installers in order
-    installers/          One installer template per tool
-      apt-packages.ts    APT baseline packages
-      nodejs.ts          Node.js via NodeSource
-      tailscale.ts       Tailscale client
-      homebrew.ts        Homebrew (Linuxbrew)
-      op-cli.ts          1Password CLI arm64 binary
-      systemd-linger.ts  loginctl enable-linger
-      shell-profile.ts   PATH setup in .bashrc
-      openclaw.ts        OpenClaw CLI via official installer
-  components/            Reusable Ink components
-    spinner.tsx          Animated braille spinner
-    step-indicator.tsx   "Step N/8" progress bar
-    log-output.tsx       Scrollable log tail
+packages/
+  types/                   Shared types, schemas, constants
+  templates/               Lima config generators (lima-yaml.ts)
+  host-core/               Host-side library
+    src/
+      drivers/             VM backend abstraction
+        types.ts           VMDriver interface
+        lima.ts            LimaDriver implementation (limactl)
+      provision.ts         VM provisioning sequence (deploy claw, invoke claw provision)
+      verify.ts            Post-provisioning verification (invokes claw doctor)
+      headless.ts          Headless orchestrator (config-file-driven)
+      cleanup.ts           VM + project dir cleanup, signal handlers
+      config.ts            Config loading, validation, sanitization
+      credentials.ts       1Password + Tailscale setup
+      bootstrap.ts         Post-provisioning openclaw setup
+      registry.ts          Instance registry (~/.config/clawctl/instances.json)
+      ...
+  cli/                     Host CLI (Ink wizard + commands)
+    bin/cli.tsx            Entry point
+    src/
+      app.tsx              Root component, wizard state machine
+      commands/            One module per subcommand (create, list, status, ...)
+      steps/               One component per wizard step (8 total)
+      components/          Reusable Ink components (spinner, step-indicator, ...)
+  vm-cli/                  Guest CLI (claw) — runs inside the VM
+    bin/claw.ts            Entry point
+    src/
+      exec.ts              execa wrapper for guest-side commands
+      output.ts            JSON envelope helpers (log, ok, fail)
+      commands/
+        provision/         Thin orchestrators (system.ts, tools.ts, openclaw.ts)
+        doctor.ts          Health checks (mounts, env, PATH, services)
+        checkpoint.ts      Signal host to commit data changes
+      tools/               One module per system tool
+        types.ts           ProvisionResult interface
+        apt.ts             apt-get operations
+        systemd.ts         systemctl + loginctl operations
+        node.ts            Node.js via NodeSource
+        tailscale.ts       Tailscale installer
+        homebrew.ts        Homebrew (Linuxbrew)
+        op-cli.ts          1Password CLI arm64 binary
+        openclaw.ts        OpenClaw CLI + gateway stub
+        fs.ts              File system helpers (ensureLineInFile, ensureDir)
+        curl.ts            Download helpers
+        shell-profile.ts   Login profile management
 ```
 
 ## Key Design Decisions
+
+### Internal CLI (`claw`) for guest-side operations
+
+Instead of generating shell scripts on the host and piping them into the
+VM, provisioning and health checks are handled by `claw` — a compiled
+TypeScript binary deployed into the VM at `/usr/local/bin/claw`. The
+host CLI invokes it via `driver.exec()`:
+
+```
+driver.exec(vmName, "sudo claw provision system --json")
+driver.exec(vmName, "claw doctor --json")
+```
+
+This gives us the same language and type system on both sides of the VM
+boundary. Provisioning logic is testable TypeScript, errors are returned
+as structured JSON instead of parsed from log output, and every operation
+is idempotent by construction (each tool module checks current state
+before acting).
+
+The `claw` binary is compiled with `bun run build:claw` (linux-arm64)
+and deployed during the provisioning sequence. In development,
+`bin/clawctl-dev` auto-builds it before running the host CLI.
+
+See `docs/vm-cli.md` for the full architecture of the guest CLI and its
+tool abstraction layer.
 
 ### vz virtualization backend
 
@@ -162,9 +167,14 @@ We use the official Ubuntu cloud image for aarch64. Cloud-init handles initial u
 
 All subprocess calls go through `src/lib/exec.ts`, which wraps execa with `reject: false` so callers get structured results (`stdout`, `stderr`, `exitCode`) instead of thrown errors. This makes error handling explicit at each call site.
 
-### Templates as TypeScript functions
+### Templates for VM configuration
 
-Provisioning scripts are generated by template functions in `src/templates/`. Each installer is its own module that produces a standalone, runnable `.sh` script. Orchestrator templates (`provision-system.ts`, `provision-user.ts`) generate scripts that call the individual installers in order. `lima-yaml.ts` interpolates `VMConfig` values (CPUs, memory, disk, paths) into the Lima configuration at generation time. All templates use `dedent` for readable multi-line template literals.
+`lima-yaml.ts` generates the Lima VM configuration by interpolating
+`VMConfig` values (CPUs, memory, disk, paths, mounts) at generation
+time. It uses `dedent` for readable multi-line template literals.
+
+Provisioning itself is handled by the `claw` binary inside the VM (see
+above), not by generated shell scripts.
 
 ## Component Relationships
 
