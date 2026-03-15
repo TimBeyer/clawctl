@@ -11,14 +11,14 @@
   },
   "scripts": {
     "dev": "bun packages/cli/bin/cli.tsx",
-    "build:claw": "bun build ./packages/vm-cli/bin/claw.ts --compile --target=bun-linux-arm64 --minify --sourcemap --bytecode --outfile dist/claw",
-    "build": "bun run build:claw && bun build ./packages/cli/bin/cli.tsx --compile --sourcemap --outfile dist/clawctl",
+    "build:claw": "bun build ./packages/vm-cli/bin/claw.ts --compile --target=bun-linux-arm64 --format=esm --minify --sourcemap --bytecode --outfile dist/claw",
+    "build": "bun run build:claw && bun build ./packages/cli/bin/cli.tsx --compile --format=esm --minify --sourcemap --bytecode --outfile dist/clawctl",
     "test": "bun test",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:vm": "CLAWCTL_VM_TESTS=1 bun test packages/host-core/tests/vm/",
-    "build:release": "bun run build:claw && bun build ./packages/cli/bin/cli.tsx --compile --target=bun-darwin-arm64 --sourcemap --outfile dist/clawctl",
+    "build:release": "bun run build:claw && bun build ./packages/cli/bin/cli.tsx --compile --target=bun-darwin-arm64 --format=esm --minify --sourcemap --bytecode --outfile dist/clawctl",
     "release": "release-it"
   },
   "dependencies": {

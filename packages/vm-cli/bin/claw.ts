@@ -14,6 +14,4 @@ registerProvisionCommand(program);
 registerDoctorCommand(program);
 registerCheckpointCommand(program);
 
-(async () => {
-  await program.parseAsync();
-})();
+await program.parseAsync();
