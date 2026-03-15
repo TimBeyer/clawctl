@@ -1,9 +1,13 @@
-import { mkdir } from "fs/promises";
-import { join } from "path";
+import { access, mkdir } from "fs/promises";
+import { constants } from "fs";
+import { join, resolve } from "path";
 import type { VMConfig } from "@clawctl/types";
-import { CLAW_BIN_PATH, PROJECT_MOUNT_POINT } from "@clawctl/types";
+import { CLAW_BIN_PATH } from "@clawctl/types";
 import type { VMDriver, VMCreateOptions, OnLine } from "./drivers/types.js";
 import { initGitRepo } from "./git.js";
+
+/** Resolve the claw binary path from the monorepo root (host-core/src/ → ../../.. → dist/claw). */
+const DEFAULT_CLAW_BINARY = resolve(import.meta.dir, "..", "..", "..", "dist", "claw");
 
 export interface ProvisionCallbacks {
   onPhase?: (phase: string) => void;
@@ -12,19 +16,30 @@ export interface ProvisionCallbacks {
 }
 
 /**
- * Deploy the claw binary from the read-only mount into the VM's PATH.
- * The binary is cross-compiled on the host and placed in dist/claw,
- * which is accessible via the read-only project mount.
+ * Copy the claw binary from the host into the VM and install it on PATH.
+ * Uses `driver.copy()` (limactl copy) to transfer the file, then moves
+ * it to /usr/local/bin with sudo.
  */
-async function deployClaw(driver: VMDriver, vmName: string, onLine?: OnLine): Promise<void> {
-  const mountedBinary = `${PROJECT_MOUNT_POINT}/dist/claw`;
+async function deployClaw(
+  driver: VMDriver,
+  vmName: string,
+  clawBinaryPath: string,
+  onLine?: OnLine,
+): Promise<void> {
+  try {
+    await access(clawBinaryPath, constants.R_OK);
+  } catch {
+    throw new Error(`Claw binary not found at ${clawBinaryPath}. Run 'bun run build:claw' first.`);
+  }
+
+  await driver.copy(vmName, clawBinaryPath, "/tmp/claw");
   const result = await driver.exec(
     vmName,
-    `sudo cp ${mountedBinary} ${CLAW_BIN_PATH} && sudo chmod +x ${CLAW_BIN_PATH}`,
+    `sudo mv /tmp/claw ${CLAW_BIN_PATH} && sudo chmod +x ${CLAW_BIN_PATH}`,
     onLine,
   );
   if (result.exitCode !== 0) {
-    throw new Error(`Failed to deploy claw binary: ${result.stderr}`);
+    throw new Error(`Failed to install claw binary: ${result.stderr}`);
   }
 }
 
@@ -64,12 +79,16 @@ async function runClawProvision(
 /**
  * Full VM provisioning sequence:
  * create dirs → init git → create VM → deploy claw → run claw provision commands.
+ *
+ * @param clawBinaryPath - Path to the compiled claw binary on the host.
+ *   Defaults to `<repo>/dist/claw`. Build with `bun run build:claw`.
  */
 export async function provisionVM(
   driver: VMDriver,
   config: VMConfig,
   callbacks: ProvisionCallbacks = {},
   createOptions: VMCreateOptions = {},
+  clawBinaryPath: string = DEFAULT_CLAW_BINARY,
 ): Promise<void> {
   const { onPhase, onStep, onLine } = callbacks;
 
@@ -104,7 +123,7 @@ export async function provisionVM(
 
   // Phase 4: Deploy claw binary
   onPhase?.("deploying");
-  await deployClaw(driver, config.vmName, onLine);
+  await deployClaw(driver, config.vmName, clawBinaryPath, onLine);
   onStep?.("Deployed claw binary to VM");
 
   // Phase 5: Provision via claw

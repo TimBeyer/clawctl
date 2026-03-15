@@ -60,7 +60,7 @@ inside the VM as a compiled Bun binary. Adds structured output, health checks
 
 - The claw binary cross-compiles to ~98MB for linux-arm64 (within expected 50-90MB range, Bun runtime overhead)
 - `templates/src/installers/` directory removed entirely — all 12 provisioning generator files deleted
-- Templates package retains: lima-yaml, bootstrap-prompt, exec-approvals, skills/*, completions/*
+- Templates package retains: lima-yaml, bootstrap-prompt, exec-approvals, skills/_, completions/_
 - The `downloadAndRun` helper downloads to a temp file first rather than piping curl to bash — more reliable for error handling
 - `provision.ts` now has a 3-phase claw approach (system as root, tools as user, openclaw as user) instead of the 2-phase bash approach (provision-system.sh, provision-user.sh)
 
