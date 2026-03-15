@@ -1,9 +1,11 @@
 import { Command } from "commander";
-import { exec, commandExists } from "../exec.js";
+import { commandExists } from "../exec.js";
 import { log, ok, fail, setJsonMode } from "../output.js";
 import { PROJECT_MOUNT_POINT } from "@clawctl/types";
 import { access } from "fs/promises";
 import { constants } from "fs";
+import * as systemd from "../tools/systemd.js";
+import * as openclaw from "../tools/openclaw.js";
 
 export interface DoctorCheck {
   name: string;
@@ -80,10 +82,7 @@ async function checkPath(): Promise<DoctorCheck[]> {
 }
 
 async function checkService(): Promise<DoctorCheck[]> {
-  const result = await exec("systemctl", ["--user", "is-active", "openclaw-gateway.service"], {
-    quiet: true,
-  });
-  const active = result.exitCode === 0 && result.stdout.trim() === "active";
+  const active = await systemd.isActive("openclaw-gateway.service");
   return [
     {
       name: "service-gateway",
@@ -96,11 +95,11 @@ async function checkService(): Promise<DoctorCheck[]> {
 }
 
 async function checkOpenclaw(): Promise<DoctorCheck[]> {
-  if (!(await commandExists("openclaw"))) {
+  if (!(await openclaw.isInstalled())) {
     return [{ name: "openclaw-doctor", passed: false, error: "openclaw not installed" }];
   }
 
-  const result = await exec("openclaw", ["doctor"], { quiet: true });
+  const result = await openclaw.doctor();
   return [
     {
       name: "openclaw-doctor",
