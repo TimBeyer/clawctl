@@ -1,4 +1,4 @@
-import { rm, writeFile } from "fs/promises";
+import { writeFile } from "fs/promises";
 import { join } from "path";
 import { loadConfig, configToVMConfig, sanitizeConfig } from "./config.js";
 import { checkPrereqs } from "./prereqs.js";
@@ -9,6 +9,7 @@ import { findSecretRefs, hasOpRefs, resolveOpRefs, getNestedValue } from "./secr
 import type { ResolvedSecretRef } from "./secrets.js";
 import { syncSecretsToVM, writeEnvSecrets } from "./secrets-sync.js";
 import { bootstrapOpenclaw } from "./bootstrap.js";
+import { cleanupVM, onSignalCleanup } from "./cleanup.js";
 import { GATEWAY_PORT } from "@clawctl/types";
 import { BIN_NAME } from "./bin-name.js";
 import type { VMDriver } from "./drivers/types.js";
@@ -27,27 +28,6 @@ export interface HeadlessResult {
 
 function log(prefix: string, message: string) {
   console.log(`[${prefix}] ${message}`);
-}
-
-/** Remove the VM and project directory. Best-effort — never throws. */
-async function cleanup(driver: VMDriver, vmName: string, projectDir: string): Promise<void> {
-  try {
-    if (await driver.exists(vmName)) {
-      log("cleanup", `Deleting VM "${vmName}"...`);
-      await driver.delete(vmName);
-      log("cleanup", "VM deleted");
-    }
-  } catch (err) {
-    log("cleanup", `Warning: failed to delete VM: ${err}`);
-  }
-
-  try {
-    log("cleanup", `Removing project directory ${projectDir}...`);
-    await rm(projectDir, { recursive: true, force: true });
-    log("cleanup", "Project directory removed");
-  } catch (err) {
-    log("cleanup", `Warning: failed to remove project directory: ${err}`);
-  }
 }
 
 /** Run headless VM creation from a config file. */
@@ -74,7 +54,15 @@ export async function runHeadless(driver: VMDriver, configPath: string): Promise
     log("prereqs", `Lima ${prereqs.vmBackendVersion} found`);
   }
 
-  // Steps 3–7 create resources that need cleanup on failure
+  // Steps 3–7 create resources that need cleanup on failure.
+  // Register signal handlers so Ctrl+C also triggers cleanup.
+  const cleanupLog = (msg: string) => log("cleanup", msg);
+  const removeSignalHandlers = onSignalCleanup(
+    driver,
+    () => ({ vmName: vmConfig.vmName, projectDir: vmConfig.projectDir }),
+    cleanupLog,
+  );
+
   try {
     // 3. Provision VM
     log("provision", "Starting VM provisioning...");
@@ -232,7 +220,9 @@ export async function runHeadless(driver: VMDriver, configPath: string): Promise
     };
   } catch (err) {
     log("error", "Provisioning failed, cleaning up...");
-    await cleanup(driver, vmConfig.vmName, vmConfig.projectDir);
+    await cleanupVM(driver, vmConfig.vmName, vmConfig.projectDir, cleanupLog);
     throw err;
+  } finally {
+    removeSignalHandlers();
   }
 }

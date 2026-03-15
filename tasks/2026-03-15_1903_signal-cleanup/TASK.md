@@ -1,6 +1,6 @@
 # Signal-based cleanup on Ctrl+C during VM creation
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -21,12 +21,12 @@ registered and the user is told to retry with `clawctl oc onboard`).
 
 ## Steps
 
-- [ ] Create `packages/host-core/src/cleanup.ts`
-- [ ] Update `packages/host-core/src/headless.ts` to use shared cleanup + signal handlers
-- [ ] Update `packages/host-core/src/index.ts` to export cleanup
-- [ ] Update `packages/cli/src/app.tsx` to accept creation tracking ref
-- [ ] Update `packages/cli/src/commands/create.ts` to clean up on wizard interrupt
-- [ ] Verify lint + build + tests
+- [x] Create `packages/host-core/src/cleanup.ts`
+- [x] Update `packages/host-core/src/headless.ts` to use shared cleanup + signal handlers
+- [x] Update `packages/host-core/src/index.ts` to export cleanup
+- [x] Update `packages/cli/src/app.tsx` to accept creation tracking ref
+- [x] Update `packages/cli/src/commands/create.ts` to clean up on wizard interrupt
+- [x] Verify lint + build + tests
 
 ## Notes
 
@@ -35,7 +35,17 @@ registered and the user is told to retry with `clawctl oc onboard`).
   (undefined = interrupted, vs "onboard"/"finish" = normal exit).
 - SIGTERM (from `kill`) still needs a signal handler for both paths.
 - Cleanup is idempotent: checks `driver.exists()` before delete, uses `force: true` on rm.
+- The `onSignalCleanup` helper uses a `cleaning` flag to prevent double-cleanup
+  if multiple signals arrive while cleanup is in progress.
+- Signal handlers are removed in the `finally` block (headless) or after the
+  wizard exits (wizard), so they don't interfere with normal post-creation work.
 
 ## Outcome
 
-(To be written when resolved)
+- Created `packages/host-core/src/cleanup.ts` with `cleanupVM()` and `onSignalCleanup()`
+- Headless path: SIGINT/SIGTERM registered before provisioning try block, removed in finally
+- Wizard path: SIGTERM handler + Ctrl+C detection via `waitUntilExit()` result check
+  - App accepts a `creationTarget` mutable ref, sets vmName/projectDir when entering create-vm
+  - After waitUntilExit, if result has no "onboard"/"finish" action → cleanup and return
+  - SIGTERM handler removed once wizard exits normally (post-wizard onboarding is retryable)
+- All 244 tests pass, lint clean, both binaries compile

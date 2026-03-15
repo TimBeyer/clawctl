@@ -11,16 +11,18 @@ import { Onboard } from "./steps/onboard.js";
 import { useVerboseMode } from "./hooks/use-verbose-mode.js";
 import { VerboseContext } from "./hooks/verbose-context.js";
 import type { VMConfig } from "@clawctl/types";
-import type { VMDriver } from "@clawctl/host-core";
+import type { VMDriver, CleanupTarget } from "@clawctl/host-core";
 import type { WizardStep, PrereqStatus, CredentialConfig } from "./types.js";
 
 const PROCESS_STEPS: WizardStep[] = ["host-setup", "create-vm", "provision", "credentials"];
 
 interface AppProps {
   driver: VMDriver;
+  /** Mutable ref set when VM creation starts, so the caller can clean up on interrupt. */
+  creationTarget?: CleanupTarget;
 }
 
-export function App({ driver }: AppProps) {
+export function App({ driver, creationTarget }: AppProps) {
   const [step, setStep] = useState<WizardStep>("welcome");
   const { verbose } = useVerboseMode();
   const [prereqs, setPrereqs] = useState<PrereqStatus>({
@@ -72,6 +74,10 @@ export function App({ driver }: AppProps) {
           <Configure
             onComplete={(c) => {
               setConfig(c);
+              if (creationTarget) {
+                creationTarget.vmName = c.vmName;
+                creationTarget.projectDir = c.projectDir;
+              }
               setStep("create-vm");
             }}
           />
