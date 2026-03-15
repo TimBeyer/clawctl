@@ -8,6 +8,8 @@ import { constants } from "fs";
 export interface DoctorCheck {
   name: string;
   passed: boolean;
+  /** If true, a failure is informational — not a hard error. */
+  warn?: boolean;
   detail?: string;
   error?: string;
 }
@@ -62,7 +64,7 @@ async function checkEnv(): Promise<DoctorCheck[]> {
 }
 
 async function checkPath(): Promise<DoctorCheck[]> {
-  const tools = ["claw", "op", "node", "bun", "brew", "openclaw"];
+  const tools = ["claw", "op", "node", "brew", "openclaw"];
   const checks: DoctorCheck[] = [];
 
   for (const tool of tools) {
@@ -86,6 +88,7 @@ async function checkService(): Promise<DoctorCheck[]> {
     {
       name: "service-gateway",
       passed: active,
+      warn: true, // only active after bootstrap, not after provisioning
       detail: active ? "openclaw-gateway active" : undefined,
       error: active ? undefined : "openclaw-gateway not active",
     },
@@ -102,6 +105,7 @@ async function checkOpenclaw(): Promise<DoctorCheck[]> {
     {
       name: "openclaw-doctor",
       passed: result.exitCode === 0,
+      warn: true, // may fail before onboarding completes
       detail: result.exitCode === 0 ? result.stdout.trim() : undefined,
       error: result.exitCode !== 0 ? result.stderr.trim() || result.stdout.trim() : undefined,
     },
@@ -135,22 +139,26 @@ export function registerDoctorCommand(program: Command): void {
       log("Checking OpenClaw...");
       checks.push(...(await checkOpenclaw()));
 
-      const failed = checks.filter((c) => !c.passed);
+      const errors = checks.filter((c) => !c.passed && !c.warn);
+      const warnings = checks.filter((c) => !c.passed && c.warn);
       const passed = checks.filter((c) => c.passed);
 
       if (!opts.json) {
         for (const c of checks) {
-          const icon = c.passed ? "[OK]" : "[FAIL]";
+          const icon = c.passed ? "[OK]" : c.warn ? "[WARN]" : "[FAIL]";
           const info = c.detail ?? c.error ?? "";
           log(`  ${icon} ${c.name}${info ? ` — ${info}` : ""}`);
         }
         log("");
         log(`${passed.length}/${checks.length} checks passed`);
+        if (warnings.length > 0) {
+          log(`${warnings.length} warning(s) (expected before bootstrap)`);
+        }
       }
 
-      if (failed.length > 0) {
+      if (errors.length > 0) {
         fail(
-          failed.map((c) => `${c.name}: ${c.error}`),
+          errors.map((c) => `${c.name}: ${c.error}`),
           { checks },
         );
         if (!opts.json) process.exit(1);
