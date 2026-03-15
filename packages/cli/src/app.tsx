@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { Box, Text } from "ink";
 import { Welcome } from "./steps/welcome.js";
 import { Configure } from "./steps/configure.js";
+import { Credentials } from "./steps/credentials.js";
 import { HostSetup } from "./steps/host-setup.js";
 import { CreateVM } from "./steps/create-vm.js";
 import { ProvisionStatus } from "./steps/provision-status.js";
-import { Credentials } from "./steps/credentials.js";
+import { CredentialSetup } from "./steps/credential-setup.js";
 import { Finish } from "./steps/finish.js";
 import { Onboard } from "./steps/onboard.js";
 import { useVerboseMode } from "./hooks/use-verbose-mode.js";
@@ -14,7 +15,7 @@ import type { VMConfig } from "@clawctl/types";
 import type { VMDriver, CleanupTarget } from "@clawctl/host-core";
 import type { WizardStep, PrereqStatus, CredentialConfig } from "./types.js";
 
-const PROCESS_STEPS: WizardStep[] = ["host-setup", "create-vm", "provision", "credentials"];
+const PROCESS_STEPS: WizardStep[] = ["host-setup", "create-vm", "provision", "credential-setup"];
 
 interface AppProps {
   driver: VMDriver;
@@ -78,27 +79,45 @@ export function App({ driver, creationTarget }: AppProps) {
                 creationTarget.vmName = c.vmName;
                 creationTarget.projectDir = c.projectDir;
               }
+              setStep("credentials");
+            }}
+          />
+        )}
+
+        {step === "credentials" && (
+          <Credentials
+            onComplete={(creds) => {
+              setCredentialConfig(creds);
               setStep("create-vm");
             }}
           />
         )}
 
         {step === "create-vm" && (
-          <CreateVM driver={driver} config={config} onComplete={() => setStep("provision")} />
+          <CreateVM
+            driver={driver}
+            config={config}
+            provisionFeatures={{
+              onePassword: !!credentialConfig.opToken,
+              tailscale: !!credentialConfig.tailscaleAuthKey,
+            }}
+            onComplete={() => setStep("provision")}
+          />
         )}
 
         {step === "provision" && (
           <ProvisionStatus
             driver={driver}
             config={config}
-            onComplete={() => setStep("credentials")}
+            onComplete={() => setStep("credential-setup")}
           />
         )}
 
-        {step === "credentials" && (
-          <Credentials
+        {step === "credential-setup" && (
+          <CredentialSetup
             driver={driver}
             config={config}
+            credentialConfig={credentialConfig}
             onComplete={(creds) => {
               setCredentialConfig(creds);
               setStep("onboard");

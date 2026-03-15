@@ -4,7 +4,7 @@ import { StepIndicator } from "../components/step-indicator.js";
 import { ProcessOutput } from "../components/process-output.js";
 import { Spinner } from "../components/spinner.js";
 import type { VMConfig } from "@clawctl/types";
-import type { VMDriver } from "@clawctl/host-core";
+import type { VMDriver, ProvisionFeatures } from "@clawctl/host-core";
 import { useVerbose } from "../hooks/verbose-context.js";
 import { useProcessLogs } from "../hooks/use-process-logs.js";
 import { provisionVM } from "@clawctl/host-core";
@@ -12,12 +12,13 @@ import { provisionVM } from "@clawctl/host-core";
 interface CreateVMProps {
   driver: VMDriver;
   config: VMConfig;
+  provisionFeatures: ProvisionFeatures;
   onComplete: () => void;
 }
 
 type Phase = "project-setup" | "generating" | "creating-vm" | "provisioning" | "done" | "error";
 
-export function CreateVM({ driver, config, onComplete }: CreateVMProps) {
+export function CreateVM({ driver, config, provisionFeatures, onComplete }: CreateVMProps) {
   const verbose = useVerbose();
   const { lines: processLogs, addLine: addProcessLog } = useProcessLogs();
   const [phase, setPhase] = useState<Phase>("project-setup");
@@ -36,6 +37,8 @@ export function CreateVM({ driver, config, onComplete }: CreateVMProps) {
             onLine: addProcessLog,
           },
           { extraMounts: config.extraMounts },
+          undefined,
+          provisionFeatures,
         );
 
         setTimeout(() => onComplete(), 500);
@@ -50,8 +53,8 @@ export function CreateVM({ driver, config, onComplete }: CreateVMProps) {
   return (
     <Box flexDirection="column">
       <StepIndicator
-        current={4}
-        total={8}
+        current={5}
+        total={9}
         label={
           phase === "creating-vm"
             ? "Creating VM..."

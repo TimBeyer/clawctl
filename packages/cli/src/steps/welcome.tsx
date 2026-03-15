@@ -47,7 +47,7 @@ export function Welcome({ driver, onComplete }: WelcomeProps) {
         </Box>
       </Box>
 
-      <StepIndicator current={1} total={8} label="Checking prerequisites..." />
+      <StepIndicator current={1} total={9} label="Checking prerequisites..." />
 
       {checking ? (
         <Spinner label="Checking system requirements..." />

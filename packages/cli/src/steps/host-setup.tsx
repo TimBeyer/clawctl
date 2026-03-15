@@ -52,7 +52,7 @@ export function HostSetup({ driver, prereqs, onComplete }: HostSetupProps) {
 
   return (
     <Box flexDirection="column">
-      <StepIndicator current={3} total={8} label="Setting up host" />
+      <StepIndicator current={4} total={9} label="Setting up host" />
 
       <Box flexDirection="column" marginLeft={2}>
         {status === "installing" && (

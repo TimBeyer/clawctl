@@ -79,7 +79,7 @@ export function Configure({ onComplete }: ConfigureProps) {
 
   return (
     <Box flexDirection="column">
-      <StepIndicator current={2} total={8} label="Configure your VM" />
+      <StepIndicator current={2} total={9} label="Configure your VM" />
 
       <Box flexDirection="column" marginLeft={2}>
         {/* Show already-answered fields */}

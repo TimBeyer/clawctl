@@ -37,7 +37,7 @@ export function Onboard({ config, tailscaleMode, onComplete }: OnboardProps) {
 
   return (
     <Box flexDirection="column">
-      <StepIndicator current={7} total={8} label="OpenClaw Onboarding" />
+      <StepIndicator current={8} total={9} label="OpenClaw Onboarding" />
 
       <Box flexDirection="column" marginLeft={2}>
         <Text>OpenClaw's onboarding wizard will configure your instance.</Text>

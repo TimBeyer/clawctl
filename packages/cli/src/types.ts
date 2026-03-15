@@ -21,9 +21,10 @@ export interface CredentialConfig {
 export type WizardStep =
   | "welcome"
   | "configure"
+  | "credentials"
   | "host-setup"
   | "create-vm"
   | "provision"
-  | "credentials"
+  | "credential-setup"
   | "onboard"
   | "finish";

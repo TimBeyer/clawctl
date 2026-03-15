@@ -37,7 +37,7 @@ export function Finish({ config, onboardSkipped, tailscaleMode }: FinishProps) {
   }, []);
   return (
     <Box flexDirection="column">
-      <StepIndicator current={8} total={8} label="Done!" />
+      <StepIndicator current={9} total={9} label="Done!" />
 
       <Box flexDirection="column" marginLeft={2} marginBottom={1}>
         <Text bold color="green">
