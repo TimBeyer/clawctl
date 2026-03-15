@@ -63,12 +63,12 @@ packages/
 
 ## Dev Setup
 
-`packages/cli/bin/clawctl-dev` is a shell wrapper that resolves its own
-location and execs `bun cli.tsx`, so you can symlink it onto PATH and run
-the CLI from anywhere without building a binary first.
+`bin/clawctl-dev` is a symlink to `packages/cli/bin/clawctl-dev`, which
+resolves its own location and execs `bun cli.tsx`. Symlink it onto PATH
+to run the CLI from anywhere without building a binary first.
 
 ```bash
-ln -s "$(pwd)/packages/cli/bin/clawctl-dev" ~/.local/bin/clawctl-dev
+ln -s "$(pwd)/bin/clawctl-dev" ~/.local/bin/clawctl-dev
 ```
 
 Then from any directory:
