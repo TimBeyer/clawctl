@@ -9,7 +9,8 @@ import { findSecretRefs, hasOpRefs, resolveOpRefs, getNestedValue } from "./secr
 import type { ResolvedSecretRef } from "./secrets.js";
 import { syncSecretsToVM, writeEnvSecrets } from "./secrets-sync.js";
 import { bootstrapOpenclaw } from "./bootstrap.js";
-import { GATEWAY_PORT, BIN_NAME } from "@clawctl/types";
+import { GATEWAY_PORT } from "@clawctl/types";
+import { BIN_NAME } from "./bin-name.js";
 import type { VMDriver } from "./drivers/types.js";
 
 export interface HeadlessResult {

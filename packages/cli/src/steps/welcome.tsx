@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Text, Box } from "ink";
 import { StepIndicator } from "../components/step-indicator.js";
 import { Spinner } from "../components/spinner.js";
-import type { PrereqStatus } from "@clawctl/types";
 import type { VMDriver } from "@clawctl/host-core";
+import type { PrereqStatus } from "../types.js";
 import { checkPrereqs } from "@clawctl/host-core";
 
 interface WelcomeProps {

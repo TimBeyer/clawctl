@@ -18,36 +18,6 @@ export interface VMConfig {
   extraMounts?: MountSpec[];
 }
 
-export interface PrereqStatus {
-  isMacOS: boolean;
-  isArm64: boolean;
-  hasHomebrew: boolean;
-  hasVMBackend: boolean;
-  vmBackendVersion?: string;
-}
-
-export interface ProvisioningStep {
-  label: string;
-  status: "pending" | "running" | "done" | "error";
-  error?: string;
-}
-
-export interface CredentialConfig {
-  opToken?: string;
-  tailscaleAuthKey?: string;
-  tailscaleMode?: "off" | "serve" | "funnel";
-}
-
-export type WizardStep =
-  | "welcome"
-  | "configure"
-  | "host-setup"
-  | "create-vm"
-  | "provision"
-  | "credentials"
-  | "onboard"
-  | "finish";
-
 /** Config-file-driven instance specification for headless provisioning. */
 export interface InstanceConfig {
   /** Instance name — becomes the VM name. */

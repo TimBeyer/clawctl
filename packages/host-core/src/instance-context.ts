@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir } from "fs/promises";
 import { join, dirname } from "path";
 import { homedir } from "os";
 import { listInstances } from "./registry.js";
-import { BIN_NAME } from "@clawctl/types";
+import { BIN_NAME } from "./bin-name.js";
 
 const CONTEXT_FILENAME = ".clawctl";
 const GLOBAL_CONFIG_DIR = join(homedir(), ".config", "clawctl");

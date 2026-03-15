@@ -2,8 +2,9 @@ import React, { useEffect, useRef } from "react";
 import { Text, Box, useApp } from "ink";
 import { StepIndicator } from "../components/step-indicator.js";
 import type { VMConfig } from "@clawctl/types";
+import { GATEWAY_PORT } from "@clawctl/types";
 import type { VMDriver } from "@clawctl/host-core";
-import { GATEWAY_PORT, BIN_NAME } from "@clawctl/types";
+import { BIN_NAME } from "@clawctl/host-core";
 
 export interface FinishResult {
   action: "finish";

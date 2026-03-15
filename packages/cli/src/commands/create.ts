@@ -5,7 +5,8 @@ import { join } from "path";
 import type { VMDriver } from "@clawctl/host-core";
 import { addInstance, getTailscaleHostname } from "@clawctl/host-core";
 import type { RegistryEntry } from "@clawctl/host-core";
-import { GATEWAY_PORT, BIN_NAME } from "@clawctl/types";
+import { GATEWAY_PORT } from "@clawctl/types";
+import { BIN_NAME } from "@clawctl/host-core";
 
 /**
  * Run the headless create path: load config, provision, register.

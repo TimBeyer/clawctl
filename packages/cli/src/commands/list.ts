@@ -1,7 +1,7 @@
 import { homedir } from "os";
 import type { VMDriver } from "@clawctl/host-core";
 import { listInstances } from "@clawctl/host-core";
-import { BIN_NAME } from "@clawctl/types";
+import { BIN_NAME } from "@clawctl/host-core";
 
 export async function runList(driver: VMDriver): Promise<void> {
   const entries = await listInstances();

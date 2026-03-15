@@ -1,6 +1,6 @@
 # Move misplaced exports out of @clawctl/types
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -27,17 +27,17 @@ Does NOT cover: moving schemas, secrets functions, or constants.
 
 ## Steps
 
-- [ ] Create `packages/cli/src/types.ts`
-- [ ] Update `packages/types/src/types.ts` — remove CLI types
-- [ ] Update `packages/types/src/index.ts` — remove CLI types from barrel
-- [ ] Update CLI files to import from local types
-- [ ] Move `BIN_NAME` to `packages/host-core/src/bin-name.ts`
-- [ ] Update all `BIN_NAME` imports
-- [ ] Move `configToVMConfig`, `sanitizeConfig` to host-core config.ts
-- [ ] Remove `formatZodError`, `expandTilde` from types barrel
-- [ ] Move `buildOnboardCommand` to host-core providers.ts
-- [ ] Update all consumer imports
-- [ ] Run tests and lint
+- [x] Create `packages/cli/src/types.ts`
+- [x] Update `packages/types/src/types.ts` — remove CLI types
+- [x] Update `packages/types/src/index.ts` — remove CLI types from barrel
+- [x] Update CLI files to import from local types
+- [x] Move `BIN_NAME` to `packages/host-core/src/bin-name.ts`
+- [x] Update all `BIN_NAME` imports
+- [x] Move `configToVMConfig`, `sanitizeConfig` to host-core config.ts
+- [x] Remove `formatZodError`, `expandTilde` from types barrel
+- [x] Move `buildOnboardCommand` to host-core providers.ts
+- [x] Update all consumer imports
+- [x] Run tests and lint
 
 ## Notes
 
@@ -45,4 +45,12 @@ Does NOT cover: moving schemas, secrets functions, or constants.
 
 ## Outcome
 
-(pending)
+All misplaced exports moved successfully:
+
+- **CLI types** (`PrereqStatus`, `CredentialConfig`, `WizardStep`, `ProvisioningStep`): moved to `packages/cli/src/types.ts`. `PrereqStatus` is also defined locally in `packages/host-core/src/prereqs.ts` since host-core can't depend on cli — both definitions are structurally identical.
+- **`BIN_NAME`**: moved to `packages/host-core/src/bin-name.ts`. Host-core files use relative imports; CLI files import from `@clawctl/host-core`.
+- **`configToVMConfig`, `sanitizeConfig`**: moved into `packages/host-core/src/config.ts` alongside `loadConfig`. No longer re-exported from types.
+- **`formatZodError`, `expandTilde`**: kept in `packages/types/src/config.ts` as private helpers for `validateConfig` (not exported from barrel). Also exported from host-core for the test suite.
+- **`buildOnboardCommand`**: moved to new `packages/host-core/src/providers.ts`.
+
+`@clawctl/types` now exports only: types/interfaces, schemas, constants, provider registry (data), `validateConfig`, and secrets utilities. All 280 tests pass, lint clean, formatting clean.

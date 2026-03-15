@@ -1,7 +1,7 @@
 import type { RegistryEntry } from "./registry.js";
 import { getInstance } from "./registry.js";
 import { resolveInstance } from "./instance-context.js";
-import { BIN_NAME } from "@clawctl/types";
+import { BIN_NAME } from "./bin-name.js";
 
 export async function requireInstance(opts: { instance?: string }): Promise<RegistryEntry> {
   let name: string;

@@ -1,9 +1,88 @@
 import { readFile } from "fs/promises";
+import { homedir } from "os";
+import { resolve } from "path";
 import { resolveEnvRefs, validateConfig } from "@clawctl/types";
-import type { InstanceConfig } from "@clawctl/types";
+import type { InstanceConfig, VMConfig } from "@clawctl/types";
 
-// Re-export pure functions for convenience
-export { validateConfig, configToVMConfig, sanitizeConfig, formatZodError, expandTilde } from "@clawctl/types";
+// Re-export validateConfig from types for convenience
+export { validateConfig } from "@clawctl/types";
+
+/** Convert InstanceConfig to VMConfig with defaults applied. */
+export function configToVMConfig(config: InstanceConfig): VMConfig {
+  const vm: VMConfig = {
+    vmName: config.name,
+    projectDir: config.project,
+    cpus: config.resources?.cpus ?? 4,
+    memory: config.resources?.memory ?? "8GiB",
+    disk: config.resources?.disk ?? "50GiB",
+  };
+  if (config.mounts && config.mounts.length > 0) {
+    vm.extraMounts = config.mounts;
+  }
+  return vm;
+}
+
+/** Strip secrets and one-time fields from config for persistence as clawctl.json. */
+export function sanitizeConfig(config: InstanceConfig): Record<string, unknown> {
+  const clone = JSON.parse(JSON.stringify(config)) as Record<string, unknown>;
+
+  // provider.apiKey
+  if (clone.provider && typeof clone.provider === "object") {
+    delete (clone.provider as Record<string, unknown>).apiKey;
+  }
+
+  // network.gatewayToken, network.tailscale.authKey
+  if (clone.network && typeof clone.network === "object") {
+    const net = clone.network as Record<string, unknown>;
+    delete net.gatewayToken;
+    if (net.tailscale && typeof net.tailscale === "object") {
+      delete (net.tailscale as Record<string, unknown>).authKey;
+    }
+  }
+
+  // services.onePassword.serviceAccountToken
+  if (clone.services && typeof clone.services === "object") {
+    const svc = clone.services as Record<string, unknown>;
+    if (svc.onePassword && typeof svc.onePassword === "object") {
+      delete (svc.onePassword as Record<string, unknown>).serviceAccountToken;
+    }
+  }
+
+  // telegram.botToken
+  if (clone.telegram && typeof clone.telegram === "object") {
+    delete (clone.telegram as Record<string, unknown>).botToken;
+  }
+
+  // bootstrap (one-time action)
+  delete clone.bootstrap;
+
+  return clone;
+}
+
+/** Format a zod error into a readable message with field path. */
+export function formatZodError(error: import("zod").ZodError): string {
+  const issue = error.issues[0];
+  const path = issue.path.join(".");
+
+  // Use custom messages (from .min() / .refine()) when they look specific
+  if (issue.message && !issue.message.startsWith("Invalid input:")) {
+    return issue.message;
+  }
+
+  // Build a path-based message for generic zod errors
+  if (path) {
+    return `'${path}': ${issue.message}`;
+  }
+  return issue.message;
+}
+
+/** Expand leading ~ to the user's home directory. */
+export function expandTilde(path: string): string {
+  if (path.startsWith("~/") || path === "~") {
+    return resolve(homedir(), path.slice(2));
+  }
+  return path;
+}
 
 /** Read and validate a JSON config file. */
 export async function loadConfig(path: string): Promise<InstanceConfig> {

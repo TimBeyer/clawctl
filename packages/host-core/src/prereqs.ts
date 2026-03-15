@@ -1,7 +1,14 @@
 import os from "os";
-import type { PrereqStatus } from "@clawctl/types";
 import { commandExists } from "./exec.js";
 import type { VMDriver } from "./drivers/types.js";
+
+export interface PrereqStatus {
+  isMacOS: boolean;
+  isArm64: boolean;
+  hasHomebrew: boolean;
+  hasVMBackend: boolean;
+  vmBackendVersion?: string;
+}
 
 /** Check all host prerequisites: macOS, arm64, Homebrew, VM backend. */
 export async function checkPrereqs(driver: VMDriver): Promise<PrereqStatus> {

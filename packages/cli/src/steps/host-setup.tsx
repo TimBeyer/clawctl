@@ -4,8 +4,8 @@ import { StepIndicator } from "../components/step-indicator.js";
 import { ProcessOutput } from "../components/process-output.js";
 import { useVerbose } from "../hooks/verbose-context.js";
 import { useProcessLogs } from "../hooks/use-process-logs.js";
-import type { PrereqStatus } from "@clawctl/types";
 import type { VMDriver } from "@clawctl/host-core";
+import type { PrereqStatus } from "../types.js";
 
 interface HostSetupProps {
   driver: VMDriver;

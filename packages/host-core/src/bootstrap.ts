@@ -2,7 +2,8 @@ import { randomBytes } from "crypto";
 import { mkdir } from "fs/promises";
 import { join } from "path";
 import type { VMDriver, OnLine } from "./drivers/types.js";
-import { buildOnboardCommand, GATEWAY_PORT } from "@clawctl/types";
+import { GATEWAY_PORT } from "@clawctl/types";
+import { buildOnboardCommand } from "./providers.js";
 import { patchMainConfig, patchAuthProfiles } from "./infra-secrets.js";
 import {
   generateSecretManagementSkill,

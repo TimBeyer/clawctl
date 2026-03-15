@@ -1,5 +1,10 @@
-import { getInstance, writeLocalContext, writeGlobalContext, resolveInstance } from "@clawctl/host-core";
-import { BIN_NAME } from "@clawctl/types";
+import {
+  getInstance,
+  writeLocalContext,
+  writeGlobalContext,
+  resolveInstance,
+} from "@clawctl/host-core";
+import { BIN_NAME } from "@clawctl/host-core";
 
 const SOURCE_LABELS: Record<string, string> = {
   flag: "--instance flag",

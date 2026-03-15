@@ -1,3 +1,6 @@
+// Bin name
+export { BIN_NAME } from "./bin-name.js";
+
 // Drivers
 export { LimaDriver } from "./drivers/index.js";
 export type { VMDriver, VMCreateOptions, ExecResult, OnLine } from "./drivers/types.js";
@@ -5,7 +8,7 @@ export type { VMDriver, VMCreateOptions, ExecResult, OnLine } from "./drivers/ty
 // Exec
 export { exec, execStream, execWithLogs, commandExists } from "./exec.js";
 
-// Config (I/O + re-exports of pure functions from @clawctl/types)
+// Config
 export {
   loadConfig,
   validateConfig,
@@ -34,19 +37,28 @@ export type { ProvisionCallbacks } from "./provision.js";
 export { verifyProvisioning } from "./verify.js";
 export type { VerifyResult } from "./verify.js";
 
+// Providers
+export { buildOnboardCommand } from "./providers.js";
+
 // Bootstrap
 export { bootstrapOpenclaw } from "./bootstrap.js";
 export type { BootstrapResult } from "./bootstrap.js";
 
 // Prerequisites
 export { checkPrereqs } from "./prereqs.js";
+export type { PrereqStatus } from "./prereqs.js";
 
 // Credentials
 export { setupOnePassword, setupTailscale, connectTailscaleInteractive } from "./credentials.js";
 export type { OpResult, TailscaleResult } from "./credentials.js";
 
 // Secrets sync
-export { sanitizeKey, buildInfraSecrets, syncSecretsToVM, writeEnvSecrets } from "./secrets-sync.js";
+export {
+  sanitizeKey,
+  buildInfraSecrets,
+  syncSecretsToVM,
+  writeEnvSecrets,
+} from "./secrets-sync.js";
 
 // Infra secrets
 export { patchMainConfig, patchAuthProfiles } from "./infra-secrets.js";

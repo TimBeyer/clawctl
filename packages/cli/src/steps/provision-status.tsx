@@ -4,8 +4,9 @@ import { StepIndicator } from "../components/step-indicator.js";
 import { LogOutput } from "../components/log-output.js";
 import { useVerbose } from "../hooks/verbose-context.js";
 import { useProcessLogs } from "../hooks/use-process-logs.js";
-import type { VMConfig, ProvisioningStep } from "@clawctl/types";
+import type { VMConfig } from "@clawctl/types";
 import type { VMDriver } from "@clawctl/host-core";
+import type { ProvisioningStep } from "../types.js";
 import { verifyProvisioning } from "@clawctl/host-core";
 
 interface ProvisionStatusProps {

@@ -2,8 +2,7 @@
 
 import { Command } from "commander";
 import pkg from "../../../package.json";
-import { LimaDriver } from "@clawctl/host-core";
-import { BIN_NAME } from "@clawctl/types";
+import { LimaDriver, BIN_NAME } from "@clawctl/host-core";
 import {
   runCreateHeadless,
   runCreateWizard,

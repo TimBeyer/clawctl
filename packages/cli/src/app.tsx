@@ -10,8 +10,9 @@ import { Finish } from "./steps/finish.js";
 import { Onboard } from "./steps/onboard.js";
 import { useVerboseMode } from "./hooks/use-verbose-mode.js";
 import { VerboseContext } from "./hooks/verbose-context.js";
-import type { WizardStep, VMConfig, PrereqStatus, CredentialConfig } from "@clawctl/types";
+import type { VMConfig } from "@clawctl/types";
 import type { VMDriver } from "@clawctl/host-core";
+import type { WizardStep, PrereqStatus, CredentialConfig } from "./types.js";
 
 const PROCESS_STEPS: WizardStep[] = ["host-setup", "create-vm", "provision", "credentials"];
 

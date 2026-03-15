@@ -3,7 +3,13 @@ import { findSecretRefs, setNestedValue } from "@clawctl/types";
 
 // Re-export pure functions for convenience
 export type { SecretRef, ResolvedSecretRef } from "@clawctl/types";
-export { findSecretRefs, hasOpRefs, resolveEnvRefs, getNestedValue, setNestedValue } from "@clawctl/types";
+export {
+  findSecretRefs,
+  hasOpRefs,
+  resolveEnvRefs,
+  getNestedValue,
+  setNestedValue,
+} from "@clawctl/types";
 
 /**
  * Resolve op:// references by calling `op read` in the VM via shellExec.

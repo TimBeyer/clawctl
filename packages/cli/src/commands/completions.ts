@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import type { VMDriver } from "@clawctl/host-core";
 import { requireInstance } from "@clawctl/host-core";
-import { BIN_NAME } from "@clawctl/types";
+import { BIN_NAME } from "@clawctl/host-core";
 import { generateBashCompletion, generateZshCompletion } from "@clawctl/templates";
 
 const OC_CACHE_DIR = join(homedir(), ".config", "clawctl");
