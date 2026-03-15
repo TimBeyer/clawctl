@@ -71,10 +71,16 @@ packages/
   surface. The host CLI invokes it via `driver.exec()`, never by generating shell
   scripts. See `docs/vm-cli.md` for the full architecture.
 - Tool wrappers in `packages/vm-cli/src/tools/` — one module per system tool,
-  plain functions (not classes). Provision commands import and compose them.
+  plain functions (not classes). Provision stages import and compose them.
 - **Operational functions** (`apt.install()`, `systemd.enable()`) throw on failure.
   **Provision functions** (`apt.ensure()`, `homebrew.provision()`) catch errors and
   return `ProvisionResult` with `status: "failed"`.
+- Provisioning stages are declarative `ProvisionStage` constants (a list of named
+  steps with `run` functions). A shared `runStage()` handles logging, result
+  collection, and ok/fail output. See `packages/vm-cli/src/commands/provision/stages.ts`.
+- Doctor checks declare `availableAfter: LifecyclePhase` to classify failures as
+  warnings or errors based on how far provisioning has progressed. The `--after`
+  flag tells doctor which phase has been reached.
 - The `claw` binary is compiled with `bun run build:claw` and deployed into the VM
   at `/usr/local/bin/claw` during provisioning.
 

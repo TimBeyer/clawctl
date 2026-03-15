@@ -96,7 +96,7 @@ export async function install(packages: string[]): Promise<void> {
 }
 ```
 
-**Provision functions** are what orchestrators call. They check current
+**Provision functions** are what stages call. They check current
 state, act if needed, catch errors, and return a `ProvisionResult`:
 
 ```typescript
@@ -137,15 +137,15 @@ in the desired state), `"failed"` (error caught and returned).
 
 Tools can use each other. For example, `openclaw.provisionGatewayStub()`
 internally calls `systemd.isEnabled()`, `systemd.daemonReload()`,
-`systemd.enable()`, and `fs.ensureDir()`. The orchestrator doesn't need
-to know these details:
+`systemd.enable()`, and `fs.ensureDir()`. The stage definition doesn't
+need to know these details:
 
 ```typescript
-// commands/provision/openclaw.ts — the orchestrator
-steps.push(await openclaw.provision());
-steps.push(await openclaw.provisionEnvVars());
-steps.push(await openclaw.provisionNpmGlobalPath());
-steps.push(await openclaw.provisionGatewayStub());
+// commands/provision/openclaw.ts — the stage
+{ name: "openclaw", label: "OpenClaw", run: () => openclaw.provision() },
+{ name: "env-vars", label: "Environment variables", run: () => openclaw.provisionEnvVars() },
+{ name: "npm-global-path", label: "npm-global PATH", run: () => openclaw.provisionNpmGlobalPath() },
+{ name: "gateway-stub", label: "Gateway service stub", run: () => openclaw.provisionGatewayStub() },
 ```
 
 ### Provisioning stages
@@ -188,7 +188,7 @@ The runner produces numbered, structured output:
 
 1. Create `tools/<tool>.ts` with operational functions + a `provision()`
    function that returns `ProvisionResult`.
-2. Import it in the appropriate orchestrator
+2. Import it in the appropriate stage definition
    (`commands/provision/system.ts`, `tools.ts`, or `openclaw.ts`).
 3. If `doctor.ts` should check for it, use the tool's `isInstalled()`
    or other query functions there.

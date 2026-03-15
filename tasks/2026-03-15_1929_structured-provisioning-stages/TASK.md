@@ -65,6 +65,7 @@ with lifecycle-phase-based classification via `availableAfter` +
 ## Outcome
 
 Delivered all planned items:
+
 - Lifecycle phases (`LIFECYCLE_PHASES`, `LifecyclePhase`, `phaseReached()`) in `@clawctl/types`
 - `ProvisionStage` type + `runStage()` runner eliminates orchestrator boilerplate
 - Three orchestrators converted to declarative stage constants

@@ -18,7 +18,7 @@ User runs CLI
   -> limactl create (downloads Ubuntu image, boots VM)
   -> Deploy claw binary into VM
   -> Host invokes claw provision {system,tools,openclaw} --json inside VM
-  -> Host invokes claw doctor --json to verify
+  -> Host invokes claw doctor --json --after provision-openclaw to verify
   -> Optional credential setup (1Password token, Tailscale auth)
   -> OpenClaw onboarding (interactive, runs inside VM via limactl shell)
   -> Register instance + write clawctl.json
@@ -30,7 +30,7 @@ User runs CLI
 ```
 Load JSON config -> check prereqs -> install Lima if missing
   -> create VM -> deploy claw binary -> claw provision (system/tools/openclaw)
-  -> claw doctor (verify) -> setup 1Password? -> connect Tailscale?
+  -> claw doctor --after provision-openclaw (verify) -> setup 1Password? -> connect Tailscale?
   -> bootstrap openclaw? (if provider configured)
   -> Register instance + write clawctl.json
   -> Done
@@ -96,8 +96,8 @@ packages/
       exec.ts              execa wrapper for guest-side commands
       output.ts            JSON envelope helpers (log, ok, fail)
       commands/
-        provision/         Thin orchestrators (system.ts, tools.ts, openclaw.ts)
-        doctor.ts          Health checks (mounts, env, PATH, services)
+        provision/         Declarative stages (system.ts, tools.ts, openclaw.ts) + runner (stages.ts)
+        doctor.ts          Health checks with lifecycle-based warnings
         checkpoint.ts      Signal host to commit data changes
       tools/               One module per system tool
         types.ts           ProvisionResult interface
@@ -124,14 +124,16 @@ host CLI invokes it via `driver.exec()`:
 
 ```
 driver.exec(vmName, "sudo claw provision system --json")
-driver.exec(vmName, "claw doctor --json")
+driver.exec(vmName, "claw doctor --json --after provision-openclaw")
 ```
 
 This gives us the same language and type system on both sides of the VM
 boundary. Provisioning logic is testable TypeScript, errors are returned
 as structured JSON instead of parsed from log output, and every operation
 is idempotent by construction (each tool module checks current state
-before acting).
+before acting). Doctor checks declare which lifecycle phase they require
+(`availableAfter`), so the host can distinguish expected warnings from
+real failures based on how far provisioning has progressed.
 
 The `claw` binary is compiled with `bun run build:claw` (linux-arm64)
 and deployed during the provisioning sequence. In development,
