@@ -10,7 +10,7 @@
 const SHARED = {
   format: "esm",
   minify: true,
-  sourcemap: "linked",
+  sourcemap: "inline",
   bytecode: true,
 } as const;
 
