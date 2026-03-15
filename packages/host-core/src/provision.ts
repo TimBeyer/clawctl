@@ -1,13 +1,11 @@
 import { access, mkdir, writeFile } from "fs/promises";
 import { constants } from "fs";
-import { join, resolve } from "path";
+import { join } from "path";
 import type { VMConfig, ProvisionConfig } from "@clawctl/types";
 import { CLAW_BIN_PATH, PROVISION_CONFIG_FILE } from "@clawctl/types";
 import type { VMDriver, VMCreateOptions, OnLine } from "./drivers/types.js";
 import { initGitRepo } from "./git.js";
-
-/** Resolve the claw binary path from the monorepo root (host-core/src/ → ../../.. → dist/claw). */
-const DEFAULT_CLAW_BINARY = resolve(import.meta.dir, "..", "..", "..", "dist", "claw");
+import { clawPath } from "./claw-binary.js";
 
 export interface ProvisionFeatures {
   onePassword: boolean;
@@ -93,7 +91,7 @@ export async function provisionVM(
   config: VMConfig,
   callbacks: ProvisionCallbacks = {},
   createOptions: VMCreateOptions = {},
-  clawBinaryPath: string = DEFAULT_CLAW_BINARY,
+  clawBinaryPath: string = clawPath,
   features: ProvisionFeatures = { onePassword: false, tailscale: false },
 ): Promise<void> {
   const { onPhase, onStep, onLine } = callbacks;

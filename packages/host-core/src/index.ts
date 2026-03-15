@@ -33,6 +33,9 @@ export type { SecretRef, ResolvedSecretRef } from "./secrets.js";
 export { provisionVM } from "./provision.js";
 export type { ProvisionCallbacks, ProvisionFeatures } from "./provision.js";
 
+// Claw binary (embedded asset in compiled mode, direct path in dev mode)
+export { clawPath } from "./claw-binary.js";
+
 // Verify
 export { verifyProvisioning } from "./verify.js";
 export type { VerifyResult } from "./verify.js";
