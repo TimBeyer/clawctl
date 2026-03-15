@@ -1,6 +1,6 @@
 # Fix `claw` binary bundling into `clawctl`
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -21,13 +21,13 @@ binary self-contained — no sibling `dist/claw` file needed.
 
 ## Steps
 
-- [ ] Create `claw-binary.ts`
-- [ ] Update `provision.ts`
-- [ ] Add re-export to `index.ts`
-- [ ] Fix `build:release` script
-- [ ] Commit task + plan
-- [ ] Commit implementation
-- [ ] Verify lint/format
+- [x] Create `claw-binary.ts`
+- [x] Update `provision.ts`
+- [x] Add re-export to `index.ts`
+- [x] Fix `build:release` script
+- [x] Commit task + plan
+- [x] Commit implementation
+- [x] Verify lint/format
 
 ## Notes
 
@@ -39,4 +39,11 @@ binary self-contained — no sibling `dist/claw` file needed.
 
 ## Outcome
 
-_To be written on resolution._
+All four changes delivered as planned:
+
+1. **`claw-binary.ts`** — isolated module with `import ... with { type: "file" }` for the claw binary
+2. **`provision.ts`** — removed `import.meta.dir` + `resolve` path hack, uses `clawPath` from the embedded import; cleaned up unused `resolve` import
+3. **`index.ts`** — re-exports `clawPath` for consumers that need to reference or override
+4. **`package.json`** — `build:release` now runs `build:claw` first so the asset exists at bundle time
+
+Lint and format pass clean. No changes needed to callers (`headless.ts`, `create-vm.tsx`) since they pass `undefined` for `clawBinaryPath` and get the default.
