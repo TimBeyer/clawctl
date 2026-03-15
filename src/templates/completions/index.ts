@@ -1,2 +1,1 @@
-export { generateBashCompletion } from "./bash.js";
-export { generateZshCompletion } from "./zsh.js";
+export { generateBashCompletion, generateZshCompletion } from "@clawctl/templates";
