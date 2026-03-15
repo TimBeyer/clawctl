@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.9.1](https://github.com/TimBeyer/clawctl/compare/v0.9.0...v0.9.1) (2026-03-15)
+
+
+### Bug Fixes
+
+* drop --minify and --bytecode from clawctl builds ([694677d](https://github.com/TimBeyer/clawctl/commit/694677dbc578fec9d06cf07c606fdfbeb9928ebe))
+* embed claw binary into clawctl using Bun asset imports ([3ced543](https://github.com/TimBeyer/clawctl/commit/3ced543638d95cf9492301655ef23985b6b783b8))
+* materialize embedded claw binary to temp file for limactl ([504d96b](https://github.com/TimBeyer/clawctl/commit/504d96bfdd7a707e95d546a78ede2cb2a00997b9))
+* use --format=esm to enable all production build flags ([941d3d1](https://github.com/TimBeyer/clawctl/commit/941d3d1e97a6dab4eab995924cd10dd925ac80ce)), closes [oven-sh/bun#14412](https://github.com/oven-sh/bun/issues/14412)
+* use inline sourcemaps for compiled binaries ([1b584c7](https://github.com/TimBeyer/clawctl/commit/1b584c7812994eb0faf6dd7a79390b508859cf0e))
+
 # [0.9.0](https://github.com/TimBeyer/clawctl/compare/v0.8.0...v0.9.0) (2026-03-15)
 
 
