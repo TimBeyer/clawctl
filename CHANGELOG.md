@@ -1,5 +1,23 @@
 # Changelog
 
+# [0.12.0](https://github.com/TimBeyer/clawctl/compare/v0.11.2...v0.12.0) (2026-03-16)
+
+
+### Bug Fixes
+
+* only run daemon tasks for Running instances ([14a239c](https://github.com/TimBeyer/clawctl/commit/14a239cbd4244ece2bc136a698abd8b8fdbe4c21))
+* remove extra space in daemon log level formatting ([654a294](https://github.com/TimBeyer/clawctl/commit/654a29409dc8d905cd92312c04a7b8549a65df50))
+
+
+### Features
+
+* add @clawctl/daemon package with background process management ([460467f](https://github.com/TimBeyer/clawctl/commit/460467f1a6fcf8a1194deceb6d86114a8cdaf0a8))
+* per-instance daemon task config overrides ([45528c5](https://github.com/TimBeyer/clawctl/commit/45528c51b322ac06c67f9e18167f3787a46b4e33))
+* show build hash in daemon status output ([cabac73](https://github.com/TimBeyer/clawctl/commit/cabac73a30e66842755dca34601930e1707073e3))
+* show dev mode indicator in daemon status ([a720b70](https://github.com/TimBeyer/clawctl/commit/a720b7034d8a5af0b450e567165f94ecd83d8cb8))
+* use content hash for daemon staleness detection ([6092925](https://github.com/TimBeyer/clawctl/commit/6092925c60102478a8f8d340944a21130e370a12))
+* write default daemon.json on first run ([47a82f5](https://github.com/TimBeyer/clawctl/commit/47a82f5d0430b35eb894d44a994b3311ff71c24b))
+
 ## [0.11.2](https://github.com/TimBeyer/clawctl/compare/v0.11.1...v0.11.2) (2026-03-16)
 
 ## [0.11.1](https://github.com/TimBeyer/clawctl/compare/v0.11.0...v0.11.1) (2026-03-16)
