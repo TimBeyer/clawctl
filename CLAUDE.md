@@ -29,7 +29,7 @@ lifecycle (VM, networking, credentials); OpenClaw manages the agents inside.
 
 ## Workspace Structure
 
-Bun workspaces monorepo with six packages:
+Bun workspaces monorepo with seven packages:
 
 ```
 packages/
@@ -37,6 +37,7 @@ packages/
   templates/      @clawctl/templates     — Pure script/config generators (string in → string out)
   capabilities/   @clawctl/capabilities  — Capability definitions, runner, state tracking
   host-core/      @clawctl/host-core     — Host-side VM management library (drivers, exec, provision)
+  daemon/         @clawctl/daemon        — Background daemon (IPC, scheduler, tasks)
   cli/            @clawctl/cli           — Host CLI (commands + Ink wizard UI)
   vm-cli/         @clawctl/vm-cli        — Guest CLI (claw) — runs inside the VM
 ```
@@ -48,6 +49,8 @@ packages/
 - `packages/cli/src/steps/` — wizard step components (each self-contained, calls onComplete)
 - `packages/cli/src/components/` — reusable UI components (spinner, progress, log output)
 - `packages/host-core/src/` — non-UI logic (drivers, exec, provision, registry)
+- `packages/daemon/src/` — background daemon (IPC server/client, scheduler, tasks)
+- `packages/daemon/src/tasks/` — daemon task implementations (checkpoint-watch, health-monitor)
 - `packages/capabilities/src/` — capability definitions (CapabilityDef modules) and runner
 - `packages/vm-cli/bin/claw.ts` — guest CLI entry point (compiled to binary, deployed into VM)
 - `packages/vm-cli/src/capabilities/` — capability registry and CapabilityContext implementation

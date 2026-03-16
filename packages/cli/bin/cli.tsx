@@ -19,7 +19,14 @@ import {
   runCompletions,
   runCompletionsUpdateOc,
   runWatch,
+  runDaemonStart,
+  runDaemonStop,
+  runDaemonRestart,
+  runDaemonStatus,
+  runDaemonLogs,
+  runDaemonRun,
 } from "../src/commands/index.js";
+import { ensureDaemon } from "@clawctl/daemon";
 
 const driver = new LimaDriver();
 
@@ -61,6 +68,7 @@ program
   .description("Show detailed info for an instance")
   .option("-i, --instance <name>", "Instance to target")
   .action(async (name: string | undefined, opts: { instance?: string }) => {
+    await ensureDaemon({ currentVersion: pkg.version });
     await runStatus(driver, { instance: opts.instance ?? name });
   });
 
@@ -69,6 +77,7 @@ program
   .description("Start a stopped instance")
   .option("-i, --instance <name>", "Instance to target")
   .action(async (name: string | undefined, opts: { instance?: string }) => {
+    await ensureDaemon({ currentVersion: pkg.version });
     await runStart(driver, { instance: opts.instance ?? name });
   });
 
@@ -77,6 +86,7 @@ program
   .description("Stop a running instance")
   .option("-i, --instance <name>", "Instance to target")
   .action(async (name: string | undefined, opts: { instance?: string }) => {
+    await ensureDaemon({ currentVersion: pkg.version });
     await runStop(driver, { instance: opts.instance ?? name });
   });
 
@@ -85,6 +95,7 @@ program
   .description("Restart an instance with health checks")
   .option("-i, --instance <name>", "Instance to target")
   .action(async (name: string | undefined, opts: { instance?: string }) => {
+    await ensureDaemon({ currentVersion: pkg.version });
     await runRestart(driver, { instance: opts.instance ?? name });
   });
 
@@ -94,6 +105,7 @@ program
   .option("-i, --instance <name>", "Instance to target")
   .option("--purge", "Also remove the project directory")
   .action(async (name: string | undefined, opts: { instance?: string; purge?: boolean }) => {
+    await ensureDaemon({ currentVersion: pkg.version });
     await runDelete(driver, { instance: opts.instance ?? name, purge: opts.purge });
   });
 
@@ -117,6 +129,7 @@ program
         instanceName = undefined;
       }
     }
+    await ensureDaemon({ currentVersion: pkg.version });
     await runShell(
       driver,
       { instance: opts.instance ?? instanceName },
@@ -140,6 +153,7 @@ program
   .allowUnknownOption()
   .passThroughOptions()
   .action(async (args: string[], opts: { instance?: string }) => {
+    await ensureDaemon({ currentVersion: pkg.version });
     await runOpenclaw(driver, opts, args);
   });
 
@@ -157,7 +171,57 @@ program
   .option("-i, --instance <name>", "Instance to target")
   .option("--poll", "Use polling instead of fs.watch (for virtiofs quirks)")
   .action(async (name: string | undefined, opts: { instance?: string; poll?: boolean }) => {
-    await runWatch({ instance: opts.instance ?? name, poll: opts.poll });
+    await runWatch({
+      instance: opts.instance ?? name,
+      poll: opts.poll,
+      currentVersion: pkg.version,
+    });
+  });
+
+const daemonCmd = program.command("daemon").description("Manage the background daemon");
+
+daemonCmd
+  .command("start")
+  .description("Start the background daemon")
+  .action(async () => {
+    await runDaemonStart();
+  });
+
+daemonCmd
+  .command("stop")
+  .description("Stop the running daemon")
+  .action(async () => {
+    await runDaemonStop();
+  });
+
+daemonCmd
+  .command("restart")
+  .description("Stop and restart the daemon")
+  .action(async () => {
+    await runDaemonRestart();
+  });
+
+daemonCmd
+  .command("status")
+  .description("Show daemon status, watched instances, and task states")
+  .action(async () => {
+    await runDaemonStatus();
+  });
+
+daemonCmd
+  .command("logs")
+  .description("Show recent daemon log lines")
+  .option("-f, --follow", "Tail logs (follow mode)")
+  .option("-n, --lines <count>", "Number of lines to show", "50")
+  .action(async (opts: { follow?: boolean; lines?: string }) => {
+    await runDaemonLogs({ follow: opts.follow, lines: parseInt(opts.lines ?? "50", 10) });
+  });
+
+daemonCmd
+  .command("run", { hidden: true })
+  .description("Run daemon in foreground (internal)")
+  .action(async () => {
+    await runDaemonRun();
   });
 
 const completionsCmd = program.command("completions").description("Shell completion scripts");

@@ -1,0 +1,14 @@
+{
+  "name": "@clawctl/daemon",
+  "version": "0.7.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "dependencies": {
+    "@clawctl/types": "workspace:*",
+    "@clawctl/host-core": "workspace:*"
+  }
+}

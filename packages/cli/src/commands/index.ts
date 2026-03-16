@@ -11,3 +11,11 @@ export { runOpenclaw } from "./openclaw.js";
 export { runUse } from "./use.js";
 export { runCompletions, runCompletionsUpdateOc } from "./completions.js";
 export { runWatch } from "./watch.js";
+export {
+  runDaemonStart,
+  runDaemonStop,
+  runDaemonRestart,
+  runDaemonStatus,
+  runDaemonLogs,
+  runDaemonRun,
+} from "./daemon.js";

@@ -9,6 +9,7 @@
   "dependencies": {
     "@clawctl/types": "workspace:*",
     "@clawctl/host-core": "workspace:*",
+    "@clawctl/daemon": "workspace:*",
     "@clawctl/templates": "workspace:*",
     "commander": "^14.0.3",
     "ink": "^6.0.0",

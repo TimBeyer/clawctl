@@ -1,6 +1,6 @@
 # clawctl Daemon Package (`@clawctl/daemon`)
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -11,6 +11,7 @@ tick-based task scheduler for periodic work (checkpoint watching, health
 monitoring).
 
 **In scope:**
+
 - New `packages/daemon/` package with IPC server/client, lifecycle management,
   task scheduler, structured logging
 - Checkpoint watch task (ported from `cli/commands/watch.ts`)
@@ -20,6 +21,7 @@ monitoring).
 - Update `clawctl watch` to delegate to daemon when running
 
 **Out of scope:**
+
 - Launchd/systemd service generation
 - Auto-upgrade, log aggregation, notifications (future tasks)
 - Desktop notifications
@@ -42,24 +44,24 @@ monitoring).
 ## Steps
 
 - [x] Create task + branch
-- [ ] Package scaffolding
-- [ ] Paths and config modules
-- [ ] Structured logging with rotation
-- [ ] PID file and lifecycle management
-- [ ] IPC server (Unix socket, NDJSON)
-- [ ] IPC client
-- [ ] Task types and scheduler
-- [ ] Task registry
-- [ ] Checkpoint watch task
-- [ ] Health monitor task
-- [ ] Daemon run entry point
-- [ ] Package index exports
-- [ ] CLI daemon commands
-- [ ] Wire daemon commands into cli.tsx
-- [ ] Auto-start (ensureDaemon) in instance commands
-- [ ] Watch command delegation
-- [ ] Update CLAUDE.md and docs
-- [ ] Verify: lint, format, type-check
+- [x] Package scaffolding
+- [x] Paths and config modules
+- [x] Structured logging with rotation
+- [x] PID file and lifecycle management
+- [x] IPC server (Unix socket, NDJSON)
+- [x] IPC client
+- [x] Task types and scheduler
+- [x] Task registry
+- [x] Checkpoint watch task
+- [x] Health monitor task
+- [x] Daemon run entry point
+- [x] Package index exports
+- [x] CLI daemon commands
+- [x] Wire daemon commands into cli.tsx
+- [x] Auto-start (ensureDaemon) in instance commands
+- [x] Watch command delegation
+- [x] Update CLAUDE.md and docs
+- [x] Verify: lint, format, type-check
 
 ## Notes
 
@@ -72,4 +74,27 @@ monitoring).
 
 ## Outcome
 
-(To be written when resolved)
+Delivered the full `@clawctl/daemon` package with:
+
+- **13 source files** in `packages/daemon/src/` covering IPC server/client,
+  lifecycle management (PID file, spawn, stop, ensureDaemon with version
+  upgrade), tick-based task scheduler, structured NDJSON logging with rotation,
+  daemon config loading, and two tasks.
+- **Checkpoint watch task** — ported from `cli/commands/watch.ts` with identical
+  logic (fs.watch + polling fallback, nested .git guard, git add/commit/cleanup).
+- **Health monitor task** — polls `driver.status()` per-instance, detects
+  transitions, logs warnings on unexpected stops, optional `autoRestart`.
+- **CLI commands** — `daemon start/stop/restart/status/logs/run` wired into
+  `cli.tsx` as a subcommand group. `run` is hidden (internal).
+- **Auto-start** — `ensureDaemon()` added to 7 instance-targeting commands
+  (start, stop, status, restart, delete, shell, openclaw). Silent by default.
+- **Watch migration** — `clawctl watch` delegates to daemon when running,
+  starts daemon if not running, falls back to foreground mode on failure.
+- **Documentation** — `docs/daemon.md`, updated `docs/architecture.md` and
+  `CLAUDE.md` workspace structure.
+
+**Deferred:**
+- Unit tests for scheduler, IPC protocol, lifecycle (should be added before
+  shipping to production)
+- Integration test (start daemon, send IPC, stop)
+- Launchd service generation
