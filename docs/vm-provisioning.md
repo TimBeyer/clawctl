@@ -5,8 +5,8 @@ inside the VM. It's driven by the `claw` binary — a compiled TypeScript
 CLI deployed into the VM during setup. The host CLI invokes it via
 `driver.exec()` and gets structured JSON results back.
 
-For the full architecture of the internal CLI and its tool abstraction
-layer, see `docs/vm-cli.md`.
+For the guest CLI architecture, see `docs/vm-cli.md`. For the capability
+extension system that drives provisioning, see `docs/capabilities.md`.
 
 ## Provisioning sequence
 
@@ -78,18 +78,18 @@ not an error.
 
 ## Idempotency
 
-Every tool module checks current state before acting:
+Every capability step checks current state before acting. Steps receive
+a `CapabilityContext` SDK and return a `ProvisionResult`:
 
-- `apt.isInstalled(pkg)` checks `dpkg -l` before installing
-- `node.isInstalled()` + `node.version()` checks before running NodeSource
-- `homebrew.isInstalled()` checks before running the installer
-- `systemd.isEnabled(service)` checks before writing the unit file
-- `openclaw.isInstalled()` checks before running the installer
+- **`unchanged`** — already in the desired state (idempotent skip)
+- **`installed`** — something changed
+- **`failed`** — error caught and returned
 
-A provision function returns `{ status: "unchanged" }` if everything is
-already in place, `{ status: "installed" }` if it made changes, or
-`{ status: "failed" }` if something went wrong. Re-running provisioning
-on an already-provisioned VM is a fast no-op.
+Re-running provisioning on an already-provisioned VM is a fast no-op.
+The runner also tracks installed capability versions in
+`data/capability-state.json` and supports migrations when a capability's
+declared version changes. See `docs/capabilities.md` for the
+CapabilityContext SDK and step function patterns.
 
 ## Verification (`claw doctor`)
 
@@ -149,8 +149,8 @@ packages. On first run this can take several minutes.
 `NONINTERACTIVE=1` ensures it does not prompt.
 
 **1Password CLI version**: The version is pinned in
-`packages/vm-cli/src/tools/op-cli.ts`. To update, change `OP_VERSION`
-there, rebuild `claw`, and re-provision.
+`packages/capabilities/src/capabilities/one-password/op-cli.ts`. To
+update, change `OP_VERSION` there, rebuild `claw`, and re-provision.
 
 **Gateway service not active**: This is expected after provisioning.
 The stub service runs `/bin/true` and exits immediately. The real

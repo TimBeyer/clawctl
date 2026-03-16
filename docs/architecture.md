@@ -69,6 +69,19 @@ are `cli/` (host-side) and `vm-cli/` (guest-side):
 packages/
   types/                   Shared types, schemas, constants
   templates/               Lima config generators (lima-yaml.ts)
+  capabilities/            Capability definitions + runner
+    src/
+      capabilities/        Individual capability modules
+        system-base/       APT packages, Node.js, systemd linger
+        homebrew/          Homebrew + shell profile
+        openclaw/          OpenClaw CLI + gateway stub
+        one-password/      1Password CLI + skills + AGENTS.md section
+        checkpoint.ts      Checkpoint skill + AGENTS.md section
+        tailscale.ts       Tailscale installer
+      runner.ts            Phase runner (executes resolved hooks)
+      state.ts             State tracking (capability-state.json)
+      util.ts              Hook key parsing
+      index.ts             Public exports
   host-core/               Host-side library
     src/
       drivers/             VM backend abstraction
@@ -95,22 +108,21 @@ packages/
     src/
       exec.ts              execa wrapper for guest-side commands
       output.ts            JSON envelope helpers (log, ok, fail)
+      capabilities/
+        registry.ts        Static capability registry + dependency resolution
+        context.ts         CapabilityContext implementation (wires to vm-cli tools)
       commands/
-        provision/         Declarative stages (system.ts, tools.ts, openclaw.ts) + runner (stages.ts)
+        provision/         Provision subcommands (delegates to capability runner)
         doctor.ts          Health checks with lifecycle-based warnings
         checkpoint.ts      Signal host to commit data changes
-      tools/               One module per system tool
+      tools/               System primitives backing CapabilityContext
         types.ts           ProvisionResult interface
-        apt.ts             apt-get operations
-        systemd.ts         systemctl + loginctl operations
-        node.ts            Node.js via NodeSource
-        tailscale.ts       Tailscale installer
-        homebrew.ts        Homebrew (Linuxbrew)
-        op-cli.ts          1Password CLI arm64 binary
-        openclaw.ts        OpenClaw CLI + gateway stub
         fs.ts              File system helpers (ensureLineInFile, ensureDir)
         curl.ts            Download helpers
         shell-profile.ts   Login profile management
+        systemd.ts         systemctl + loginctl operations
+        openclaw.ts        OpenClaw CLI queries (isInstalled, version, doctor)
+        provision-config.ts  Provision config reader
 ```
 
 ## Key Design Decisions
@@ -130,8 +142,8 @@ driver.exec(vmName, "claw doctor --json --after provision-openclaw")
 This gives us the same language and type system on both sides of the VM
 boundary. Provisioning logic is testable TypeScript, errors are returned
 as structured JSON instead of parsed from log output, and every operation
-is idempotent by construction (each tool module checks current state
-before acting). Doctor checks declare which lifecycle phase they require
+is idempotent by construction (capabilities check current state before
+acting). Doctor checks declare which lifecycle phase they require
 (`availableAfter`), so the host can distinguish expected warnings from
 real failures based on how far provisioning has progressed.
 
@@ -139,8 +151,8 @@ The `claw` binary is compiled with `bun run build:claw` (linux-arm64)
 and deployed during the provisioning sequence. In development,
 `bin/clawctl-dev` auto-builds it before running the host CLI.
 
-See `docs/vm-cli.md` for the full architecture of the guest CLI and its
-tool abstraction layer.
+See `docs/vm-cli.md` for the guest CLI architecture and
+`docs/capabilities.md` for the capability extension system.
 
 ### vz virtualization backend
 

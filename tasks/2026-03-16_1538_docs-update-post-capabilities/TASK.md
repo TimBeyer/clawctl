@@ -1,6 +1,6 @@
 # Docs Update: Post-Capabilities Refactoring + Agent Skills
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -20,16 +20,29 @@ or adding new capabilities.
 
 ## Steps
 
-- [ ] Update CLAUDE.md (six packages, capabilities package, rewrite claw conventions)
-- [ ] Update docs/architecture.md (directory tree, tool abstraction references)
-- [ ] Update docs/vm-cli.md (remove tool abstraction section, add system primitives)
-- [ ] Update docs/vm-provisioning.md (capabilities references, idempotency, 1Password path)
-- [ ] Update docs/project-directory.md (capability-state.json, provisioning section)
-- [ ] Update docs/capabilities.md (add Agent Skills section)
-- [ ] Create .agents/skills/ with four skill directories + SKILL.md + symlinks
-- [ ] Grep for stale references
-- [ ] Run format check
+- [x] Update CLAUDE.md (six packages, capabilities package, rewrite claw conventions)
+- [x] Update docs/architecture.md (directory tree, tool abstraction references)
+- [x] Update docs/vm-cli.md (remove tool abstraction section, add system primitives)
+- [x] Update docs/vm-provisioning.md (capabilities references, idempotency, 1Password path)
+- [x] Update docs/project-directory.md (capability-state.json, provisioning section)
+- [x] Update docs/capabilities.md (add Agent Skills section)
+- [x] Create .agents/skills/ with four skill directories + SKILL.md + symlinks
+- [x] Grep for stale references
+- [x] Run format check
+- [x] Fix bonus stale refs in docs/troubleshooting.md and docs/cli-wizard-flow.md
 
 ## Notes
 
+- Also caught stale references in `docs/troubleshooting.md` (op-cli.ts path)
+  and `docs/cli-wizard-flow.md` (homebrew.ts path) that weren't in the original
+  plan. Fixed them since they were easy wins.
+
 ## Outcome
+
+- Updated 8 docs files to replace all references to deleted tool modules,
+  old stages pattern, and "five packages" with current capabilities-based
+  architecture
+- Added Agent Skills section to capabilities.md
+- Created 4 Agent Skills in `.agents/skills/` with SKILL.md files following
+  the Agent Skills spec, plus symlinks to canonical docs
+- All formatting passes, no stale references remain in docs/

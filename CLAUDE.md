@@ -29,15 +29,16 @@ lifecycle (VM, networking, credentials); OpenClaw manages the agents inside.
 
 ## Workspace Structure
 
-Bun workspaces monorepo with five packages:
+Bun workspaces monorepo with six packages:
 
 ```
 packages/
-  types/        @clawctl/types       — Shared types, schemas, constants, pure functions
-  templates/    @clawctl/templates   — Pure script/config generators (string in → string out)
-  host-core/    @clawctl/host-core   — Host-side VM management library (drivers, exec, provision)
-  cli/          @clawctl/cli         — Host CLI (commands + Ink wizard UI)
-  vm-cli/       @clawctl/vm-cli      — Guest CLI (claw) — runs inside the VM
+  types/          @clawctl/types         — Shared types, schemas, constants, pure functions
+  templates/      @clawctl/templates     — Pure script/config generators (string in → string out)
+  capabilities/   @clawctl/capabilities  — Capability definitions, runner, state tracking
+  host-core/      @clawctl/host-core     — Host-side VM management library (drivers, exec, provision)
+  cli/            @clawctl/cli           — Host CLI (commands + Ink wizard UI)
+  vm-cli/         @clawctl/vm-cli        — Guest CLI (claw) — runs inside the VM
 ```
 
 ### Key Directories
@@ -47,8 +48,9 @@ packages/
 - `packages/cli/src/steps/` — wizard step components (each self-contained, calls onComplete)
 - `packages/cli/src/components/` — reusable UI components (spinner, progress, log output)
 - `packages/host-core/src/` — non-UI logic (drivers, exec, provision, registry)
+- `packages/capabilities/src/` — capability definitions (CapabilityDef modules) and runner
 - `packages/vm-cli/bin/claw.ts` — guest CLI entry point (compiled to binary, deployed into VM)
-- `packages/vm-cli/src/tools/` — typed wrappers for system tools (apt, systemd, node, etc.)
+- `packages/vm-cli/src/capabilities/` — capability registry and CapabilityContext implementation
 - `packages/vm-cli/src/commands/` — guest CLI commands (provision, doctor, checkpoint)
 - `packages/templates/src/` — template generators, one file per generated artifact
 - `packages/types/src/` — shared types, schemas, constants
@@ -69,16 +71,18 @@ packages/
 
 - `claw` is both the agent's management CLI and the VM's installer. All VM-side
   setup — system packages, tools, OpenClaw, workspace skills — is provisioned
-  through `claw` stages. The host deploys the binary and invokes stages; `claw`
-  does the work inside the VM. See `docs/vm-cli.md` for the full architecture.
-- Tool wrappers in `packages/vm-cli/src/tools/` — one module per system tool,
-  plain functions (not classes). Provision stages import and compose them.
-- **Operational functions** (`apt.install()`, `systemd.enable()`) throw on failure.
-  **Provision functions** (`apt.ensure()`, `homebrew.provision()`) catch errors and
-  return `ProvisionResult` with `status: "failed"`.
-- Provisioning stages are declarative constants, not imperative functions — see
-  `stages.ts` for the pattern. Doctor checks use lifecycle phases (`availableAfter`)
-  rather than hardcoded `warn` flags.
+  through **capabilities**. The host deploys the binary and invokes provisioning
+  phases; `claw` delegates to the capability runner. See `docs/capabilities.md`
+  for the extension system and `docs/vm-cli.md` for the guest CLI architecture.
+- Capabilities are declared in `packages/capabilities/src/capabilities/` as
+  `CapabilityDef` modules. Each capability hooks into lifecycle phases and
+  receives a `CapabilityContext` SDK for system access.
+- Remaining tool modules in `packages/vm-cli/src/tools/` (`curl.ts`, `fs.ts`,
+  `systemd.ts`, `shell-profile.ts`, `openclaw.ts`) back the `CapabilityContext`
+  implementation — capabilities use them indirectly via the context, not by
+  direct import.
+- Doctor checks are declared on capabilities via `doctorChecks` and use
+  lifecycle phases (`availableAfter`) rather than hardcoded `warn` flags.
 - The `claw` binary is compiled with `bun run build:claw` and deployed into the VM
   at `/usr/local/bin/claw` during provisioning.
 

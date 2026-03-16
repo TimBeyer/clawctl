@@ -282,3 +282,22 @@ hooks. These integrate with `claw doctor` and follow the same
 warning if its phase hasn't been reached yet, an error otherwise.
 
 See `docs/vm-cli.md` for the full doctor checks table.
+
+## Agent Skills (SKILL.md files)
+
+Capabilities can install **Agent Skills** — structured instructions that
+coding agents discover and load on demand. Skills follow the
+[Agent Skills specification](https://agentskills.io/specification) and
+live in the workspace's `.agents/skills/` directory.
+
+A skill is a directory containing a `SKILL.md` file (YAML frontmatter +
+Markdown body) plus optional `references/`, `scripts/`, and `assets/`
+subdirectories. Agents load only the `name` and `description` at startup;
+the full body and referenced files are loaded when the skill is activated.
+
+Existing capability-installed skills:
+
+- **`checkpoint`** (`checkpoint.ts`) — installs the checkpoint skill
+  into the workspace during `provision-workspace`
+- **`one-password`** (`one-password/skill.ts`) — installs the 1Password
+  skill with wrapper scripts during `provision-tools`
