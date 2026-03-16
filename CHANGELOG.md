@@ -1,5 +1,12 @@
 # Changelog
 
+# [0.11.0](https://github.com/TimBeyer/clawctl/compare/v0.10.0...v0.11.0) (2026-03-16)
+
+
+### Features
+
+* add agent skills for developer documentation ([453ccdb](https://github.com/TimBeyer/clawctl/commit/453ccdb82803a38a316b062cd4872879eac72c52))
+
 # [0.10.0](https://github.com/TimBeyer/clawctl/compare/v0.9.1...v0.10.0) (2026-03-16)
 
 
