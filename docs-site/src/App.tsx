@@ -145,34 +145,42 @@ function CopyButton({ text }: { text: string }) {
 // Sections
 // ---------------------------------------------------------------------------
 
+function Divider() {
+  return (
+    <div className="max-w-xs mx-auto h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
+  );
+}
+
 function Nav() {
   return (
-    <nav className="relative z-10 flex items-center justify-between px-6 py-5 max-w-6xl mx-auto">
-      <span className="font-display font-bold text-lg tracking-tight text-white select-none">
-        clawctl
-      </span>
-      <div className="flex items-center gap-6">
-        <a
-          href="https://github.com/TimBeyer/clawctl#readme"
-          className="text-sm text-slate-400 hover:text-accent transition-colors"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Docs
-        </a>
-        <a
-          href="https://github.com/TimBeyer/clawctl"
-          className="text-sm text-slate-300 hover:text-white transition-colors inline-flex items-center gap-1.5"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-          </svg>
-          GitHub
-        </a>
-      </div>
-    </nav>
+    <div className="nav-sticky">
+      <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+        <span className="font-display font-bold text-lg tracking-tight text-white select-none">
+          clawctl
+        </span>
+        <div className="flex items-center gap-6">
+          <a
+            href="https://github.com/TimBeyer/clawctl#readme"
+            className="text-sm text-slate-400 hover:text-accent transition-colors"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Docs
+          </a>
+          <a
+            href="https://github.com/TimBeyer/clawctl"
+            className="text-sm text-slate-300 hover:text-white transition-colors inline-flex items-center gap-1.5"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+            </svg>
+            GitHub
+          </a>
+        </div>
+      </nav>
+    </div>
   );
 }
 
@@ -537,48 +545,24 @@ function ManagementDemo() {
       <FadeIn delay={80}>
         <div className="max-w-2xl mx-auto">
           <Terminal title="~">
-            <div className="space-y-4 text-slate-300">
-              <div>
-                <div className="text-slate-500 text-xs mb-1 select-none">
-                  # set your default instance once
+            <div className="grid text-slate-300 gap-y-1" style={{ gridTemplateColumns: "auto 1fr" }}>
+              {[
+                ["clawctl use research-ai", "set default instance"],
+                ["clawctl oc doctor", "health check"],
+                ["clawctl restart", "fix what's stuck"],
+                ["clawctl create", "spin up another"],
+                ["clawctl delete staging", "clean up"],
+              ].map(([cmd, comment]) => (
+                <div key={cmd} className="grid grid-cols-subgrid col-span-2">
+                  <span className="whitespace-nowrap">
+                    <Prompt />
+                    <span className="text-slate-200">{cmd}</span>
+                  </span>
+                  <span className="text-slate-600 whitespace-nowrap pl-8">
+                    # {comment}
+                  </span>
                 </div>
-                <Prompt />
-                <span className="text-slate-200">
-                  clawctl use research-ai
-                </span>
-              </div>
-
-              <div>
-                <div className="text-slate-500 text-xs mb-1 select-none">
-                  # health check — no need to shell in
-                </div>
-                <Prompt />
-                <span className="text-slate-200">clawctl oc doctor</span>
-              </div>
-
-              <div>
-                <div className="text-slate-500 text-xs mb-1 select-none">
-                  # restart a misbehaving gateway
-                </div>
-                <Prompt />
-                <span className="text-slate-200">clawctl restart</span>
-              </div>
-
-              <div>
-                <div className="text-slate-500 text-xs mb-1 select-none">
-                  # spin up another gateway for a different project
-                </div>
-                <Prompt />
-                <span className="text-slate-200">clawctl create</span>
-              </div>
-
-              <div>
-                <div className="text-slate-500 text-xs mb-1 select-none">
-                  # tear it down when done — project dir stays by default
-                </div>
-                <Prompt />
-                <span className="text-slate-200">clawctl delete staging</span>
-              </div>
+              ))}
             </div>
           </Terminal>
         </div>
@@ -661,17 +645,24 @@ export default function App() {
       {/* Background layers */}
       <div className="fixed inset-0 bg-dots pointer-events-none" />
       <div className="fixed inset-0 bg-glow-hero pointer-events-none" />
+      <div className="noise-overlay" />
 
       <Nav />
       <Hero />
 
+      <Divider />
+
       <div className="bg-glow-mid">
         <FleetDemo />
+        <Divider />
         <Features />
       </div>
 
+      <Divider />
       <ConfigSection />
+      <Divider />
       <ManagementDemo />
+      <Divider />
       <FinalCTA />
       <Footer />
     </div>
