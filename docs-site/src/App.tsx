@@ -70,9 +70,7 @@ function Terminal({
           <span className="terminal-dot bg-[#febc2e]" />
           <span className="terminal-dot bg-[#28c840]" />
           {title && (
-            <span className="ml-2 text-xs text-slate-500 font-mono select-none">
-              {title}
-            </span>
+            <span className="ml-2 text-xs text-slate-500 font-mono select-none">{title}</span>
           )}
         </div>
         {copyText && <CopyButton text={copyText} />}
@@ -206,20 +204,21 @@ function Hero() {
           >
             OpenClaw
           </a>{" "}
-          gateway in its own isolated Ubuntu VM. Set up in minutes. Manage a
-          fleet from your terminal.
+          gateway in its own isolated Ubuntu VM. Set up in minutes. Manage a fleet from your
+          terminal.
         </p>
       </FadeIn>
 
       <FadeIn delay={160}>
         <div className="mt-12 max-w-4xl mx-auto text-left">
-          <Terminal title="~" copyText="curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash">
+          <Terminal
+            title="~"
+            copyText="curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash"
+          >
             <div className="text-slate-300">
               <Prompt />
               <span className="text-slate-200">
-                curl -fsSL
-                https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh
-                | bash
+                curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
               </span>
             </div>
             <div className="text-slate-300 mt-1">
@@ -229,9 +228,7 @@ function Hero() {
             </div>
           </Terminal>
         </div>
-        <p className="mt-5 text-sm text-slate-500">
-          Requires macOS on Apple Silicon.
-        </p>
+        <p className="mt-5 text-sm text-slate-500">Requires macOS on Apple Silicon.</p>
       </FadeIn>
     </section>
   );
@@ -246,8 +243,7 @@ function FleetDemo() {
             Your fleet, at a glance
           </h2>
           <p className="mt-3 text-slate-400 text-lg max-w-xl mx-auto">
-            Every instance is its own isolated VM. See them all with one
-            command.
+            Every instance is its own isolated VM. See them all with one command.
           </p>
         </div>
       </FadeIn>
@@ -260,30 +256,22 @@ function FleetDemo() {
           </div>
           <div className="whitespace-pre mt-3">
             <div className="text-slate-500">
-              {
-                "NAME           STATUS   PROJECT                       PROVIDER   PORT"
-              }
+              {"NAME           STATUS   PROJECT                       PROVIDER   PORT"}
             </div>
             <div className="text-slate-300">
               {"research-ai    "}
               <span className="text-green">Running</span>
-              {
-                "  ~/openclaw-vms/research-ai    anthropic  18789"
-              }
+              {"  ~/openclaw-vms/research-ai    anthropic  18789"}
             </div>
             <div className="text-slate-300">
               {"code-review    "}
               <span className="text-green">Running</span>
-              {
-                "  ~/openclaw-vms/code-review    openai     18790"
-              }
+              {"  ~/openclaw-vms/code-review    openai     18790"}
             </div>
             <div className="text-slate-300">
               {"data-pipeline  "}
               <span className="text-red">Stopped</span>
-              {
-                "  ~/openclaw-vms/data-pipeline  anthropic  18791"
-              }
+              {"  ~/openclaw-vms/data-pipeline  anthropic  18791"}
             </div>
           </div>
         </Terminal>
@@ -326,9 +314,7 @@ function Features() {
               <h3 className="font-display font-bold text-xl text-white mb-3 tracking-tight">
                 {f.title}
               </h3>
-              <p className="text-slate-400 text-[15px] leading-relaxed">
-                {f.description}
-              </p>
+              <p className="text-slate-400 text-[15px] leading-relaxed">{f.description}</p>
             </div>
           </FadeIn>
         ))}
@@ -363,31 +349,24 @@ function ConfigSection() {
               Headless provisioning
             </h2>
             <p className="mt-4 text-slate-400 text-lg leading-relaxed">
-              One JSON file. Full gateway. No prompts. VM resources, networking,
-              provider, agent persona, channels — everything in one config you
-              can check into git.
+              One JSON file. Full gateway. No prompts. VM resources, networking, provider, agent
+              persona, channels — everything in one config you can check into git.
             </p>
             <div className="mt-6 space-y-3 text-[15px]">
               <div className="flex items-start gap-3">
-                <span className="text-accent mt-0.5 shrink-0 font-mono text-sm">
-                  //
-                </span>
+                <span className="text-accent mt-0.5 shrink-0 font-mono text-sm">//</span>
                 <span className="text-slate-400">
                   Share configs across your team for identical environments
                 </span>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-accent mt-0.5 shrink-0 font-mono text-sm">
-                  //
-                </span>
+                <span className="text-accent mt-0.5 shrink-0 font-mono text-sm">//</span>
                 <span className="text-slate-400">
                   Run in CI/CD for fully automated provisioning
                 </span>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-accent mt-0.5 shrink-0 font-mono text-sm">
-                  //
-                </span>
+                <span className="text-accent mt-0.5 shrink-0 font-mono text-sm">//</span>
                 <span className="text-slate-400">
                   Same config rebuilds an identical gateway every time
                 </span>
@@ -398,9 +377,7 @@ function ConfigSection() {
               <Terminal title="~">
                 <div className="text-slate-300">
                   <Prompt />
-                  <span className="text-slate-200">
-                    clawctl create --config hal.json
-                  </span>
+                  <span className="text-slate-200">clawctl create --config hal.json</span>
                 </div>
               </Terminal>
             </div>
@@ -450,16 +427,18 @@ function highlightJsonLine(line: string): ReactNode {
   // Tokenize the rest
   while (remaining.length > 0) {
     // Key-value pair: "key": value
-    const kvMatch = remaining.match(
-      /^("(?:[^"\\]|\\.)*")\s*:\s*(.*)/,
-    );
+    const kvMatch = remaining.match(/^("(?:[^"\\]|\\.)*")\s*:\s*(.*)/);
     if (kvMatch) {
       parts.push(
         <span key={key++} className="text-accent">
           {kvMatch[1]}
         </span>,
       );
-      parts.push(<span key={key++} className="text-slate-500">{": "}</span>);
+      parts.push(
+        <span key={key++} className="text-slate-500">
+          {": "}
+        </span>,
+      );
       remaining = kvMatch[2];
       continue;
     }
@@ -501,7 +480,7 @@ function highlightJsonLine(line: string): ReactNode {
     }
 
     // Brackets, commas, colons — punctuation
-    const punctMatch = remaining.match(/^([{}\[\],:])(.*)/);
+    const punctMatch = remaining.match(/^([{}[\],:])(.*)/);
     if (punctMatch) {
       parts.push(
         <span key={key++} className="text-slate-500">
@@ -545,7 +524,10 @@ function ManagementDemo() {
       <FadeIn delay={80}>
         <div className="max-w-2xl mx-auto">
           <Terminal title="~">
-            <div className="grid text-slate-300 gap-y-1" style={{ gridTemplateColumns: "auto 1fr" }}>
+            <div
+              className="grid text-slate-300 gap-y-1"
+              style={{ gridTemplateColumns: "auto 1fr" }}
+            >
               {[
                 ["clawctl use research-ai", "set default instance"],
                 ["clawctl oc doctor", "health check"],
@@ -558,9 +540,7 @@ function ManagementDemo() {
                     <Prompt />
                     <span className="text-slate-200">{cmd}</span>
                   </span>
-                  <span className="text-slate-600 whitespace-nowrap pl-8">
-                    # {comment}
-                  </span>
+                  <span className="text-slate-600 whitespace-nowrap pl-8"># {comment}</span>
                 </div>
               ))}
             </div>
@@ -583,13 +563,14 @@ function FinalCTA() {
         </p>
 
         <div className="mt-10 max-w-4xl mx-auto text-left">
-          <Terminal title="~" copyText="curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash">
+          <Terminal
+            title="~"
+            copyText="curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash"
+          >
             <div className="text-slate-300">
               <Prompt />
               <span className="text-slate-200">
-                curl -fsSL
-                https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh
-                | bash
+                curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
               </span>
             </div>
             <div className="text-slate-300 mt-1">
@@ -608,9 +589,7 @@ function Footer() {
   return (
     <footer className="relative z-10 border-t border-border">
       <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-        <span className="font-display font-bold text-slate-400 tracking-tight">
-          clawctl
-        </span>
+        <span className="font-display font-bold text-slate-400 tracking-tight">clawctl</span>
         <div className="flex items-center gap-6">
           <a
             href="https://github.com/TimBeyer/clawctl"

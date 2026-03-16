@@ -44,11 +44,7 @@ body {
 
 /* Background layers */
 .bg-dots {
-  background-image: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.04) 1px,
-    transparent 1px
-  );
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 32px 32px;
 }
 
@@ -124,11 +120,7 @@ body {
   gap: 8px;
   padding: 8px 12px 8px 16px;
   border-bottom: 1px solid var(--color-border);
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.02),
-    transparent
-  );
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent);
 }
 
 .terminal-dot {
@@ -168,12 +160,7 @@ body {
   left: 24px;
   right: 24px;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--color-accent),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
