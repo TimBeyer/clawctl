@@ -13,7 +13,12 @@ export {
 
 // Config
 export { loadDaemonConfig } from "./config.js";
-export type { DaemonConfig } from "./config.js";
+export type {
+  DaemonConfig,
+  TasksConfig,
+  CheckpointTaskConfig,
+  HealthMonitorTaskConfig,
+} from "./config.js";
 
 // Paths
 export {

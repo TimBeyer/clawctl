@@ -1,12 +1,14 @@
 import type { RegistryEntry } from "@clawctl/host-core";
 import { loadRegistry, listInstances, type VMDriver } from "@clawctl/host-core";
 import type { DaemonTask, DaemonTaskContext } from "./tasks/types.js";
-import type { DaemonConfig } from "./config.js";
+import type { DaemonConfig, TasksConfig } from "./config.js";
+import { loadInstanceTaskConfig, resolveTaskConfig } from "./config.js";
 import { writeLog } from "./logging.js";
 
 interface ActiveTask {
   task: DaemonTask;
   instance?: RegistryEntry;
+  tasksConfig: TasksConfig;
   lastRun: number;
 }
 
@@ -47,14 +49,15 @@ export class Scheduler {
     this.stopped = false;
 
     // Start global tasks
+    const globalTasksConfig = this.config.tasks ?? {};
     for (const task of this.tasks) {
       if (task.scope === "global") {
-        if (this.isTaskDisabled(task.name)) continue;
+        if (!this.isTaskEnabled(task.name, globalTasksConfig)) continue;
         const key = this.taskKey(task.name);
         const ctx = this.makeContext(task.name);
         try {
           await task.start(ctx);
-          this.activeTasks.set(key, { task, lastRun: 0 });
+          this.activeTasks.set(key, { task, tasksConfig: globalTasksConfig, lastRun: 0 });
           await writeLog("info", `Started global task: ${task.label}`, {
             task: task.name,
           });
@@ -84,22 +87,22 @@ export class Scheduler {
     }, 1000);
   }
 
-  private isTaskDisabled(taskName: string): boolean {
+  private isTaskEnabled(taskName: string, tasksConfig: TasksConfig): boolean {
     if (taskName === "checkpoint-watch") {
-      return this.config.tasks?.checkpoint?.enabled === false;
+      return tasksConfig.checkpoint?.enabled !== false;
     }
     if (taskName === "health-monitor") {
-      return this.config.tasks?.healthMonitor?.enabled === false;
+      return tasksConfig.healthMonitor?.enabled !== false;
     }
-    return false;
+    return true;
   }
 
-  private getTaskInterval(task: DaemonTask): number {
+  private getTaskInterval(task: DaemonTask, tasksConfig: TasksConfig): number {
     if (task.name === "checkpoint-watch") {
-      return this.config.tasks?.checkpoint?.pollIntervalMs ?? task.intervalMs;
+      return tasksConfig.checkpoint?.pollIntervalMs ?? task.intervalMs;
     }
     if (task.name === "health-monitor") {
-      return this.config.tasks?.healthMonitor?.intervalMs ?? task.intervalMs;
+      return tasksConfig.healthMonitor?.intervalMs ?? task.intervalMs;
     }
     return task.intervalMs;
   }
@@ -132,12 +135,20 @@ export class Scheduler {
 
     const runningNames = new Set(runningInstances.map((i) => i.name));
 
-    // Start tasks for newly-running instances
+    // Load per-instance config overrides and start tasks
+    const instanceConfigs = new Map<string, TasksConfig>();
+    for (const instance of runningInstances) {
+      const override = await loadInstanceTaskConfig(instance.projectDir);
+      instanceConfigs.set(instance.name, resolveTaskConfig(this.config, override));
+    }
+
     for (const task of this.tasks) {
       if (task.scope !== "per-instance") continue;
-      if (this.isTaskDisabled(task.name)) continue;
 
       for (const instance of runningInstances) {
+        const tasksConfig = instanceConfigs.get(instance.name)!;
+        if (!this.isTaskEnabled(task.name, tasksConfig)) continue;
+
         const key = this.taskKey(task.name, instance.name);
         if (!this.activeTasks.has(key)) {
           const freshTask = this.createFreshTask(task);
@@ -147,6 +158,7 @@ export class Scheduler {
             this.activeTasks.set(key, {
               task: freshTask,
               instance,
+              tasksConfig,
               lastRun: 0,
             });
             await writeLog("info", `Started task for instance`, {
@@ -203,7 +215,7 @@ export class Scheduler {
     const now = Date.now();
 
     for (const [_key, active] of this.activeTasks) {
-      const interval = this.getTaskInterval(active.task);
+      const interval = this.getTaskInterval(active.task, active.tasksConfig);
       if (now - active.lastRun < interval) continue;
 
       active.lastRun = now;

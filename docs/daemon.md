@@ -64,7 +64,9 @@ daemon is an older version, it's stopped and restarted with the current CLI.
 
 ## Configuration
 
-Optional file at `~/.config/clawctl/daemon.json`:
+### Global config: `~/.config/clawctl/daemon.json`
+
+Written automatically on first run with all defaults:
 
 ```json
 {
@@ -72,18 +74,41 @@ Optional file at `~/.config/clawctl/daemon.json`:
   "logLevel": "info",
   "tasks": {
     "checkpoint": {
+      "enabled": true,
       "pollIntervalMs": 2000
     },
     "healthMonitor": {
-      "intervalMs": 60000,
+      "enabled": true,
+      "intervalMs": 10000,
       "autoRestart": false
     }
   }
 }
 ```
 
-All fields are optional. Defaults: all tasks enabled, `autoRestart: false`
-(log-only), auto-watch all registered instances.
+### Per-instance overrides: `<projectDir>/clawctl.json`
+
+Add a `daemon` key to the existing `clawctl.json` in any project directory.
+Same shape as the `tasks` section above — instance settings override global:
+
+```json
+{
+  "name": "my-agent",
+  "project": "~/openclaw-vms/my-agent",
+  "daemon": {
+    "healthMonitor": {
+      "autoRestart": true,
+      "intervalMs": 5000
+    }
+  }
+}
+```
+
+Resolution order: **instance clawctl.json > daemon.json > defaults**.
+
+This lets you keep `autoRestart: false` globally but enable it for
+a specific production agent, or use a faster poll interval for a
+particular instance.
 
 ## IPC Protocol
 

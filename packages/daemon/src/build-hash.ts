@@ -19,7 +19,7 @@ export function isDevMode(): boolean {
 export async function computeBuildHash(): Promise<string> {
   if (!isDevMode()) {
     // Compiled binary — hash the binary itself
-    const binary = await readFile(execPath);
+    const binary = await readFile(process.execPath);
     return createHash("sha256").update(binary).digest("hex").slice(0, 12);
   }
 
