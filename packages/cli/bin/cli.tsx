@@ -18,7 +18,6 @@ import {
   runUse,
   runCompletions,
   runCompletionsUpdateOc,
-  runWatch,
   runDaemonStart,
   runDaemonStop,
   runDaemonRestart,
@@ -163,15 +162,6 @@ program
   .option("--global", "Set global context instead of local .clawctl file")
   .action(async (name: string | undefined, opts: { global?: boolean }) => {
     await runUse(name, opts);
-  });
-
-program
-  .command("watch [name]")
-  .description("Watch for checkpoint signals and auto-commit data changes")
-  .option("-i, --instance <name>", "Instance to target")
-  .option("--poll", "Use polling instead of fs.watch (for virtiofs quirks)")
-  .action(async (name: string | undefined, opts: { instance?: string; poll?: boolean }) => {
-    await runWatch({ instance: opts.instance ?? name, poll: opts.poll });
   });
 
 const daemonCmd = program.command("daemon").description("Manage the background daemon");
