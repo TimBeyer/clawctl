@@ -15,13 +15,13 @@ in a single `CapabilityDef` object.
 Capabilities hook into **lifecycle phases**. Each phase corresponds to a
 `claw provision <subcommand>` that the host invokes at the right time:
 
-| Phase                | Subcommand              | Exec context | When                          |
-| -------------------- | ----------------------- | ------------ | ----------------------------- |
-| `provision-system`   | `claw provision system` | root         | System packages, runtime      |
-| `provision-tools`    | `claw provision tools`  | user         | User tools (brew, op)         |
-| `provision-openclaw` | `claw provision openclaw` | user       | OpenClaw install + gateway    |
-| `provision-workspace`| `claw provision workspace` | user      | Skills, workspace files       |
-| `bootstrap`          | `claw provision bootstrap` | user      | Post-onboard (AGENTS.md etc.) |
+| Phase                 | Subcommand                 | Exec context | When                          |
+| --------------------- | -------------------------- | ------------ | ----------------------------- |
+| `provision-system`    | `claw provision system`    | root         | System packages, runtime      |
+| `provision-tools`     | `claw provision tools`     | user         | User tools (brew, op)         |
+| `provision-openclaw`  | `claw provision openclaw`  | user         | OpenClaw install + gateway    |
+| `provision-workspace` | `claw provision workspace` | user         | Skills, workspace files       |
+| `bootstrap`           | `claw provision bootstrap` | user         | Post-onboard (AGENTS.md etc.) |
 
 The `bootstrap` phase runs after `openclaw onboard` completes. This is
 where capabilities write AGENTS.md sections — the onboard step creates
@@ -82,14 +82,16 @@ export const myTool: CapabilityDef = {
   name: "my-tool",
   label: "My Tool",
   version: "1.0.0",
-  core: false,                       // true = always enabled
-  dependsOn: ["homebrew"],           // runs after homebrew in same phase
-  enabled: (config) =>               // when to activate (non-core only)
-    "my-tool" in (config.capabilities ?? {}),
+  core: false, // true = always enabled
+  dependsOn: ["homebrew"], // runs after homebrew in same phase
+  enabled: (
+    config, // when to activate (non-core only)
+  ) => "my-tool" in (config.capabilities ?? {}),
 
   hooks: {
-    "provision-tools": {              // hook key = phase or pre:/post: phase
-      execContext: "user",            // "root" or "user"
+    "provision-tools": {
+      // hook key = phase or pre:/post: phase
+      execContext: "user", // "root" or "user"
       steps: [
         {
           name: "my-tool-install",
@@ -100,7 +102,8 @@ export const myTool: CapabilityDef = {
           },
         },
       ],
-      doctorChecks: [                 // optional health checks
+      doctorChecks: [
+        // optional health checks
         {
           name: "path-my-tool",
           availableAfter: "provision-tools",
@@ -110,7 +113,8 @@ export const myTool: CapabilityDef = {
         },
       ],
     },
-    bootstrap: {                      // post-onboard AGENTS.md section
+    bootstrap: {
+      // post-onboard AGENTS.md section
       execContext: "user",
       steps: [
         {
@@ -164,16 +168,16 @@ rather than throwing.
 The context provides a sandboxed interface to system tools. Capabilities
 never import vm-cli internals directly — they use the context:
 
-| Category  | Methods |
-| --------- | ------- |
-| Exec      | `exec(cmd, args?, opts?)`, `commandExists(cmd)`, `log(msg)` |
+| Category  | Methods                                                                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Exec      | `exec(cmd, args?, opts?)`, `commandExists(cmd)`, `log(msg)`                                                                                |
 | Files     | `fs.readFile`, `fs.writeFile`, `fs.mkdir`, `fs.chmod`, `fs.rename`, `fs.rm`, `fs.stat`, `fs.access`, `fs.ensureLineInFile`, `fs.ensureDir` |
-| Network   | `net.downloadFile(url, dest)`, `net.downloadAndRun(url, args?)` |
-| Profile   | `profile.ensureInBashrc(line)`, `profile.ensureInProfile(line)`, `profile.ensurePath(entry)` |
-| APT       | `apt.install(packages)`, `apt.isInstalled(pkg)` |
-| systemd   | `systemd.enable`, `systemd.isEnabled`, `systemd.isActive`, `systemd.daemonReload`, `systemd.enableLinger`, `systemd.findDefaultUser` |
-| AGENTS.md | `agentsMd.update(owner, content)` |
-| Config    | `readProvisionConfig()` |
+| Network   | `net.downloadFile(url, dest)`, `net.downloadAndRun(url, args?)`                                                                            |
+| Profile   | `profile.ensureInBashrc(line)`, `profile.ensureInProfile(line)`, `profile.ensurePath(entry)`                                               |
+| APT       | `apt.install(packages)`, `apt.isInstalled(pkg)`                                                                                            |
+| systemd   | `systemd.enable`, `systemd.isEnabled`, `systemd.isActive`, `systemd.daemonReload`, `systemd.enableLinger`, `systemd.findDefaultUser`       |
+| AGENTS.md | `agentsMd.update(owner, content)`                                                                                                          |
+| Config    | `readProvisionConfig()`                                                                                                                    |
 
 ### AGENTS.md managed sections
 
@@ -184,9 +188,11 @@ with markers:
 
 ```markdown
 <!-- BEGIN MANAGED SECTION: my-tool -->
+
 ### My Tool
 
 Usage instructions for the agent...
+
 <!-- END MANAGED SECTION: my-tool -->
 ```
 
@@ -256,14 +262,14 @@ If no migration path exists, the runner falls through to re-provision
 
 ## Core vs optional capabilities
 
-| Capability    | Core | Enabled when                      |
-| ------------- | ---- | --------------------------------- |
-| `system-base` | yes  | Always                            |
-| `homebrew`    | yes  | Always                            |
-| `openclaw`    | yes  | Always                            |
-| `checkpoint`  | yes  | Always                            |
-| `tailscale`   | no   | `capabilities.tailscale` in config |
-| `one-password`| no   | `capabilities["one-password"]` in config |
+| Capability     | Core | Enabled when                             |
+| -------------- | ---- | ---------------------------------------- |
+| `system-base`  | yes  | Always                                   |
+| `homebrew`     | yes  | Always                                   |
+| `openclaw`     | yes  | Always                                   |
+| `checkpoint`   | yes  | Always                                   |
+| `tailscale`    | no   | `capabilities.tailscale` in config       |
+| `one-password` | no   | `capabilities["one-password"]` in config |
 
 Core capabilities run on every instance. Optional capabilities are
 activated by the instance config (`provision.json`).
