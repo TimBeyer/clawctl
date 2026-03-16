@@ -49,7 +49,7 @@ Completed fields show with a green checkmark above the current prompt.
 **Component**: `src/steps/host-setup.tsx`
 **Step indicator**: Step 3/8
 
-This step only appears if Lima was not found in Step 1. It runs `brew install lima` via the `installLima()` function in `src/lib/homebrew.ts`.
+This step only appears if Lima was not found in Step 1. It runs `brew install lima` via `installFormula()` from `host-core/src/homebrew.ts`.
 
 **Flow logic**:
 

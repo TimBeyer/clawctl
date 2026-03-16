@@ -17,8 +17,9 @@ This gives us:
 - **Structured output** — every command returns a JSON envelope
   (`{ status, data, errors }`) so the host can programmatically react
   to results instead of parsing log lines.
-- **Idempotent tool wrappers** — each system tool (apt, systemd, node,
-  etc.) has a typed module that checks current state before acting.
+- **Capability-driven provisioning** — provisioning is handled by
+  `CapabilityDef` modules that hook into lifecycle phases. See
+  `docs/capabilities.md` for the extension system.
 - **A health-check surface** — `claw doctor` runs inside the VM with
   full access to the guest filesystem, systemd, and PATH. The host
   calls it to verify provisioning and diagnose issues.
@@ -82,18 +83,14 @@ packages/vm-cli/
         index.ts               Registers provision subcommands (system, tools, openclaw, workspace, bootstrap)
       doctor.ts                Health checks (mounts, env, PATH, services, openclaw)
       checkpoint.ts            Signal host to commit data changes
-    tools/                     One module per system tool
+    tools/                     System primitives backing CapabilityContext
       types.ts                 ProvisionResult interface
       fs.ts                    ensureLineInFile, ensureDir
       curl.ts                  downloadFile, downloadAndRun
       shell-profile.ts         ensureInBashrc, ensureInProfile, ensurePath
-      apt.ts                   isInstalled, update, install, ensure
       systemd.ts               findDefaultUser, enableLinger, isEnabled, isActive, ...
-      node.ts                  isInstalled, version, provision
-      tailscale.ts             isInstalled, provision
-      homebrew.ts              isInstalled, install, provision
-      op-cli.ts                isInstalled, provision
-      openclaw.ts              isInstalled, version, doctor, provision, provisionGatewayStub
+      openclaw.ts              isInstalled, version, doctor
+      provision-config.ts      Provision config reader
 ```
 
 Provisioning logic (what gets installed, in what order) lives in the
@@ -102,126 +99,24 @@ The provision subcommands are thin — they resolve hooks from the
 registry and delegate to the capability runner. See `docs/capabilities.md`
 for the full extension system.
 
-## Tool abstraction layer (`tools/`)
+## System primitives (`tools/`)
 
-Each module in `tools/` wraps all interactions with one system tool.
-Provisioning commands never call `exec()` directly — they compose tool
-functions.
+The remaining modules in `tools/` are low-level system primitives that
+back the `CapabilityContext` implementation. Capabilities access them
+indirectly via the context SDK — not by direct import.
 
-### Two kinds of functions
+| Module                | Purpose                                                   |
+| --------------------- | --------------------------------------------------------- |
+| `types.ts`            | `ProvisionResult` interface                               |
+| `fs.ts`               | `ensureLineInFile`, `ensureDir`                           |
+| `curl.ts`             | `downloadFile`, `downloadAndRun`                          |
+| `shell-profile.ts`    | `ensureInBashrc`, `ensureInProfile`, `ensurePath`         |
+| `systemd.ts`          | systemctl + loginctl operations                           |
+| `openclaw.ts`         | OpenClaw CLI queries (`isInstalled`, `version`, `doctor`) |
+| `provision-config.ts` | Provision config reader                                   |
 
-**Operational functions** are building blocks. They do one thing and
-throw on failure:
-
-```typescript
-// tools/apt.ts
-export async function install(packages: string[]): Promise<void> {
-  const result = await exec("apt-get", ["install", "-y", "-qq", ...packages]);
-  if (result.exitCode !== 0) {
-    throw new Error(`apt-get install failed: ${result.stderr}`);
-  }
-}
-```
-
-**Provision functions** are what stages call. They check current
-state, act if needed, catch errors, and return a `ProvisionResult`:
-
-```typescript
-// tools/apt.ts
-export async function ensure(packages: string[]): Promise<ProvisionResult> {
-  try {
-    const toInstall = [];
-    for (const pkg of packages) {
-      if (!(await isInstalled(pkg))) toInstall.push(pkg);
-    }
-    if (toInstall.length === 0) {
-      return { name: "apt-packages", status: "unchanged" };
-    }
-    await update();
-    await install(toInstall);
-    return { name: "apt-packages", status: "installed" };
-  } catch (err) {
-    return { name: "apt-packages", status: "failed", error: String(err) };
-  }
-}
-```
-
-### ProvisionResult
-
-```typescript
-interface ProvisionResult {
-  name: string;
-  status: "installed" | "unchanged" | "failed";
-  detail?: string;
-  error?: string;
-}
-```
-
-Three states: `"installed"` (something changed), `"unchanged"` (already
-in the desired state), `"failed"` (error caught and returned).
-
-### Cross-tool composition
-
-Tools can use each other. For example, `openclaw.provisionGatewayStub()`
-internally calls `systemd.isEnabled()`, `systemd.daemonReload()`,
-`systemd.enable()`, and `fs.ensureDir()`. The stage definition doesn't
-need to know these details:
-
-```typescript
-// commands/provision/openclaw.ts — the stage
-{ name: "openclaw", label: "OpenClaw", run: () => openclaw.provision() },
-{ name: "env-vars", label: "Environment variables", run: () => openclaw.provisionEnvVars() },
-{ name: "npm-global-path", label: "npm-global PATH", run: () => openclaw.provisionNpmGlobalPath() },
-{ name: "gateway-stub", label: "Gateway service stub", run: () => openclaw.provisionGatewayStub() },
-```
-
-### Provisioning stages
-
-Each provisioning stage is a declarative `ProvisionStage` constant — a
-named list of steps with `run` functions. A shared `runStage()` handles
-all the boilerplate (numbered logging, collecting results, checking
-failures, ok/fail output):
-
-```typescript
-// commands/provision/system.ts
-export const systemStage: ProvisionStage = {
-  name: "system",
-  phase: "provision-system",
-  steps: [
-    { name: "apt-packages", label: "APT packages", run: () => apt.ensure(APT_PACKAGES) },
-    { name: "nodejs", label: "Node.js", run: () => node.provision() },
-    { name: "systemd-linger", label: "systemd linger", run: () => systemd.provisionLinger() },
-    { name: "tailscale", label: "Tailscale", run: () => tailscale.provision() },
-  ],
-};
-```
-
-The runner produces numbered, structured output:
-
-```
-=== system provisioning ===
-[1/4] APT packages
-      ✓ installed — build-essential, git, curl
-[2/4] Node.js
-      ✓ unchanged — v22.22.1
-[3/4] systemd linger
-      ✓ installed — lima
-[4/4] Tailscale
-      ✓ unchanged
-=== system provisioning complete (4 steps) ===
-```
-
-### Adding a new tool
-
-1. Create `tools/<tool>.ts` with operational functions + a `provision()`
-   function that returns `ProvisionResult`.
-2. Import it in the appropriate stage definition
-   (`commands/provision/system.ts`, `tools.ts`, or `openclaw.ts`).
-3. If `doctor.ts` should check for it, use the tool's `isInstalled()`
-   or other query functions there.
-
-Constants (URLs, versions) go in the tool module — not centralized —
-unless they're shared across multiple tools.
+For the provisioning extension system (how to add new tools, define
+hooks, declare doctor checks), see `docs/capabilities.md`.
 
 ## JSON output protocol
 

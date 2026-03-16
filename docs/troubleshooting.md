@@ -75,8 +75,9 @@ prompt — if it appears stuck, give it time.
 
 ### 1Password CLI version
 
-The `op` version is pinned in `src/templates/installers/op-cli.ts`. To update,
-change `OP_VERSION` there and recreate the VM.
+The `op` version is pinned in
+`packages/capabilities/src/capabilities/one-password/op-cli.ts`. To
+update, change `OP_VERSION` there, rebuild `claw`, and re-provision.
 
 ### General provisioning failures
 

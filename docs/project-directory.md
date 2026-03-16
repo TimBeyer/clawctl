@@ -8,6 +8,7 @@ When the CLI runs, it creates a project directory with everything needed to mana
 <projectDir>/
   clawctl.json                   Instance config (sanitized, no secrets)
   data/                          Writable persistent mount (survives VM rebuilds)
+    capability-state.json        Tracks installed capability versions
   .git/                          Git repository
   .gitignore                     Ignores VM images, credentials, .DS_Store
 ```
@@ -78,9 +79,15 @@ clawctl create --config config.json
 
 ## Provisioning
 
-Provisioning scripts are generated from TypeScript templates and written directly into the VM as ephemeral temp files during bootstrap. They are not persisted in the project directory. See [vm-provisioning.md](./vm-provisioning.md) for details on what is installed.
+Provisioning is handled by capabilities — self-contained modules that
+declare what they install, when they run, and what health checks they
+provide. The host deploys the `claw` binary into the VM and invokes
+provisioning phases; capabilities do the work inside the VM.
 
-To add new provisioning steps, modify the template generators in `src/templates/` and recreate the VM.
+Installed capability versions are tracked in `data/capability-state.json`.
+To add new provisioning steps, write a `CapabilityDef` module. See
+[capabilities.md](./capabilities.md) for the extension system and
+[vm-provisioning.md](./vm-provisioning.md) for the provisioning sequence.
 
 ## data/
 
