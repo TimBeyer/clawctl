@@ -1,7 +1,5 @@
 import { exec } from "../exec.js";
-import { log } from "../output.js";
 import { readFile } from "fs/promises";
-import type { ProvisionResult } from "./types.js";
 
 /**
  * Find the default non-root user by reading /etc/passwd.
@@ -61,17 +59,5 @@ export async function enable(service: string): Promise<void> {
   const result = await exec("systemctl", ["--user", "enable", service], { quiet: true });
   if (result.exitCode !== 0) {
     throw new Error(`Failed to enable ${service}: ${result.stderr}`);
-  }
-}
-
-/** Provision systemd linger for the default user. */
-export async function provisionLinger(): Promise<ProvisionResult> {
-  try {
-    const user = await findDefaultUser();
-    await enableLinger(user);
-    log(`systemd linger enabled for ${user}`);
-    return { name: "systemd-linger", status: "installed", detail: user };
-  } catch (err) {
-    return { name: "systemd-linger", status: "failed", error: String(err) };
   }
 }
