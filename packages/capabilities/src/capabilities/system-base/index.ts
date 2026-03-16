@@ -55,17 +55,17 @@ export const systemBase: CapabilityDef = {
         {
           name: "path-claw",
           availableAfter: "vm-created",
-          run: async (ctx) => ({
-            passed: await ctx.commandExists("claw"),
-            error: (await ctx.commandExists("claw")) ? undefined : "claw not found on PATH",
-          }),
+          run: async (ctx) => {
+            const found = await ctx.commandExists("claw");
+            return { passed: found, error: found ? undefined : "claw not found on PATH" };
+          },
         },
         {
           name: "path-node",
-          run: async (ctx) => ({
-            passed: await ctx.commandExists("node"),
-            error: (await ctx.commandExists("node")) ? undefined : "node not found on PATH",
-          }),
+          run: async (ctx) => {
+            const found = await ctx.commandExists("node");
+            return { passed: found, error: found ? undefined : "node not found on PATH" };
+          },
         },
       ],
     },

@@ -26,10 +26,10 @@ export const homebrew: CapabilityDef = {
       doctorChecks: [
         {
           name: "path-brew",
-          run: async (ctx) => ({
-            passed: await ctx.commandExists("brew"),
-            error: (await ctx.commandExists("brew")) ? undefined : "brew not found on PATH",
-          }),
+          run: async (ctx) => {
+            const found = await ctx.commandExists("brew");
+            return { passed: found, error: found ? undefined : "brew not found on PATH" };
+          },
         },
       ],
     },
