@@ -84,7 +84,6 @@ packages/vm-cli/
       doctor.ts                Health checks (mounts, env, PATH, services, openclaw)
       checkpoint.ts            Signal host to commit data changes
     tools/                     System primitives backing CapabilityContext
-      types.ts                 ProvisionResult interface
       fs.ts                    ensureLineInFile, ensureDir
       curl.ts                  downloadFile, downloadAndRun
       shell-profile.ts         ensureInBashrc, ensureInProfile, ensurePath
@@ -107,7 +106,6 @@ indirectly via the context SDK — not by direct import.
 
 | Module                | Purpose                                                   |
 | --------------------- | --------------------------------------------------------- |
-| `types.ts`            | `ProvisionResult` interface                               |
 | `fs.ts`               | `ensureLineInFile`, `ensureDir`                           |
 | `curl.ts`             | `downloadFile`, `downloadAndRun`                          |
 | `shell-profile.ts`    | `ensureInBashrc`, `ensureInProfile`, `ensurePath`         |

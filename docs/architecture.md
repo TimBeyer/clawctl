@@ -116,7 +116,6 @@ packages/
         doctor.ts          Health checks with lifecycle-based warnings
         checkpoint.ts      Signal host to commit data changes
       tools/               System primitives backing CapabilityContext
-        types.ts           ProvisionResult interface
         fs.ts              File system helpers (ensureLineInFile, ensureDir)
         curl.ts            Download helpers
         shell-profile.ts   Login profile management

@@ -3,16 +3,23 @@ import { openSync } from "node:fs";
 import { ReadStream } from "node:tty";
 import { join } from "path";
 import type { VMDriver } from "@clawctl/host-core";
-import { addInstance, getTailscaleHostname, cleanupVM } from "@clawctl/host-core";
+import {
+  addInstance,
+  getTailscaleHostname,
+  cleanupVM,
+  runHeadless,
+  extractGatewayToken,
+  loadRegistry,
+  saveRegistry,
+  BIN_NAME,
+} from "@clawctl/host-core";
 import type { RegistryEntry, CleanupTarget } from "@clawctl/host-core";
 import { GATEWAY_PORT } from "@clawctl/types";
-import { BIN_NAME } from "@clawctl/host-core";
 
 /**
  * Run the headless create path: load config, provision, register.
  */
 export async function runCreateHeadless(driver: VMDriver, configPath: string): Promise<void> {
-  const { runHeadless } = await import("@clawctl/host-core");
   const result = await runHeadless(driver, configPath);
 
   const entry: RegistryEntry = {
@@ -36,7 +43,6 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
   const React = (await import("react")).default;
   const { render } = await import("ink");
   const { App } = await import("../app.js");
-  const { extractGatewayToken } = await import("@clawctl/host-core");
 
   type OnboardResult = {
     action: "onboard";
@@ -210,7 +216,6 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
               console.log("  First tailnet connection requires device approval:");
               console.log(`  ${BIN_NAME} oc devices list`);
               console.log(`  ${BIN_NAME} oc devices approve <requestId>`);
-              const { loadRegistry, saveRegistry } = await import("@clawctl/host-core");
               const registry = await loadRegistry();
               if (registry.instances[vmName]) {
                 registry.instances[vmName].tailscaleUrl = tsBaseUrl;

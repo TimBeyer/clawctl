@@ -17,23 +17,6 @@ describe("useProcessLogs logic", () => {
     expect(lines).toEqual(["first", "second", "third"]);
   });
 
-  test("clear resets the buffer", () => {
-    let lines: string[] = [];
-    const addLine = (line: string) => {
-      lines.push(line);
-    };
-    const clear = () => {
-      lines = [];
-    };
-
-    addLine("a");
-    addLine("b");
-    expect(lines).toHaveLength(2);
-
-    clear();
-    expect(lines).toHaveLength(0);
-  });
-
   test("addLine is safe to call rapidly", () => {
     const lines: string[] = [];
     const addLine = (line: string) => {
