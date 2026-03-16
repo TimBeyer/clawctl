@@ -35,7 +35,7 @@ export const onePassword: CapabilityDef = {
         },
       ],
     },
-    // Phase 2: Install wrapper, exec-approvals, skills, and AGENTS.md section
+    // Phase 2: Install wrapper, exec-approvals, and skills
     "provision-workspace": {
       execContext: "user",
       steps: [
@@ -78,6 +78,12 @@ export const onePassword: CapabilityDef = {
           label: "Exec approvals",
           run: (ctx) => provisionExecApprovals(ctx),
         },
+      ],
+    },
+    // AGENTS.md must be written after openclaw onboard creates the base file
+    bootstrap: {
+      execContext: "user",
+      steps: [
         {
           name: "agents-md-one-password",
           label: "AGENTS.md 1Password section",

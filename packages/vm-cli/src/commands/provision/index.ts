@@ -31,6 +31,11 @@ const PROVISION_SUBCOMMANDS: Array<{
     phase: "provision-workspace",
     description: "Install workspace skills and agent configuration",
   },
+  {
+    name: "bootstrap",
+    phase: "bootstrap",
+    description: "Post-onboard finalization (AGENTS.md sections)",
+  },
 ];
 
 export function registerProvisionCommand(program: Command): void {

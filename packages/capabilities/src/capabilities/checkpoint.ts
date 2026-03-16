@@ -118,6 +118,12 @@ export const checkpoint: CapabilityDef = {
             }
           },
         },
+      ],
+    },
+    // AGENTS.md must be written after openclaw onboard creates the base file
+    bootstrap: {
+      execContext: "user",
+      steps: [
         {
           name: "agents-md-checkpoint",
           label: "AGENTS.md checkpoint section",
