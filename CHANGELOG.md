@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.1](https://github.com/TimBeyer/clawctl/compare/v0.11.0...v0.11.1) (2026-03-16)
+
+
+### Bug Fixes
+
+* eliminate double commandExists calls in doctor checks ([5b41eac](https://github.com/TimBeyer/clawctl/commit/5b41eac783c3c138ad7d61d179ee94bb9c748dad))
+* use index-based result tracking in capability runner ([188dbb9](https://github.com/TimBeyer/clawctl/commit/188dbb9203568671c22da8cd3c7b6d9326b11d6d))
+
 # [0.11.0](https://github.com/TimBeyer/clawctl/compare/v0.10.0...v0.11.0) (2026-03-16)
 
 
