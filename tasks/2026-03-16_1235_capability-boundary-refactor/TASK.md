@@ -1,6 +1,6 @@
 # Capability Extension System — Boundary Refactor
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -39,16 +39,16 @@ so the extension interface can evolve toward a proper plugin system.
 
 ## Steps
 
-- [ ] Delete stale task + commit task plan
-- [ ] Type changes: ProvisionContext → CapabilityContext, add apt/systemd/agentsMd
-- [ ] Extract basePhase/hookTiming to util.ts
-- [ ] Move registry to vm-cli
-- [ ] Update context implementation
-- [ ] Restructure capabilities into directories
-- [ ] Update runner signature
-- [ ] Update vm-cli consumers
-- [ ] Update tests
-- [ ] Verify all checks pass
+- [x] Delete stale task + commit task plan
+- [x] Type changes: ProvisionContext → CapabilityContext, add apt/systemd/agentsMd
+- [x] Extract basePhase/hookTiming to util.ts
+- [x] Move registry to vm-cli
+- [x] Update context implementation
+- [x] Restructure capabilities into directories
+- [x] Update runner signature
+- [x] Update vm-cli consumers
+- [x] Update tests
+- [x] Verify all checks pass
 
 ## Notes
 
@@ -60,3 +60,24 @@ so the extension interface can evolve toward a proper plugin system.
   post-workspace writeAgentsMd() call. Capabilities manage their own sections.
 - Registry moves to vm-cli because the "which capabilities exist and which are
   enabled" question is application policy, not extension interface.
+- agentsMd.update() uses per-owner markers (`<!-- clawctl:checkpoint:start -->`)
+  so capabilities can independently manage their sections without conflicts.
+- Runner signature changed from `(phase, config, ctx, ...)` to `(hooks, ctx, phaseName, ...)`
+  — the caller resolves hooks via the registry, runner just executes them.
+
+## Outcome
+
+All 7 PR review items delivered:
+
+1. Registry moved from capabilities to vm-cli (application wiring)
+2. apt + systemd promoted to CapabilityContext SDK primitives
+3. Helpers colocated into capability directories (no shared helpers/)
+4. Skill content inlined in checkpoint and one-password capabilities
+5. AGENTS.md became ctx.agentsMd.update() SDK action
+6. ProvisionContext renamed to CapabilityContext
+7. Stale task directory deleted
+
+The capabilities package now contains only: capability definitions,
+the generic runner, state tracking, and utility functions. No registry,
+no agents-md assembly, no shared helpers. 275 tests pass, lint/format
+clean, binary builds.
