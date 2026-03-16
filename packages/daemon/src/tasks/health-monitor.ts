@@ -8,7 +8,7 @@ export function createHealthMonitorTask(): DaemonTask {
     name: "health-monitor",
     label: "Health Monitor",
     scope: "per-instance",
-    intervalMs: 60_000,
+    intervalMs: 30_000,
 
     async start(ctx: DaemonTaskContext, instance?: RegistryEntry): Promise<void> {
       if (!instance) return;

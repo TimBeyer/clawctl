@@ -29,7 +29,7 @@ const DEFAULT_CONFIG: DaemonConfig = {
     },
     healthMonitor: {
       enabled: true,
-      intervalMs: 60000,
+      intervalMs: 30000,
       autoRestart: false,
     },
   },
