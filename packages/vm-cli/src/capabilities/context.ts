@@ -28,7 +28,8 @@ export function createProvisionContext(): ProvisionContext {
     log,
 
     fs: {
-      readFile: (path, encoding) => readFile(path, (encoding ?? "utf-8") as BufferEncoding) as Promise<string>,
+      readFile: (path, encoding) =>
+        readFile(path, (encoding ?? "utf-8") as BufferEncoding) as Promise<string>,
       writeFile: (path, content) => writeFile(path, content),
       mkdir: (path, opts) => mkdir(path, opts) as Promise<void>,
       chmod: (path, mode) => chmod(path, mode),

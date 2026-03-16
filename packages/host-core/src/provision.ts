@@ -101,10 +101,12 @@ export async function provisionVM(
   await mkdir(join(config.projectDir, "data", "state"), { recursive: true });
   onStep?.("Created project directory");
 
-  // Write provision config so claw knows which optional tools to install
+  // Write provision config so claw knows which optional capabilities to enable
   const provisionConfig: ProvisionConfig = {
-    onePassword: features.onePassword,
-    tailscale: features.tailscale,
+    capabilities: {
+      ...(features.onePassword && { "one-password": true }),
+      ...(features.tailscale && { tailscale: true }),
+    },
   };
   await writeFile(
     join(config.projectDir, "data", PROVISION_CONFIG_FILE),

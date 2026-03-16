@@ -33,9 +33,7 @@ export const openclaw: CapabilityDef = {
           name: "path-openclaw",
           run: async (ctx) => ({
             passed: await ctx.commandExists("openclaw"),
-            error: (await ctx.commandExists("openclaw"))
-              ? undefined
-              : "openclaw not found on PATH",
+            error: (await ctx.commandExists("openclaw")) ? undefined : "openclaw not found on PATH",
           }),
         },
         {

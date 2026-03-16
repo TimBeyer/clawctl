@@ -9,14 +9,7 @@ export {
 } from "./registry.js";
 
 // Individual capabilities
-export {
-  systemBase,
-  homebrew,
-  openclaw,
-  checkpoint,
-  tailscale,
-  onePassword,
-} from "./registry.js";
+export { systemBase, homebrew, openclaw, checkpoint, tailscale, onePassword } from "./registry.js";
 
 // Runner
 export { runPhase } from "./runner.js";

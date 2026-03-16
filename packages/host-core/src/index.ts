@@ -113,9 +113,6 @@ export { redact, redactSecrets } from "./redact.js";
 export { cleanupVM, onSignalCleanup } from "./cleanup.js";
 export type { CleanupTarget } from "./cleanup.js";
 
-// AGENTS.md managed section
-export { patchAgentsMd } from "./agents-md.js";
-
 // Headless
 export { runHeadless } from "./headless.js";
 export type { HeadlessResult } from "./headless.js";

@@ -1,6 +1,6 @@
 # Plugin/Capability Extension System
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -10,6 +10,7 @@ module with lifecycle hooks, sequential migrations, config schema contributions,
 injected toolkit SDK.
 
 **In scope:**
+
 - New `@clawctl/capabilities` shared package with atomic capability definitions
 - `ProvisionContext` SDK injected into all capability steps
 - Multi-phase hooks with pre/main/post timing
@@ -19,6 +20,7 @@ injected toolkit SDK.
 - Backwards-compatible config translation
 
 **Out of scope:**
+
 - Moving credential injection (setupOnePassword, setupTailscale) VM-side
 - Moving bootstrap orchestration VM-side
 - Wizard refactoring to use capability schemas (future task)
@@ -38,17 +40,17 @@ injected toolkit SDK.
 
 ## Steps
 
-- [ ] Create task directory + TASK.md
-- [ ] Define capability types (`CapabilityDef`, `ProvisionContext`, etc.)
-- [ ] Create `@clawctl/capabilities` package structure
-- [ ] Port tool wrapper helpers (apt, node, systemd, homebrew, openclaw, etc.)
-- [ ] Create capability modules (system-base, homebrew, openclaw, etc.)
-- [ ] Create registry, state, runner, agents-md modules
-- [ ] Wire VM-side (context.ts, provision/index.ts, doctor.ts)
-- [ ] Wire host-side (provision.ts, headless.ts, bootstrap.ts, schemas)
-- [ ] Delete old files
-- [ ] Add tests
-- [ ] Verify build + lint + format
+- [x] Create task directory + TASK.md
+- [x] Define capability types (`CapabilityDef`, `ProvisionContext`, etc.)
+- [x] Create `@clawctl/capabilities` package structure
+- [x] Port tool wrapper helpers (apt, node, systemd, homebrew, openclaw, etc.)
+- [x] Create capability modules (system-base, homebrew, openclaw, etc.)
+- [x] Create registry, state, runner, agents-md modules
+- [x] Wire VM-side (context.ts, provision/index.ts, doctor.ts)
+- [x] Wire host-side (provision.ts, headless.ts, bootstrap.ts, schemas)
+- [x] Delete old files (stages, tool wrappers, host-side agents-md.ts)
+- [x] Add tests (registry: 21 tests, state: 10 tests)
+- [x] Verify build + lint + format (275 tests pass, 0 fail)
 
 ## Notes
 
@@ -62,4 +64,19 @@ injected toolkit SDK.
 
 ## Outcome
 
-_(To be written when resolved)_
+Delivered the full capability extension system:
+
+- **New `@clawctl/capabilities` package** with 6 atomic capabilities (4 core + 2 optional),
+  8 helper modules, registry, state tracker, runner, and AGENTS.md writer
+- **`ProvisionContext` SDK** injected into all capability steps — capabilities never import
+  VM tools directly
+- **Multi-phase hooks** with pre/main/post timing via `PhaseHookKey` type
+- **Sequential migrations** with chain-walking `findMigrationPath()`
+- **Backwards-compatible** config translation (old boolean flags → capabilities map)
+- **AGENTS.md** patching moved VM-side (host-side `agents-md.ts` deleted)
+- **31 new tests** (21 registry, 10 state) — all 275 tests pass, lint clean, build succeeds
+
+**Deferred:**
+- Wizard integration with capability config schemas (future task)
+- Moving credential injection and bootstrap orchestration VM-side
+- External plugin discovery (capabilities are currently static imports)

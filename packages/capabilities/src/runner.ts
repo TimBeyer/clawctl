@@ -83,9 +83,7 @@ export async function runPhase(
     }
 
     // Track version for this capability
-    const capResults = results.filter((r) =>
-      hook.steps.some((s) => s.name === r.name),
-    );
+    const capResults = results.filter((r) => hook.steps.some((s) => s.name === r.name));
     const anyFailed = capResults.some((r) => r.status === "failed");
     if (!anyFailed) {
       await markInstalled(ctx, state, capability.name, capability.version);

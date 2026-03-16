@@ -7,7 +7,12 @@
 
 import { join } from "path";
 import { PROJECT_MOUNT_POINT } from "@clawctl/types";
-import type { CapabilityState, CapabilityDef, CapabilityMigration, ProvisionContext } from "@clawctl/types";
+import type {
+  CapabilityState,
+  CapabilityDef,
+  CapabilityMigration,
+  ProvisionContext,
+} from "@clawctl/types";
 
 const STATE_PATH = join(PROJECT_MOUNT_POINT, "data", "capability-state.json");
 
