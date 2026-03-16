@@ -83,6 +83,12 @@ export async function runDaemon(): Promise<void> {
         };
       }
 
+      case "sync": {
+        await writeLog("debug", "Instance sync requested via IPC");
+        await scheduler.sync();
+        return { ok: true, data: { synced: true } };
+      }
+
       case "reload": {
         await writeLog("info", "Reloading config and registry");
         const newConfig = await loadDaemonConfig();

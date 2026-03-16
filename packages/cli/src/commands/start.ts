@@ -1,5 +1,6 @@
 import type { VMDriver } from "@clawctl/host-core";
 import { requireInstance } from "@clawctl/host-core";
+import { notifyDaemon } from "@clawctl/daemon";
 
 export async function runStart(driver: VMDriver, opts: { instance?: string }): Promise<void> {
   const entry = await requireInstance(opts);
@@ -13,4 +14,5 @@ export async function runStart(driver: VMDriver, opts: { instance?: string }): P
   console.log(`Starting "${entry.name}"...`);
   await driver.start(entry.vmName);
   console.log(`Instance "${entry.name}" started.`);
+  await notifyDaemon();
 }

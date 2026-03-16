@@ -107,24 +107,37 @@ export class Scheduler {
   private async syncInstances(): Promise<void> {
     const instances = await listInstances();
 
-    // Determine which instances to watch
-    let targetInstances: RegistryEntry[];
+    // Determine which instances are configured for watching
+    let candidateInstances: RegistryEntry[];
     if (this.config.instances && this.config.instances.length > 0) {
-      targetInstances = instances.filter((i) => this.config.instances!.includes(i.name));
+      candidateInstances = instances.filter((i) => this.config.instances!.includes(i.name));
     } else if (this.config.autoWatch !== false) {
-      targetInstances = instances;
+      candidateInstances = instances;
     } else {
-      targetInstances = [];
+      candidateInstances = [];
     }
 
-    const targetNames = new Set(targetInstances.map((i) => i.name));
+    // Only activate tasks for instances whose VM is actually Running
+    const runningInstances: RegistryEntry[] = [];
+    for (const instance of candidateInstances) {
+      try {
+        const status = await this.driver.status(instance.vmName);
+        if (status === "Running") {
+          runningInstances.push(instance);
+        }
+      } catch {
+        // Can't determine status — skip
+      }
+    }
 
-    // Start tasks for new instances
+    const runningNames = new Set(runningInstances.map((i) => i.name));
+
+    // Start tasks for newly-running instances
     for (const task of this.tasks) {
       if (task.scope !== "per-instance") continue;
       if (this.isTaskDisabled(task.name)) continue;
 
-      for (const instance of targetInstances) {
+      for (const instance of runningInstances) {
         const key = this.taskKey(task.name, instance.name);
         if (!this.activeTasks.has(key)) {
           const freshTask = this.createFreshTask(task);
@@ -150,9 +163,9 @@ export class Scheduler {
       }
     }
 
-    // Stop tasks for removed instances
+    // Stop tasks for instances that are no longer running (stopped, removed, or unknown)
     for (const [key, active] of this.activeTasks) {
-      if (active.instance && !targetNames.has(active.instance.name)) {
+      if (active.instance && !runningNames.has(active.instance.name)) {
         try {
           await active.task.stop();
         } catch (err) {
@@ -162,12 +175,16 @@ export class Scheduler {
           });
         }
         this.activeTasks.delete(key);
-        await writeLog("info", `Stopped task (instance removed)`, {
+        await writeLog("info", `Stopped task (instance not running)`, {
           task: active.task.name,
           instance: active.instance.name,
         });
       }
     }
+  }
+
+  async sync(): Promise<void> {
+    await this.syncInstances();
   }
 
   private taskFactories = new Map<string, () => DaemonTask>();

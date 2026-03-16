@@ -3,7 +3,7 @@ export { sendRequest } from "./client.js";
 export type { DaemonRequest, DaemonResponse } from "./client.js";
 
 // Lifecycle
-export { isDaemonRunning, ensureDaemon, stopDaemon, spawnDaemon } from "./lifecycle.js";
+export { isDaemonRunning, ensureDaemon, stopDaemon, spawnDaemon, notifyDaemon } from "./lifecycle.js";
 
 // Config
 export { loadDaemonConfig } from "./config.js";

@@ -171,6 +171,18 @@ export async function ensureDaemon(opts?: {
   }
 }
 
+/**
+ * Tell the daemon to re-check instance states immediately.
+ * Fire-and-forget — failures are silently ignored.
+ */
+export async function notifyDaemon(): Promise<void> {
+  try {
+    await sendRequest("sync", {}, 2000);
+  } catch {
+    // Daemon not running or unresponsive — nothing to do
+  }
+}
+
 export async function stopDaemon(): Promise<void> {
   // Try graceful shutdown via socket
   try {
