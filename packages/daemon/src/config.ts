@@ -8,11 +8,11 @@ export interface DaemonConfig {
   logLevel?: "debug" | "info" | "warn" | "error";
   tasks?: {
     checkpoint?: {
-      disabled?: boolean;
+      enabled?: boolean;
       pollIntervalMs?: number;
     };
     healthMonitor?: {
-      disabled?: boolean;
+      enabled?: boolean;
       intervalMs?: number;
       autoRestart?: boolean;
     };
@@ -24,11 +24,11 @@ const DEFAULT_CONFIG: DaemonConfig = {
   logLevel: "info",
   tasks: {
     checkpoint: {
-      disabled: false,
+      enabled: true,
       pollIntervalMs: 2000,
     },
     healthMonitor: {
-      disabled: false,
+      enabled: true,
       intervalMs: 60000,
       autoRestart: false,
     },

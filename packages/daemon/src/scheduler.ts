@@ -86,10 +86,10 @@ export class Scheduler {
 
   private isTaskDisabled(taskName: string): boolean {
     if (taskName === "checkpoint-watch") {
-      return this.config.tasks?.checkpoint?.disabled === true;
+      return this.config.tasks?.checkpoint?.enabled === false;
     }
     if (taskName === "health-monitor") {
-      return this.config.tasks?.healthMonitor?.disabled === true;
+      return this.config.tasks?.healthMonitor?.enabled === false;
     }
     return false;
   }
