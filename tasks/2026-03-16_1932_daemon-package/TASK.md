@@ -94,6 +94,7 @@ Delivered the full `@clawctl/daemon` package with:
   `CLAUDE.md` workspace structure.
 
 **Deferred:**
+
 - Unit tests for scheduler, IPC protocol, lifecycle (should be added before
   shipping to production)
 - Integration test (start daemon, send IPC, stop)

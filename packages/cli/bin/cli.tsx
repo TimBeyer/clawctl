@@ -68,7 +68,7 @@ program
   .description("Show detailed info for an instance")
   .option("-i, --instance <name>", "Instance to target")
   .action(async (name: string | undefined, opts: { instance?: string }) => {
-    await ensureDaemon({ currentVersion: pkg.version });
+    await ensureDaemon();
     await runStatus(driver, { instance: opts.instance ?? name });
   });
 
@@ -77,7 +77,7 @@ program
   .description("Start a stopped instance")
   .option("-i, --instance <name>", "Instance to target")
   .action(async (name: string | undefined, opts: { instance?: string }) => {
-    await ensureDaemon({ currentVersion: pkg.version });
+    await ensureDaemon();
     await runStart(driver, { instance: opts.instance ?? name });
   });
 
@@ -86,7 +86,7 @@ program
   .description("Stop a running instance")
   .option("-i, --instance <name>", "Instance to target")
   .action(async (name: string | undefined, opts: { instance?: string }) => {
-    await ensureDaemon({ currentVersion: pkg.version });
+    await ensureDaemon();
     await runStop(driver, { instance: opts.instance ?? name });
   });
 
@@ -95,7 +95,7 @@ program
   .description("Restart an instance with health checks")
   .option("-i, --instance <name>", "Instance to target")
   .action(async (name: string | undefined, opts: { instance?: string }) => {
-    await ensureDaemon({ currentVersion: pkg.version });
+    await ensureDaemon();
     await runRestart(driver, { instance: opts.instance ?? name });
   });
 
@@ -105,7 +105,7 @@ program
   .option("-i, --instance <name>", "Instance to target")
   .option("--purge", "Also remove the project directory")
   .action(async (name: string | undefined, opts: { instance?: string; purge?: boolean }) => {
-    await ensureDaemon({ currentVersion: pkg.version });
+    await ensureDaemon();
     await runDelete(driver, { instance: opts.instance ?? name, purge: opts.purge });
   });
 
@@ -129,7 +129,7 @@ program
         instanceName = undefined;
       }
     }
-    await ensureDaemon({ currentVersion: pkg.version });
+    await ensureDaemon();
     await runShell(
       driver,
       { instance: opts.instance ?? instanceName },
@@ -153,7 +153,7 @@ program
   .allowUnknownOption()
   .passThroughOptions()
   .action(async (args: string[], opts: { instance?: string }) => {
-    await ensureDaemon({ currentVersion: pkg.version });
+    await ensureDaemon();
     await runOpenclaw(driver, opts, args);
   });
 
@@ -171,11 +171,7 @@ program
   .option("-i, --instance <name>", "Instance to target")
   .option("--poll", "Use polling instead of fs.watch (for virtiofs quirks)")
   .action(async (name: string | undefined, opts: { instance?: string; poll?: boolean }) => {
-    await runWatch({
-      instance: opts.instance ?? name,
-      poll: opts.poll,
-      currentVersion: pkg.version,
-    });
+    await runWatch({ instance: opts.instance ?? name, poll: opts.poll });
   });
 
 const daemonCmd = program.command("daemon").description("Manage the background daemon");

@@ -83,11 +83,7 @@ async function handleCheckpoint(dataDir: string): Promise<void> {
   await unlink(signalPath).catch(() => {});
 }
 
-export async function runWatch(opts: {
-  instance?: string;
-  poll?: boolean;
-  currentVersion?: string;
-}): Promise<void> {
+export async function runWatch(opts: { instance?: string; poll?: boolean }): Promise<void> {
   // If daemon is running, delegate to it
   const daemonStatus = await isDaemonRunning();
   if (daemonStatus.running) {
@@ -99,18 +95,16 @@ export async function runWatch(opts: {
     return;
   }
 
-  // No daemon — offer to start it, or fall back to foreground mode
-  if (opts.currentVersion) {
-    try {
-      await ensureDaemon({ currentVersion: opts.currentVersion });
-      const entry = await requireInstance(opts);
-      console.log(`Daemon started. Checkpoint watching active for "${entry.name}".`);
-      console.log(`Use "clawctl daemon status" for details.`);
-      return;
-    } catch {
-      // Daemon failed to start — fall through to foreground mode
-      console.log("Could not start daemon, falling back to foreground mode.\n");
-    }
+  // No daemon — try to start it, fall back to foreground mode on failure
+  try {
+    await ensureDaemon();
+    const entry = await requireInstance(opts);
+    console.log(`Daemon started. Checkpoint watching active for "${entry.name}".`);
+    console.log(`Use "clawctl daemon status" for details.`);
+    return;
+  } catch {
+    // Daemon failed to start — fall through to foreground mode
+    console.log("Could not start daemon, falling back to foreground mode.\n");
   }
 
   const entry = await requireInstance(opts);

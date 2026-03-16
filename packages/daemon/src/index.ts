@@ -3,7 +3,13 @@ export { sendRequest } from "./client.js";
 export type { DaemonRequest, DaemonResponse } from "./client.js";
 
 // Lifecycle
-export { isDaemonRunning, ensureDaemon, stopDaemon, spawnDaemon, notifyDaemon } from "./lifecycle.js";
+export {
+  isDaemonRunning,
+  ensureDaemon,
+  stopDaemon,
+  spawnDaemon,
+  notifyDaemon,
+} from "./lifecycle.js";
 
 // Config
 export { loadDaemonConfig } from "./config.js";
@@ -25,6 +31,9 @@ export { readLogLines, formatLogLine } from "./logging.js";
 
 // Runner (called by `clawctl daemon run`)
 export { runDaemon } from "./run.js";
+
+// Build hash
+export { computeBuildHash } from "./build-hash.js";
 
 // Task types
 export type { DaemonTask, DaemonTaskContext } from "./tasks/types.js";

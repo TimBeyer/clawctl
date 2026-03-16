@@ -9,6 +9,7 @@ import {
   DAEMON_LOG_DIR,
 } from "./paths.js";
 import { sendRequest } from "./client.js";
+import { computeBuildHash } from "./build-hash.js";
 import { spawn } from "child_process";
 import { openSync } from "fs";
 
@@ -46,12 +47,16 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
-async function socketResponds(): Promise<{ alive: boolean; version?: string }> {
+async function socketResponds(): Promise<{
+  alive: boolean;
+  version?: string;
+  buildHash?: string;
+}> {
   try {
     const response = await sendRequest("ping", {}, 2000);
     if (response.ok && response.data) {
-      const data = response.data as { version?: string };
-      return { alive: true, version: data.version };
+      const data = response.data as { version?: string; buildHash?: string };
+      return { alive: true, version: data.version, buildHash: data.buildHash };
     }
     return { alive: true };
   } catch {
@@ -63,6 +68,7 @@ export async function isDaemonRunning(): Promise<{
   running: boolean;
   pid?: number;
   version?: string;
+  buildHash?: string;
 }> {
   const pid = await readPidFile();
   if (pid === null) return { running: false };
@@ -74,13 +80,13 @@ export async function isDaemonRunning(): Promise<{
     return { running: false };
   }
 
-  const { alive, version } = await socketResponds();
+  const { alive, version, buildHash } = await socketResponds();
   if (!alive) {
     // Process alive but socket unresponsive — stale
     return { running: false, pid };
   }
 
-  return { running: true, pid, version };
+  return { running: true, pid, version, buildHash };
 }
 
 function detectSpawnArgs(): { command: string; args: string[] } {
@@ -134,22 +140,20 @@ async function waitForSocket(timeoutMs: number = 3000): Promise<boolean> {
   return false;
 }
 
-export async function ensureDaemon(opts?: {
-  verbose?: boolean;
-  currentVersion?: string;
-}): Promise<void> {
+export async function ensureDaemon(opts?: { verbose?: boolean }): Promise<void> {
   const status = await isDaemonRunning();
 
   if (status.running && status.pid) {
-    // Check version mismatch
-    if (opts?.currentVersion && status.version && status.version !== opts.currentVersion) {
-      if (opts.verbose) {
-        console.log(`Upgrading daemon (${status.version} → ${opts.currentVersion})`);
+    // Compare build hashes to detect stale daemons (works in both dev and compiled mode)
+    const localHash = await computeBuildHash();
+    if (status.buildHash && localHash !== status.buildHash) {
+      if (opts?.verbose) {
+        console.log(`Restarting daemon (build changed: ${status.buildHash} → ${localHash})`);
       }
       await stopDaemon();
       // Fall through to respawn
     } else {
-      return; // Already running, version matches
+      return; // Already running, build matches
     }
   }
 
