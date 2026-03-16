@@ -19,7 +19,10 @@
     "format:check": "prettier --check .",
     "test:vm": "CLAWCTL_VM_TESTS=1 bun test packages/host-core/tests/vm/",
     "build:release": "bun scripts/build.ts release",
-    "release": "release-it"
+    "release": "release-it",
+    "docs:dev": "cd docs-site && bun run dev",
+    "docs:build": "cd docs-site && bun run build",
+    "docs:preview": "cd docs-site && bun run preview"
   },
   "dependencies": {
     "@clawctl/host-core": "workspace:*",
