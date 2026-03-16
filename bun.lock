@@ -45,6 +45,7 @@
       "name": "@clawctl/cli",
       "version": "0.7.0",
       "dependencies": {
+        "@clawctl/daemon": "workspace:*",
         "@clawctl/host-core": "workspace:*",
         "@clawctl/templates": "workspace:*",
         "@clawctl/types": "workspace:*",
@@ -54,6 +55,14 @@
         "ink-text-input": "^6.0.0",
         "react": "^19.0.0",
         "react-devtools-core": "^7.0.1",
+      },
+    },
+    "packages/daemon": {
+      "name": "@clawctl/daemon",
+      "version": "0.7.0",
+      "dependencies": {
+        "@clawctl/host-core": "workspace:*",
+        "@clawctl/types": "workspace:*",
       },
     },
     "packages/host-core": {
@@ -107,6 +116,8 @@
     "@clawctl/capabilities": ["@clawctl/capabilities@workspace:packages/capabilities"],
 
     "@clawctl/cli": ["@clawctl/cli@workspace:packages/cli"],
+
+    "@clawctl/daemon": ["@clawctl/daemon@workspace:packages/daemon"],
 
     "@clawctl/host-core": ["@clawctl/host-core@workspace:packages/host-core"],
 

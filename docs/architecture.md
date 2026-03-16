@@ -96,11 +96,22 @@ packages/
       bootstrap.ts         Post-provisioning openclaw setup
       registry.ts          Instance registry (~/.config/clawctl/instances.json)
       ...
+  daemon/                  Background daemon library
+    src/
+      server.ts            Unix socket server (NDJSON IPC)
+      client.ts            IPC client (CLI → daemon)
+      lifecycle.ts         PID file, spawn/stop, ensureDaemon
+      scheduler.ts         Tick-based task dispatcher
+      logging.ts           Structured NDJSON logger + rotation
+      run.ts               Main daemon loop
+      tasks/               Task implementations
+        checkpoint-watch   Checkpoint signal → git commit
+        health-monitor     VM status polling + optional auto-restart
   cli/                     Host CLI (Ink wizard + commands)
     bin/cli.tsx            Entry point
     src/
       app.tsx              Root component, wizard state machine
-      commands/            One module per subcommand (create, list, status, ...)
+      commands/            One module per subcommand (create, list, status, daemon, ...)
       steps/               One component per wizard step (8 total)
       components/          Reusable Ink components (spinner, step-indicator, ...)
   vm-cli/                  Guest CLI (claw) — runs inside the VM
