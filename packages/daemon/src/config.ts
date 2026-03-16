@@ -1,4 +1,5 @@
-import { readFile } from "fs/promises";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { dirname } from "path";
 import { DAEMON_CONFIG_PATH } from "./paths.js";
 
 export interface DaemonConfig {
@@ -21,7 +22,27 @@ export interface DaemonConfig {
 const DEFAULT_CONFIG: DaemonConfig = {
   autoWatch: true,
   logLevel: "info",
+  tasks: {
+    checkpoint: {
+      disabled: false,
+      pollIntervalMs: 2000,
+    },
+    healthMonitor: {
+      disabled: false,
+      intervalMs: 60000,
+      autoRestart: false,
+    },
+  },
 };
+
+async function writeDefaultConfig(path: string): Promise<void> {
+  try {
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, JSON.stringify(DEFAULT_CONFIG, null, 2) + "\n");
+  } catch {
+    // Non-fatal — daemon works fine without the file
+  }
+}
 
 export async function loadDaemonConfig(path: string = DAEMON_CONFIG_PATH): Promise<DaemonConfig> {
   try {
@@ -30,6 +51,7 @@ export async function loadDaemonConfig(path: string = DAEMON_CONFIG_PATH): Promi
     return { ...DEFAULT_CONFIG, ...parsed };
   } catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") {
+      await writeDefaultConfig(path);
       return { ...DEFAULT_CONFIG };
     }
     console.error(`Warning: could not read daemon config (${err}), using defaults`);
