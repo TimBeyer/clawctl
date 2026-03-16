@@ -28,10 +28,10 @@ export const onePassword: CapabilityDef = {
       doctorChecks: [
         {
           name: "path-op",
-          run: async (ctx) => ({
-            passed: await ctx.commandExists("op"),
-            error: (await ctx.commandExists("op")) ? undefined : "op not found on PATH",
-          }),
+          run: async (ctx) => {
+            const found = await ctx.commandExists("op");
+            return { passed: found, error: found ? undefined : "op not found on PATH" };
+          },
         },
       ],
     },

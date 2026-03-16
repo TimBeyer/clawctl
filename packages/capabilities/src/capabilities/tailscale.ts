@@ -36,12 +36,10 @@ export const tailscale: CapabilityDef = {
       doctorChecks: [
         {
           name: "path-tailscale",
-          run: async (ctx) => ({
-            passed: await ctx.commandExists("tailscale"),
-            error: (await ctx.commandExists("tailscale"))
-              ? undefined
-              : "tailscale not found on PATH",
-          }),
+          run: async (ctx) => {
+            const found = await ctx.commandExists("tailscale");
+            return { passed: found, error: found ? undefined : "tailscale not found on PATH" };
+          },
         },
       ],
     },

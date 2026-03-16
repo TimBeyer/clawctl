@@ -22,9 +22,8 @@ import {
   checkpoint,
   tailscale,
   onePassword,
-  basePhase,
-  hookTiming,
 } from "@clawctl/capabilities";
+import { basePhase, hookTiming } from "./util.js";
 
 /** All known capabilities, in registration order. */
 export const ALL_CAPABILITIES: CapabilityDef[] = [
@@ -134,4 +133,4 @@ function resolveOrder<T extends { capability: CapabilityDef }>(
 }
 
 // Re-export utility functions for convenience
-export { basePhase, hookTiming } from "@clawctl/capabilities";
+export { basePhase, hookTiming } from "./util.js";

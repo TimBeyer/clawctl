@@ -1,15 +1,5 @@
-import type { CapabilityDef, ProvisionResult, CapabilityContext } from "@clawctl/types";
-import { provisionHomebrew } from "./install.js";
-
-async function provisionShellProfile(ctx: CapabilityContext): Promise<ProvisionResult> {
-  try {
-    await ctx.profile.ensurePath("$HOME/.local/bin");
-    ctx.log("      Shell profile configured");
-    return { name: "shell-profile", status: "installed" };
-  } catch (err) {
-    return { name: "shell-profile", status: "failed", error: String(err) };
-  }
-}
+import type { CapabilityDef } from "@clawctl/types";
+import { provisionHomebrew, provisionShellProfile } from "./install.js";
 
 export const homebrew: CapabilityDef = {
   name: "homebrew",
@@ -26,10 +16,10 @@ export const homebrew: CapabilityDef = {
       doctorChecks: [
         {
           name: "path-brew",
-          run: async (ctx) => ({
-            passed: await ctx.commandExists("brew"),
-            error: (await ctx.commandExists("brew")) ? undefined : "brew not found on PATH",
-          }),
+          run: async (ctx) => {
+            const found = await ctx.commandExists("brew");
+            return { passed: found, error: found ? undefined : "brew not found on PATH" };
+          },
         },
       ],
     },

@@ -72,6 +72,7 @@ export async function runPhase(
     }
 
     // Run provision steps
+    const startIdx = results.length;
     for (const step of hook.steps) {
       stepNum++;
       ctx.log(`[${stepNum}/${totalSteps}] ${step.label}`);
@@ -82,7 +83,7 @@ export async function runPhase(
     }
 
     // Track version for this capability
-    const capResults = results.filter((r) => hook.steps.some((s) => s.name === r.name));
+    const capResults = results.slice(startIdx);
     const anyFailed = capResults.some((r) => r.status === "failed");
     if (!anyFailed) {
       await markInstalled(ctx, state, capability.name, capability.version);

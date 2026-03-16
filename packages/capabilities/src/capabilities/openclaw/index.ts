@@ -31,10 +31,10 @@ export const openclaw: CapabilityDef = {
       doctorChecks: [
         {
           name: "path-openclaw",
-          run: async (ctx) => ({
-            passed: await ctx.commandExists("openclaw"),
-            error: (await ctx.commandExists("openclaw")) ? undefined : "openclaw not found on PATH",
-          }),
+          run: async (ctx) => {
+            const found = await ctx.commandExists("openclaw");
+            return { passed: found, error: found ? undefined : "openclaw not found on PATH" };
+          },
         },
         {
           name: "env-OPENCLAW_STATE_DIR",

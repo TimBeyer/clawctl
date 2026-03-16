@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { setJsonMode, ok, fail } from "../../output.js";
-import { runPhase } from "@clawctl/capabilities";
+import { runPhase } from "../../capabilities/runner.js";
 import { createCapabilityContext } from "../../capabilities/context.js";
 import { getHooksForPhase } from "../../capabilities/registry.js";
 import { readProvisionConfig } from "../../tools/provision-config.js";

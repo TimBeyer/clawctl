@@ -3,6 +3,17 @@ import type { CapabilityContext, ProvisionResult } from "@clawctl/types";
 const HOMEBREW_INSTALL_URL = "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh";
 const BREW_SHELLENV = 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"';
 
+/** Ensure ~/.local/bin is on PATH in the shell profile. */
+export async function provisionShellProfile(ctx: CapabilityContext): Promise<ProvisionResult> {
+  try {
+    await ctx.profile.ensurePath("$HOME/.local/bin");
+    ctx.log("Shell profile configured");
+    return { name: "shell-profile", status: "installed" };
+  } catch (err) {
+    return { name: "shell-profile", status: "failed", error: String(err) };
+  }
+}
+
 /** Install Homebrew and configure the shell profile. */
 export async function provisionHomebrew(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
