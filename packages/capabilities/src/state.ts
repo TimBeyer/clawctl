@@ -11,7 +11,7 @@ import type {
   CapabilityState,
   CapabilityDef,
   CapabilityMigration,
-  ProvisionContext,
+  CapabilityContext,
 } from "@clawctl/types";
 
 const STATE_PATH = join(PROJECT_MOUNT_POINT, "data", "capability-state.json");
@@ -19,7 +19,7 @@ const STATE_PATH = join(PROJECT_MOUNT_POINT, "data", "capability-state.json");
 const EMPTY_STATE: CapabilityState = { installed: {} };
 
 /** Read the capability state file. Returns empty state if missing/malformed. */
-export async function readCapabilityState(ctx: ProvisionContext): Promise<CapabilityState> {
+export async function readCapabilityState(ctx: CapabilityContext): Promise<CapabilityState> {
   try {
     const raw = await ctx.fs.readFile(STATE_PATH, "utf-8");
     const parsed = JSON.parse(raw);
@@ -34,7 +34,7 @@ export async function readCapabilityState(ctx: ProvisionContext): Promise<Capabi
 
 /** Write the capability state file. */
 export async function writeCapabilityState(
-  ctx: ProvisionContext,
+  ctx: CapabilityContext,
   state: CapabilityState,
 ): Promise<void> {
   await ctx.fs.writeFile(STATE_PATH, JSON.stringify(state, null, 2) + "\n");
@@ -42,7 +42,7 @@ export async function writeCapabilityState(
 
 /** Mark a capability as installed with the given version. */
 export async function markInstalled(
-  ctx: ProvisionContext,
+  ctx: CapabilityContext,
   state: CapabilityState,
   name: string,
   version: string,

@@ -1,6 +1,5 @@
-import type { ProvisionContext, ProvisionResult } from "@clawctl/types";
+import type { CapabilityContext, ProvisionResult } from "@clawctl/types";
 import { PROJECT_MOUNT_POINT } from "@clawctl/types";
-import * as systemdHelper from "./systemd.js";
 
 const OPENCLAW_INSTALL_URL = "https://openclaw.ai/install.sh";
 
@@ -15,7 +14,7 @@ WantedBy=default.target
 `;
 
 /** Install openclaw via the official installer. */
-export async function provision(ctx: ProvisionContext): Promise<ProvisionResult> {
+export async function provisionOpenclaw(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
     const npmGlobalBin = `${process.env.HOME}/.npm-global/bin`;
     const pathWithNpmGlobal = `${npmGlobalBin}:${process.env.PATH}`;
@@ -59,7 +58,7 @@ export async function provision(ctx: ProvisionContext): Promise<ProvisionResult>
 }
 
 /** Configure OpenClaw environment variables in the shell profile. */
-export async function provisionEnvVars(ctx: ProvisionContext): Promise<ProvisionResult> {
+export async function provisionEnvVars(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
     await ctx.profile.ensureInProfile(
       `export OPENCLAW_STATE_DIR=${PROJECT_MOUNT_POINT}/data/state`,
@@ -75,7 +74,7 @@ export async function provisionEnvVars(ctx: ProvisionContext): Promise<Provision
 }
 
 /** Ensure ~/.npm-global/bin is on the PATH in login profile. */
-export async function provisionNpmGlobalPath(ctx: ProvisionContext): Promise<ProvisionResult> {
+export async function provisionNpmGlobalPath(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
     await ctx.profile.ensureInProfile('export PATH="$HOME/.npm-global/bin:$PATH"');
     ctx.log("npm-global PATH configured");
@@ -86,9 +85,9 @@ export async function provisionNpmGlobalPath(ctx: ProvisionContext): Promise<Pro
 }
 
 /** Create and enable the gateway stub systemd service. */
-export async function provisionGatewayStub(ctx: ProvisionContext): Promise<ProvisionResult> {
+export async function provisionGatewayStub(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
-    if (await systemdHelper.isEnabled(ctx, "openclaw-gateway.service")) {
+    if (await ctx.systemd.isEnabled("openclaw-gateway.service")) {
       ctx.log("openclaw-gateway.service already enabled, skipping stub");
       return { name: "gateway-stub", status: "unchanged" };
     }
@@ -97,8 +96,8 @@ export async function provisionGatewayStub(ctx: ProvisionContext): Promise<Provi
     await ctx.fs.ensureDir(unitDir);
     await ctx.fs.writeFile(`${unitDir}/openclaw-gateway.service`, GATEWAY_UNIT);
 
-    await systemdHelper.daemonReload(ctx);
-    await systemdHelper.enable(ctx, "openclaw-gateway.service");
+    await ctx.systemd.daemonReload();
+    await ctx.systemd.enable("openclaw-gateway.service");
 
     ctx.log("gateway service stub enabled");
     return { name: "gateway-stub", status: "installed" };

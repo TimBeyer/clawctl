@@ -1,7 +1,8 @@
 import { Command } from "commander";
 import { setJsonMode, ok, fail } from "../../output.js";
 import { runPhase } from "@clawctl/capabilities";
-import { createProvisionContext } from "../../capabilities/context.js";
+import { createCapabilityContext } from "../../capabilities/context.js";
+import { getHooksForPhase } from "../../capabilities/registry.js";
 import { readProvisionConfig } from "../../tools/provision-config.js";
 import type { LifecyclePhase } from "@clawctl/types";
 
@@ -43,8 +44,9 @@ export function registerProvisionCommand(program: Command): void {
       .action(async (opts: { json?: boolean }) => {
         if (opts.json) setJsonMode(true);
         const config = await readProvisionConfig();
-        const ctx = createProvisionContext();
-        await runPhase(sub.phase, config, ctx, ok, fail);
+        const ctx = createCapabilityContext();
+        const hooks = getHooksForPhase(sub.phase, config);
+        await runPhase(hooks, ctx, sub.phase, ok, fail);
       });
   }
 }

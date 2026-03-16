@@ -11,8 +11,8 @@ import { PROJECT_MOUNT_POINT, LIFECYCLE_PHASES, phaseReached } from "@clawctl/ty
 import type { LifecyclePhase } from "@clawctl/types";
 import { access } from "fs/promises";
 import { constants } from "fs";
-import { getEnabledCapabilities, basePhase } from "@clawctl/capabilities";
-import { createProvisionContext } from "../capabilities/context.js";
+import { getEnabledCapabilities, basePhase } from "../capabilities/registry.js";
+import { createCapabilityContext } from "../capabilities/context.js";
 import { readProvisionConfig } from "../tools/provision-config.js";
 import * as systemd from "../tools/systemd.js";
 import * as openclaw from "../tools/openclaw.js";
@@ -137,7 +137,7 @@ export function registerDoctorCommand(program: Command): void {
       // Capability-contributed checks
       log("Checking capabilities...");
       const config = await readProvisionConfig();
-      const ctx = createProvisionContext();
+      const ctx = createCapabilityContext();
       const capabilities = getEnabledCapabilities(config);
 
       for (const cap of capabilities) {

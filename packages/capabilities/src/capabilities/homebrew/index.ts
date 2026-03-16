@@ -1,7 +1,7 @@
-import type { CapabilityDef, ProvisionResult, ProvisionContext } from "@clawctl/types";
-import { provision as homebrewProvision } from "../helpers/homebrew.js";
+import type { CapabilityDef, ProvisionResult, CapabilityContext } from "@clawctl/types";
+import { provisionHomebrew } from "./install.js";
 
-async function provisionShellProfile(ctx: ProvisionContext): Promise<ProvisionResult> {
+async function provisionShellProfile(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
     await ctx.profile.ensurePath("$HOME/.local/bin");
     ctx.log("      Shell profile configured");
@@ -20,7 +20,7 @@ export const homebrew: CapabilityDef = {
     "provision-tools": {
       execContext: "user",
       steps: [
-        { name: "homebrew", label: "Homebrew", run: (ctx) => homebrewProvision(ctx) },
+        { name: "homebrew", label: "Homebrew", run: (ctx) => provisionHomebrew(ctx) },
         { name: "shell-profile", label: "Shell profile", run: (ctx) => provisionShellProfile(ctx) },
       ],
       doctorChecks: [

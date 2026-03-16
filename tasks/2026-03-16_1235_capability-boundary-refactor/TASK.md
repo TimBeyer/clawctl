@@ -8,6 +8,7 @@ Restructure the capabilities package to enforce clean separation of concerns
 so the extension interface can evolve toward a proper plugin system.
 
 **In scope:**
+
 - Move registry (application wiring) from capabilities to vm-cli
 - Promote apt + systemd to SDK context primitives
 - Colocate capability-specific helpers (no shared helpers/ directory)
@@ -18,6 +19,7 @@ so the extension interface can evolve toward a proper plugin system.
 - Delete stale task directory
 
 **Out of scope:**
+
 - Homebrew as a context-level SDK abstraction (future)
 - Typed scope restriction for agentsMd per lifecycle phase (future)
 - Third-party plugin loading (future)

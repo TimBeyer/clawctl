@@ -8,7 +8,7 @@ export type {
   ProvisionResult,
   ExecResult,
   ExecOptions,
-  ProvisionContext,
+  CapabilityContext,
   CapabilityStep,
   DoctorCheckDef,
   CapabilityHook,

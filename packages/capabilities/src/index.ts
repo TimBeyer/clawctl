@@ -1,17 +1,12 @@
-// Registry
-export {
-  ALL_CAPABILITIES,
-  isEnabled,
-  getEnabledCapabilities,
-  getHooksForPhase,
-  basePhase,
-  hookTiming,
-} from "./registry.js";
+// Individual capability definitions
+export { systemBase } from "./capabilities/system-base/index.js";
+export { homebrew } from "./capabilities/homebrew/index.js";
+export { openclaw } from "./capabilities/openclaw/index.js";
+export { checkpoint } from "./capabilities/checkpoint.js";
+export { tailscale } from "./capabilities/tailscale.js";
+export { onePassword } from "./capabilities/one-password/index.js";
 
-// Individual capabilities
-export { systemBase, homebrew, openclaw, checkpoint, tailscale, onePassword } from "./registry.js";
-
-// Runner
+// Runner (generic — takes resolved hooks)
 export { runPhase } from "./runner.js";
 
 // State
@@ -23,5 +18,5 @@ export {
   findMigrationPath,
 } from "./state.js";
 
-// AGENTS.md
-export { writeAgentsMd } from "./agents-md.js";
+// Utility (used by vm-cli registry)
+export { basePhase, hookTiming } from "./util.js";

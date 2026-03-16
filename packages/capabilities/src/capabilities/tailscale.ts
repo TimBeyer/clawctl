@@ -1,5 +1,6 @@
 import type { CapabilityDef } from "@clawctl/types";
-import { provision as tailscaleProvision } from "../helpers/tailscale.js";
+
+const TAILSCALE_INSTALL_URL = "https://tailscale.com/install.sh";
 
 export const tailscale: CapabilityDef = {
   name: "tailscale",
@@ -12,7 +13,26 @@ export const tailscale: CapabilityDef = {
   hooks: {
     "provision-system": {
       execContext: "root",
-      steps: [{ name: "tailscale", label: "Tailscale", run: (ctx) => tailscaleProvision(ctx) }],
+      steps: [
+        {
+          name: "tailscale",
+          label: "Tailscale",
+          run: async (ctx) => {
+            try {
+              if (await ctx.commandExists("tailscale")) {
+                ctx.log("Tailscale already installed");
+                return { name: "tailscale", status: "unchanged" };
+              }
+              ctx.log("Installing Tailscale...");
+              await ctx.net.downloadAndRun(TAILSCALE_INSTALL_URL);
+              ctx.log("Tailscale installed");
+              return { name: "tailscale", status: "installed" };
+            } catch (err) {
+              return { name: "tailscale", status: "failed", error: String(err) };
+            }
+          },
+        },
+      ],
       doctorChecks: [
         {
           name: "path-tailscale",

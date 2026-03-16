@@ -2,11 +2,10 @@
  * Capability extension system types.
  *
  * A capability is a self-contained, versioned provisioning module that hooks
- * into lifecycle phases (with pre/main/post timing), contributes doctor checks
- * and AGENTS.md sections, declares config schemas, and supports sequential
- * migrations.
+ * into lifecycle phases (with pre/main/post timing), contributes doctor checks,
+ * declares config schemas, and supports sequential migrations.
  *
- * Capabilities use the ProvisionContext SDK for all VM interactions — they
+ * Capabilities use the CapabilityContext SDK for all VM interactions — they
  * never import VM-side tools directly. This makes them safe to import from
  * both the host CLI (for config validation) and the VM CLI (for execution).
  */
@@ -52,8 +51,11 @@ export interface ExecOptions {
  *
  * Capabilities use this instead of importing VM-side tools directly.
  * The real implementation lives in vm-cli and delegates to exec, fs, etc.
+ *
+ * Only low-level primitives belong here — capabilities own all
+ * provisioning logic.
  */
-export interface ProvisionContext {
+export interface CapabilityContext {
   /** Run a command. */
   exec: (command: string, args?: string[], opts?: ExecOptions) => Promise<ExecResult>;
   /** Check if a command exists on PATH. */
@@ -88,6 +90,27 @@ export interface ProvisionContext {
     ensurePath: (pathEntry: string) => Promise<void>;
   };
 
+  /** APT package management — low-level system primitive. */
+  apt: {
+    install: (packages: string[]) => Promise<void>;
+    isInstalled: (pkg: string) => Promise<boolean>;
+  };
+
+  /** systemd service management — low-level system primitive. */
+  systemd: {
+    enable: (service: string) => Promise<void>;
+    isEnabled: (service: string) => Promise<boolean>;
+    isActive: (service: string) => Promise<boolean>;
+    daemonReload: () => Promise<void>;
+    enableLinger: (user: string) => Promise<void>;
+    findDefaultUser: () => Promise<string>;
+  };
+
+  /** AGENTS.md managed-section SDK action. Idempotent. */
+  agentsMd: {
+    update: (owner: string, content: string) => Promise<void>;
+  };
+
   /** Read the provision config written by the host. */
   readProvisionConfig: () => Promise<ProvisionConfig>;
 }
@@ -96,7 +119,7 @@ export interface ProvisionContext {
 export interface CapabilityStep {
   name: string;
   label: string;
-  run: (ctx: ProvisionContext) => Promise<ProvisionResult>;
+  run: (ctx: CapabilityContext) => Promise<ProvisionResult>;
 }
 
 /** A doctor check contributed by a capability. */
@@ -104,7 +127,7 @@ export interface DoctorCheckDef {
   name: string;
   /** Phase after which this check is expected to pass. Defaults to the hook's phase. */
   availableAfter?: LifecyclePhase;
-  run: (ctx: ProvisionContext) => Promise<{ passed: boolean; detail?: string; error?: string }>;
+  run: (ctx: CapabilityContext) => Promise<{ passed: boolean; detail?: string; error?: string }>;
 }
 
 /** A single lifecycle hook into a phase. */
@@ -123,15 +146,15 @@ export interface CapabilityMigration {
   from: string;
   /** Version this migration upgrades TO. */
   to: string;
-  run: (ctx: ProvisionContext) => Promise<ProvisionResult>;
+  run: (ctx: CapabilityContext) => Promise<ProvisionResult>;
 }
 
 /**
  * Full capability definition — an atomic, self-contained provisioning module.
  *
  * Capabilities are plain constant objects. They declare their metadata,
- * lifecycle hooks, doctor checks, migrations, config schema, and AGENTS.md
- * contributions in a single file.
+ * lifecycle hooks, doctor checks, migrations, and config schemas in a
+ * single file (or directory for complex capabilities).
  */
 export interface CapabilityDef {
   /** Unique identifier: "tailscale", "one-password", "system-base". */
@@ -168,9 +191,6 @@ export interface CapabilityDef {
   /** Zod schema for this capability's config section (optional). */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   configSchema?: any;
-
-  /** Markdown snippet to include in AGENTS.md managed section. */
-  agentsMdSection?: string;
 }
 
 /** Tracks installed capability versions inside the VM. */

@@ -1,19 +1,19 @@
 import dedent from "dedent";
-import type { ProvisionContext, ProvisionResult } from "@clawctl/types";
+import type { CapabilityContext, ProvisionResult } from "@clawctl/types";
 
 const OP_VERSION = "2.30.0";
 const OP_DOWNLOAD_URL = (version: string) =>
   `https://cache.agilebits.com/dist/1P/op2/pkg/v${version}/op_linux_arm64_v${version}.zip`;
 
 /** Check if 1Password CLI is installed (real or wrapped). */
-export async function isInstalled(ctx: ProvisionContext): Promise<boolean> {
+export async function isOpInstalled(ctx: CapabilityContext): Promise<boolean> {
   return ctx.commandExists("op");
 }
 
 /** Install 1Password CLI. */
-export async function provision(ctx: ProvisionContext): Promise<ProvisionResult> {
+export async function provisionOpCli(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
-    if (await isInstalled(ctx)) {
+    if (await isOpInstalled(ctx)) {
       ctx.log("1Password CLI already installed");
       return { name: "op-cli", status: "unchanged" };
     }
@@ -42,13 +42,13 @@ export async function provision(ctx: ProvisionContext): Promise<ProvisionResult>
  * and writes the wrapper in its place. Idempotent — skips if already wrapped.
  * Conditional — only installs if op is available.
  */
-export async function provisionOpWrapper(ctx: ProvisionContext): Promise<ProvisionResult> {
+export async function provisionOpWrapper(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
     const home = process.env.HOME ?? "/root";
     const opPath = `${home}/.local/bin/op`;
     const opRealPath = `${home}/.local/bin/.op-real`;
 
-    if (!(await isInstalled(ctx))) {
+    if (!(await isOpInstalled(ctx))) {
       return { name: "op-wrapper", status: "unchanged", detail: "op not installed" };
     }
 
@@ -87,9 +87,9 @@ export async function provisionOpWrapper(ctx: ProvisionContext): Promise<Provisi
  * Install exec-approvals.json for the 1Password CLI.
  * Conditional — only installs if op is available.
  */
-export async function provisionExecApprovals(ctx: ProvisionContext): Promise<ProvisionResult> {
+export async function provisionExecApprovals(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
-    if (!(await isInstalled(ctx))) {
+    if (!(await isOpInstalled(ctx))) {
       return { name: "exec-approvals", status: "unchanged", detail: "op not installed" };
     }
 

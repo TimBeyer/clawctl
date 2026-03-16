@@ -1,23 +1,19 @@
 /**
  * Capability-aware phase runner.
  *
- * Replaces the old `runStage()` with capability-driven resolution:
- * - Collects hooks for the given phase from all enabled capabilities
- * - Resolves execution order by dependencies + pre/main/post timing
+ * Runs resolved hooks for a given phase:
+ * - Takes pre-resolved hooks (caller does registry lookup)
  * - Runs migrations when installed version differs from declared version
  * - Tracks capability state after successful provisioning
- * - Writes AGENTS.md managed section after the workspace phase
  */
 
 import type {
-  ProvisionConfig,
-  ProvisionContext,
+  CapabilityContext,
+  CapabilityDef,
+  CapabilityHook,
   ProvisionResult,
-  LifecyclePhase,
 } from "@clawctl/types";
-import { getHooksForPhase, getEnabledCapabilities } from "./registry.js";
 import { readCapabilityState, markInstalled, needsMigration, findMigrationPath } from "./state.js";
-import { writeAgentsMd } from "./agents-md.js";
 
 function formatResult(result: ProvisionResult): string {
   const detail = result.detail ? ` — ${result.detail}` : "";
@@ -26,22 +22,25 @@ function formatResult(result: ProvisionResult): string {
 }
 
 /**
- * Run all enabled capabilities for a given lifecycle phase.
+ * Run all hooks for a given lifecycle phase.
  *
- * @param phase - The lifecycle phase to run (e.g. "provision-system")
- * @param config - The provision config (determines which capabilities are enabled)
- * @param ctx - The provision context (SDK)
+ * @param hooks - Pre-resolved hooks for this phase (from registry)
+ * @param ctx - The capability context (SDK)
+ * @param phaseName - Phase name for log messages
  * @param outputOk - Called on success with the results envelope
  * @param outputFail - Called on failure with errors and data
  */
 export async function runPhase(
-  phase: LifecyclePhase,
-  config: ProvisionConfig,
-  ctx: ProvisionContext,
+  hooks: Array<{
+    capability: CapabilityDef;
+    hook: CapabilityHook;
+    timing: "pre" | "main" | "post";
+  }>,
+  ctx: CapabilityContext,
+  phaseName: string,
   outputOk: (data: unknown) => void,
   outputFail: (errors: string[], data?: unknown) => void,
 ): Promise<void> {
-  const hooks = getHooksForPhase(phase, config);
   const state = await readCapabilityState(ctx);
   const results: ProvisionResult[] = [];
 
@@ -49,7 +48,7 @@ export async function runPhase(
   const totalSteps = hooks.reduce((sum, h) => sum + h.hook.steps.length, 0);
   let stepNum = 0;
 
-  ctx.log(`=== ${phase} provisioning ===`);
+  ctx.log(`=== ${phaseName} provisioning ===`);
 
   for (const { capability, hook } of hooks) {
     // Check for migrations
@@ -90,15 +89,9 @@ export async function runPhase(
     }
   }
 
-  // After workspace provisioning, write AGENTS.md
-  if (phase === "provision-workspace") {
-    const enabledCaps = getEnabledCapabilities(config);
-    await writeAgentsMd(ctx, enabledCaps);
-  }
-
   const failed = results.filter((r) => r.status === "failed");
   if (failed.length > 0) {
-    ctx.log(`=== ${phase} provisioning failed ===`);
+    ctx.log(`=== ${phaseName} provisioning failed ===`);
     outputFail(
       failed.map((r) => `${r.name}: ${r.error}`),
       { steps: results },
@@ -106,6 +99,6 @@ export async function runPhase(
     process.exit(1);
   }
 
-  ctx.log(`=== ${phase} provisioning complete (${totalSteps} steps) ===`);
+  ctx.log(`=== ${phaseName} provisioning complete (${totalSteps} steps) ===`);
   outputOk({ steps: results });
 }

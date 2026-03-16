@@ -1,7 +1,11 @@
 /**
- * Static capability registry.
+ * Static capability registry — application wiring.
  *
- * Adding a new capability = write the module + add one import here.
+ * Lives in vm-cli because the "which capabilities exist and which are enabled"
+ * question is application policy, not part of the extension interface.
+ *
+ * Adding a new capability = write the module in @clawctl/capabilities + add
+ * one import here.
  */
 
 import type {
@@ -11,16 +15,16 @@ import type {
   PhaseHookKey,
   LifecyclePhase,
 } from "@clawctl/types";
-
-// Core capabilities (always enabled)
-import { systemBase } from "./capabilities/system-base.js";
-import { homebrew } from "./capabilities/homebrew.js";
-import { openclaw } from "./capabilities/openclaw.js";
-import { checkpoint } from "./capabilities/checkpoint.js";
-
-// Optional capabilities
-import { tailscale } from "./capabilities/tailscale.js";
-import { onePassword } from "./capabilities/one-password.js";
+import {
+  systemBase,
+  homebrew,
+  openclaw,
+  checkpoint,
+  tailscale,
+  onePassword,
+  basePhase,
+  hookTiming,
+} from "@clawctl/capabilities";
 
 /** All known capabilities, in registration order. */
 export const ALL_CAPABILITIES: CapabilityDef[] = [
@@ -43,20 +47,6 @@ export function isEnabled(capability: CapabilityDef, config: ProvisionConfig): b
 /** Get all enabled capabilities. */
 export function getEnabledCapabilities(config: ProvisionConfig): CapabilityDef[] {
   return ALL_CAPABILITIES.filter((cap) => isEnabled(cap, config));
-}
-
-/** Extract the base phase from a hook key (strips pre:/post: prefix). */
-export function basePhase(hookKey: PhaseHookKey): LifecyclePhase {
-  if (hookKey.startsWith("pre:")) return hookKey.slice(4) as LifecyclePhase;
-  if (hookKey.startsWith("post:")) return hookKey.slice(5) as LifecyclePhase;
-  return hookKey as LifecyclePhase;
-}
-
-/** Extract timing from a hook key. */
-export function hookTiming(hookKey: PhaseHookKey): "pre" | "main" | "post" {
-  if (hookKey.startsWith("pre:")) return "pre";
-  if (hookKey.startsWith("post:")) return "post";
-  return "main";
 }
 
 /**
@@ -143,10 +133,5 @@ function resolveOrder<T extends { capability: CapabilityDef }>(
   return result;
 }
 
-// Re-export all capability constants for direct access
-export { systemBase } from "./capabilities/system-base.js";
-export { homebrew } from "./capabilities/homebrew.js";
-export { openclaw } from "./capabilities/openclaw.js";
-export { checkpoint } from "./capabilities/checkpoint.js";
-export { tailscale } from "./capabilities/tailscale.js";
-export { onePassword } from "./capabilities/one-password.js";
+// Re-export utility functions for convenience
+export { basePhase, hookTiming } from "@clawctl/capabilities";

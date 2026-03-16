@@ -77,6 +77,7 @@ Delivered the full capability extension system:
 - **31 new tests** (21 registry, 10 state) — all 275 tests pass, lint clean, build succeeds
 
 **Deferred:**
+
 - Wizard integration with capability config schemas (future task)
 - Moving credential injection and bootstrap orchestration VM-side
 - External plugin discovery (capabilities are currently static imports)

@@ -1,10 +1,10 @@
-import type { ProvisionContext, ProvisionResult } from "@clawctl/types";
+import type { CapabilityContext, ProvisionResult } from "@clawctl/types";
 
 const HOMEBREW_INSTALL_URL = "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh";
 const BREW_SHELLENV = 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"';
 
 /** Install Homebrew and configure the shell profile. */
-export async function provision(ctx: ProvisionContext): Promise<ProvisionResult> {
+export async function provisionHomebrew(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
     if (await ctx.commandExists("brew")) {
       ctx.log("Homebrew already installed");

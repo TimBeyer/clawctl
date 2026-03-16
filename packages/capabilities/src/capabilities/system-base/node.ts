@@ -1,11 +1,11 @@
-import type { ProvisionContext, ProvisionResult } from "@clawctl/types";
+import type { CapabilityContext, ProvisionResult } from "@clawctl/types";
 
 const NODE_MAJOR_VERSION = 22;
 const NODESOURCE_SETUP_URL = (majorVersion: number) =>
   `https://deb.nodesource.com/setup_${majorVersion}.x`;
 
 /** Install Node.js via NodeSource and apt. */
-export async function provision(ctx: ProvisionContext): Promise<ProvisionResult> {
+export async function provisionNode(ctx: CapabilityContext): Promise<ProvisionResult> {
   try {
     if (await ctx.commandExists("node")) {
       const v = (await ctx.exec("node", ["--version"], { quiet: true })).stdout.trim();

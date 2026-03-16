@@ -1,10 +1,10 @@
 import type { CapabilityDef } from "@clawctl/types";
 import {
-  provision as openclawProvision,
+  provisionOpenclaw,
   provisionEnvVars,
   provisionNpmGlobalPath,
   provisionGatewayStub,
-} from "../helpers/openclaw.js";
+} from "./install.js";
 
 export const openclaw: CapabilityDef = {
   name: "openclaw",
@@ -15,7 +15,7 @@ export const openclaw: CapabilityDef = {
     "provision-openclaw": {
       execContext: "user",
       steps: [
-        { name: "openclaw-install", label: "OpenClaw", run: (ctx) => openclawProvision(ctx) },
+        { name: "openclaw-install", label: "OpenClaw", run: (ctx) => provisionOpenclaw(ctx) },
         { name: "env-vars", label: "Environment variables", run: (ctx) => provisionEnvVars(ctx) },
         {
           name: "npm-global-path",
