@@ -19,13 +19,20 @@ The host-side provisioning sequence (`host-core/src/provision.ts`):
 5. `sudo claw provision system --json` — system packages (as root)
 6. `claw provision tools --json` — user tools (as default user)
 7. `claw provision openclaw --json` — OpenClaw and gateway stub
+8. `claw provision workspace --json` — skills and workspace files
+9. `claw doctor --json` — verify provisioning
+10. `openclaw onboard` — interactive or headless onboarding
+11. `claw provision bootstrap --json` — post-onboard hooks (AGENTS.md sections)
 
 Each `claw provision` subcommand returns a JSON envelope with a list of
 `ProvisionResult` steps. The host checks for failures and aborts if any
 step has `status: "failed"`.
 
-After provisioning, the host runs `claw doctor --json` to verify that
-everything is installed and healthy.
+The `bootstrap` phase (step 11) runs after onboarding because it writes
+AGENTS.md managed sections — the base file is created by `openclaw onboard`.
+
+All provisioning stages are implemented as capabilities. See
+`docs/capabilities.md` for the extension system.
 
 ## What each stage installs
 
@@ -108,6 +115,8 @@ VM, you can re-provision at any time:
 clawctl shell -- sudo claw provision system
 clawctl shell -- claw provision tools
 clawctl shell -- claw provision openclaw
+clawctl shell -- claw provision workspace
+clawctl shell -- claw provision bootstrap
 
 # Check health
 clawctl shell -- claw doctor
