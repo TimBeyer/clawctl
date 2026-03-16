@@ -1,5 +1,22 @@
 // Types and interfaces
-export type { MountSpec, VMConfig, InstanceConfig, ProvisionConfig } from "./types.js";
+export type { MountSpec, VMConfig, InstanceConfig } from "./types.js";
+
+// Capability types (ProvisionConfig is now defined here)
+export type {
+  ExecContext,
+  PhaseHookKey,
+  ProvisionResult,
+  ExecResult,
+  ExecOptions,
+  CapabilityContext,
+  CapabilityStep,
+  DoctorCheckDef,
+  CapabilityHook,
+  CapabilityMigration,
+  CapabilityDef,
+  CapabilityState,
+  ProvisionConfig,
+} from "./capability.js";
 
 // Schemas
 export {
@@ -9,6 +26,7 @@ export {
   servicesSchema,
   agentSchema,
   toolsSchema,
+  capabilitiesSchema,
   mountsSchema,
   providerSchema,
   bootstrapSchema,

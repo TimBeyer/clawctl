@@ -67,8 +67,8 @@ export async function runHeadless(driver: VMDriver, configPath: string): Promise
     // 3. Provision VM
     log("provision", "Starting VM provisioning...");
     const provisionFeatures = {
-      onePassword: !!config.services?.onePassword,
-      tailscale: !!config.network?.tailscale,
+      onePassword: !!config.services?.onePassword || !!config.capabilities?.["one-password"],
+      tailscale: !!config.network?.tailscale || !!config.capabilities?.tailscale,
     };
     await provisionVM(
       driver,

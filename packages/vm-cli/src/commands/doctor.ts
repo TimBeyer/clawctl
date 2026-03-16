@@ -1,29 +1,26 @@
 /**
  * VM health checks.
  *
- * Each check declares `availableAfter` — the lifecycle phase after which
- * it's expected to pass. The `--after <phase>` flag tells doctor how far
- * the lifecycle has progressed. Failures for phases not yet reached are
- * warnings; all others are errors. Without `--after`, all failures are
- * errors (strictest mode). See LIFECYCLE_PHASES in @clawctl/types.
+ * Core infrastructure checks (mounts, gateway service, openclaw doctor) are
+ * defined here. Tool/path/env checks come from capabilities via the registry.
  */
 
 import { Command } from "commander";
-import { commandExists } from "../exec.js";
 import { log, ok, fail, setJsonMode } from "../output.js";
 import { PROJECT_MOUNT_POINT, LIFECYCLE_PHASES, phaseReached } from "@clawctl/types";
 import type { LifecyclePhase } from "@clawctl/types";
 import { access } from "fs/promises";
 import { constants } from "fs";
+import { getEnabledCapabilities, basePhase } from "../capabilities/registry.js";
+import { createCapabilityContext } from "../capabilities/context.js";
+import { readProvisionConfig } from "../tools/provision-config.js";
 import * as systemd from "../tools/systemd.js";
 import * as openclaw from "../tools/openclaw.js";
 
 export interface DoctorCheck {
   name: string;
   passed: boolean;
-  /** Lifecycle phase after which this check is expected to pass. */
   availableAfter: LifecyclePhase;
-  /** Computed: true if the check failed but its phase hasn't been reached yet. */
   warn?: boolean;
   detail?: string;
   error?: string;
@@ -32,7 +29,6 @@ export interface DoctorCheck {
 async function checkMount(): Promise<DoctorCheck[]> {
   const checks: DoctorCheck[] = [];
 
-  // /mnt/project readable
   try {
     await access(PROJECT_MOUNT_POINT, constants.R_OK);
     checks.push({
@@ -50,7 +46,6 @@ async function checkMount(): Promise<DoctorCheck[]> {
     });
   }
 
-  // /mnt/project/data writable
   try {
     await access(`${PROJECT_MOUNT_POINT}/data`, constants.W_OK);
     checks.push({
@@ -66,58 +61,6 @@ async function checkMount(): Promise<DoctorCheck[]> {
       availableAfter: "vm-created",
       error: `${PROJECT_MOUNT_POINT}/data not writable`,
     });
-  }
-
-  return checks;
-}
-
-async function checkEnv(): Promise<DoctorCheck[]> {
-  const checks: DoctorCheck[] = [];
-
-  for (const varName of ["OPENCLAW_STATE_DIR", "OPENCLAW_CONFIG_PATH"]) {
-    const value = process.env[varName];
-    if (value) {
-      checks.push({
-        name: `env-${varName}`,
-        passed: true,
-        availableAfter: "provision-openclaw",
-        detail: value,
-      });
-    } else {
-      checks.push({
-        name: `env-${varName}`,
-        passed: false,
-        availableAfter: "provision-openclaw",
-        error: `${varName} not set`,
-      });
-    }
-  }
-
-  return checks;
-}
-
-async function checkPath(): Promise<DoctorCheck[]> {
-  const toolPhases: Array<{ tool: string; availableAfter: LifecyclePhase }> = [
-    { tool: "claw", availableAfter: "vm-created" },
-    { tool: "node", availableAfter: "provision-system" },
-    { tool: "op", availableAfter: "provision-tools" },
-    { tool: "brew", availableAfter: "provision-tools" },
-    { tool: "openclaw", availableAfter: "provision-openclaw" },
-  ];
-  const checks: DoctorCheck[] = [];
-
-  for (const { tool, availableAfter } of toolPhases) {
-    const exists = await commandExists(tool);
-    if (exists) {
-      checks.push({ name: `path-${tool}`, passed: true, availableAfter });
-    } else {
-      checks.push({
-        name: `path-${tool}`,
-        passed: false,
-        availableAfter,
-        error: `${tool} not found on PATH`,
-      });
-    }
   }
 
   return checks;
@@ -169,7 +112,6 @@ export function registerDoctorCommand(program: Command): void {
     .action(async (opts: { json?: boolean; after?: string }) => {
       if (opts.json) setJsonMode(true);
 
-      // Validate --after value if provided
       const afterPhase = opts.after as LifecyclePhase | undefined;
       if (afterPhase && !LIFECYCLE_PHASES.includes(afterPhase)) {
         fail([
@@ -182,20 +124,38 @@ export function registerDoctorCommand(program: Command): void {
 
       const checks: DoctorCheck[] = [];
 
+      // Core infrastructure checks
       log("Checking mounts...");
       checks.push(...(await checkMount()));
-
-      log("Checking environment...");
-      checks.push(...(await checkEnv()));
-
-      log("Checking PATH...");
-      checks.push(...(await checkPath()));
 
       log("Checking services...");
       checks.push(...(await checkService()));
 
       log("Checking OpenClaw...");
       checks.push(...(await checkOpenclaw()));
+
+      // Capability-contributed checks
+      log("Checking capabilities...");
+      const config = await readProvisionConfig();
+      const ctx = createCapabilityContext();
+      const capabilities = getEnabledCapabilities(config);
+
+      for (const cap of capabilities) {
+        for (const [hookKey, hook] of Object.entries(cap.hooks)) {
+          if (!hook?.doctorChecks) continue;
+          const phase = basePhase(hookKey as Parameters<typeof basePhase>[0]);
+          for (const check of hook.doctorChecks) {
+            const result = await check.run(ctx);
+            checks.push({
+              name: check.name,
+              passed: result.passed,
+              availableAfter: check.availableAfter ?? phase,
+              detail: result.detail,
+              error: result.error,
+            });
+          }
+        }
+      }
 
       // Compute warn based on lifecycle phase
       for (const check of checks) {

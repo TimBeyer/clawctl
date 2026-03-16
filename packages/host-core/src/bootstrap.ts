@@ -2,13 +2,12 @@ import { randomBytes } from "crypto";
 import { mkdir, rm } from "fs/promises";
 import { join } from "path";
 import type { VMDriver, OnLine } from "./drivers/types.js";
-import { GATEWAY_PORT } from "@clawctl/types";
+import { GATEWAY_PORT, CLAW_BIN_PATH } from "@clawctl/types";
 import { buildOnboardCommand } from "./providers.js";
 import { patchMainConfig, patchAuthProfiles } from "./infra-secrets.js";
 import { generateBootstrapPrompt } from "@clawctl/templates";
 import { redactSecrets } from "./redact.js";
 import { getTailscaleHostname } from "./tailscale.js";
-import { patchAgentsMd } from "./agents-md.js";
 import type { InstanceConfig } from "@clawctl/types";
 import type { ResolvedSecretRef } from "./secrets.js";
 
@@ -217,10 +216,18 @@ export async function bootstrapOpenclaw(
     }
   }
 
-  // k) Patch AGENTS.md with clawctl managed section.
-  //    Runs last — after onboard, daemon restart, and bootstrap prompt have all
-  //    had a chance to create/populate AGENTS.md at the workspace mount.
-  await patchAgentsMd(config.project, onLine);
+  // k) Run bootstrap-phase capability hooks (AGENTS.md sections etc.)
+  //    Runs after the bootstrap prompt — the agent's first run populates the
+  //    base AGENTS.md, and capabilities append their managed sections to it.
+  onLine?.("Running bootstrap provisioning...");
+  const bootstrapProvResult = await driver.exec(
+    vmName,
+    `${CLAW_BIN_PATH} provision bootstrap --json`,
+    onLine,
+  );
+  if (bootstrapProvResult.exitCode !== 0) {
+    onLine?.(`Warning: bootstrap provisioning failed: ${bootstrapProvResult.stderr}`);
+  }
 
   // l) Return result
   const hostPort = config.network?.gatewayPort ?? GATEWAY_PORT;

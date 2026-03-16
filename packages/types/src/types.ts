@@ -51,8 +51,11 @@ export interface InstanceConfig {
     onePassword?: { serviceAccountToken: string };
   };
 
-  /** Additional tools to install (future). */
+  /** Additional tools to install (future, deprecated — use capabilities). */
   tools?: Record<string, boolean | Record<string, unknown>>;
+
+  /** Capability configs. true = enabled with defaults. Object = enabled with config. */
+  capabilities?: Record<string, true | Record<string, unknown>>;
 
   /** Extra host directories to mount into the VM. */
   mounts?: MountSpec[];
@@ -112,12 +115,4 @@ export interface InstanceConfig {
     /** Group IDs and their settings. */
     groups?: Record<string, { requireMention?: boolean }>;
   };
-}
-
-/** Feature flags telling claw which optional tools to install. */
-export interface ProvisionConfig {
-  /** Install 1Password CLI, wrapper, exec-approvals, and secret-management skill. */
-  onePassword: boolean;
-  /** Install Tailscale. */
-  tailscale: boolean;
 }

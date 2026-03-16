@@ -49,6 +49,15 @@ driver.exec(vmName, "claw provision openclaw --json")
 driver.exec(vmName, "claw provision workspace --json")
 ```
 
+After `openclaw onboard`, the host runs the bootstrap phase:
+
+```
+driver.exec(vmName, "claw provision bootstrap --json")
+```
+
+This executes post-onboard hooks (AGENTS.md managed sections, etc.).
+See `docs/capabilities.md` for the hook system.
+
 After provisioning, the host runs `claw doctor --json` to verify that
 all tools are installed and services are healthy. The structured output
 lets the host distinguish hard errors from expected warnings (e.g. the
@@ -65,21 +74,18 @@ packages/vm-cli/
   src/
     exec.ts                    execa wrapper (exec, commandExists)
     output.ts                  JSON envelope helpers (log, ok, fail)
+    capabilities/
+      registry.ts              Static capability registry + dependency resolution
+      context.ts               CapabilityContext implementation (wires to vm-cli tools)
     commands/
       provision/
-        index.ts               Registers provision subcommands
-        stages.ts              ProvisionStage type + runStage() runner
-        system.ts              Stage definition: apt + node + systemd + tailscale
-        tools.ts               Stage definition: homebrew + op-cli + shell profile
-        openclaw.ts            Stage definition: openclaw + env vars + gateway stub
-        workspace.ts           Stage definition: workspace skills (checkpoint, etc.)
+        index.ts               Registers provision subcommands (system, tools, openclaw, workspace, bootstrap)
       doctor.ts                Health checks (mounts, env, PATH, services, openclaw)
       checkpoint.ts            Signal host to commit data changes
     tools/                     One module per system tool
       types.ts                 ProvisionResult interface
       fs.ts                    ensureLineInFile, ensureDir
       curl.ts                  downloadFile, downloadAndRun
-      skills.ts                provisionCheckpointSkill (writes SKILL.md files)
       shell-profile.ts         ensureInBashrc, ensureInProfile, ensurePath
       apt.ts                   isInstalled, update, install, ensure
       systemd.ts               findDefaultUser, enableLinger, isEnabled, isActive, ...
@@ -89,6 +95,12 @@ packages/vm-cli/
       op-cli.ts                isInstalled, provision
       openclaw.ts              isInstalled, version, doctor, provision, provisionGatewayStub
 ```
+
+Provisioning logic (what gets installed, in what order) lives in the
+capability modules in `@clawctl/capabilities`, not in this package.
+The provision subcommands are thin — they resolve hooks from the
+registry and delegate to the capability runner. See `docs/capabilities.md`
+for the full extension system.
 
 ## Tool abstraction layer (`tools/`)
 
