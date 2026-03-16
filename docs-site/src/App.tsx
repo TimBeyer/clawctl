@@ -94,10 +94,13 @@ function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    navigator.clipboard.writeText(text).then(
+      () => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      },
+      () => {},
+    );
   };
 
   return (
@@ -105,6 +108,7 @@ function CopyButton({ text }: { text: string }) {
       onClick={handleCopy}
       className="p-1 rounded-md text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all cursor-pointer"
       title="Copy to clipboard"
+      aria-label={copied ? "Copied" : "Copy to clipboard"}
     >
       {copied ? (
         <svg
@@ -402,10 +406,10 @@ function JsonHighlight({ json }: { json: string }) {
   return (
     <>
       {lines.map((line, i) => (
-        <div key={i}>
+        <span key={i} className="block">
           {highlightJsonLine(line)}
           {"\n"}
-        </div>
+        </span>
       ))}
     </>
   );

@@ -27,7 +27,7 @@ Does **not** include actual documentation content — just the working skeleton.
 ## Notes
 
 - Using Tailwind v4 with `@tailwindcss/vite` plugin (CSS-first config)
-- `base` in vite.config.ts set to `/create-openclaw-vm/` for GitHub Pages
+- `base` in vite.config.ts set to `/clawctl/` for GitHub Pages
 - Not added to root Bun workspaces — independent project
 
 ## Outcome
@@ -36,5 +36,5 @@ Delivered the full skeleton:
 
 - `docs-site/` with Vite 6 + React 18 + TypeScript + Tailwind v4
 - GitHub Actions workflow (`.github/workflows/pages.yml`) using `actions/deploy-pages`
-- `tsc -b && vite build` passes cleanly, producing `dist/` with correct `/create-openclaw-vm/` base path
+- `tsc -b && vite build` passes cleanly, producing `dist/` with correct `/clawctl/` base path
 - Not added to root Bun workspaces — fully independent project
