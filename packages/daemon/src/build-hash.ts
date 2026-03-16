@@ -2,6 +2,11 @@ import { createHash } from "crypto";
 import { readFile, readdir } from "fs/promises";
 import { resolve, join } from "path";
 
+export function isDevMode(): boolean {
+  const execPath = process.execPath;
+  return execPath.endsWith("/bun") || execPath.endsWith("/bun.exe");
+}
+
 /**
  * Compute a hash that changes whenever the daemon code changes.
  *
@@ -12,10 +17,7 @@ import { resolve, join } from "path";
  * the package.json version never changes between edits.
  */
 export async function computeBuildHash(): Promise<string> {
-  const execPath = process.execPath;
-  const isBun = execPath.endsWith("/bun") || execPath.endsWith("/bun.exe");
-
-  if (!isBun) {
+  if (!isDevMode()) {
     // Compiled binary — hash the binary itself
     const binary = await readFile(execPath);
     return createHash("sha256").update(binary).digest("hex").slice(0, 12);

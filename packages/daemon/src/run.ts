@@ -7,7 +7,7 @@ import { Scheduler } from "./scheduler.js";
 import { getDefaultTasks } from "./tasks/registry.js";
 import { createCheckpointWatchTask } from "./tasks/checkpoint-watch.js";
 import { createHealthMonitorTask } from "./tasks/health-monitor.js";
-import { computeBuildHash } from "./build-hash.js";
+import { computeBuildHash, isDevMode } from "./build-hash.js";
 import type { RequestHandler } from "./server.js";
 
 export async function runDaemon(): Promise<void> {
@@ -46,7 +46,8 @@ export async function runDaemon(): Promise<void> {
 
   // Compute build hash for staleness detection
   const buildHash = await computeBuildHash();
-  await writeLog("info", `Build hash: ${buildHash}`);
+  const devMode = isDevMode();
+  await writeLog("info", `Build hash: ${buildHash}${devMode ? " (dev)" : ""}`);
 
   // 5. Create IPC server
   const handler: RequestHandler = async (method, _params) => {
@@ -59,6 +60,7 @@ export async function runDaemon(): Promise<void> {
             uptime: Math.floor((Date.now() - startTime) / 1000),
             version,
             buildHash,
+            devMode,
           },
         };
       }
@@ -84,6 +86,7 @@ export async function runDaemon(): Promise<void> {
             uptime: Math.floor((Date.now() - startTime) / 1000),
             version,
             buildHash,
+            devMode,
             instances: instanceStatuses,
             tasks: schedulerStatus.tasks,
           },

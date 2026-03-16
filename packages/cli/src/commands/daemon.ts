@@ -81,6 +81,7 @@ export async function runDaemonStatus(): Promise<void> {
     uptime: number;
     version: string;
     buildHash: string;
+    devMode?: boolean;
     instances: Array<{ name: string; vmStatus: string }>;
     tasks: Array<{ name: string; label: string; instance?: string }>;
   };
@@ -88,7 +89,7 @@ export async function runDaemonStatus(): Promise<void> {
   console.log(`Daemon status:`);
   console.log(`  PID:      ${data.pid}`);
   console.log(`  Uptime:   ${formatUptime(data.uptime)}`);
-  console.log(`  Version:  ${data.version}`);
+  console.log(`  Version:  ${data.version}${data.devMode ? " (dev)" : ""}`);
   console.log(`  Build:    ${data.buildHash}`);
 
   if (data.instances.length > 0) {
