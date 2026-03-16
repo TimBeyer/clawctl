@@ -1,6 +1,6 @@
 # Dead code & misplaced code cleanup
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -25,12 +25,25 @@ the identified dead code.
 
 ## Steps
 
-- [ ] Items 1-8 implementation
-- [ ] `bun test` passes
-- [ ] `bun run lint` clean
-- [ ] `bun run format:check` clean
-- [ ] Grep verification for removed symbols
+- [x] Items 1-8 implementation
+- [x] `bun test` passes (264 pass, 10 skip, 0 fail)
+- [x] `bun run lint` clean
+- [x] `bun run format:check` clean
+- [x] Grep verification for removed symbols
 
 ## Notes
 
 ## Outcome
+
+All 8 items delivered as planned:
+
+1. Deleted `formatZodError` + `expandTilde` from host-core (duplicates of types package)
+2. Deleted `openclaw.version()` from vm-cli (unused)
+3. Removed `clear` from `useProcessLogs` hook + its test
+4. Removed `toggle` from `useVerboseMode` hook
+5. Removed `driver` prop from `Finish` component
+6. Simplified `CredentialSetup` — removed unnecessary `updatedCreds` copy
+7. Converted 3 dynamic imports to static imports in `create.ts`
+8. Removed stale `tools/types.ts` references from `vm-cli.md` and `architecture.md`
+
+No behavioral changes. All tests pass, lint/format clean.

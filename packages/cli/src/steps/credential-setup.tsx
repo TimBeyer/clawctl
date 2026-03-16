@@ -35,8 +35,6 @@ export function CredentialSetup({
 
   useEffect(() => {
     async function run() {
-      const updatedCreds = { ...credentialConfig };
-
       // Validate 1Password token in VM
       if (hasOp) {
         try {
@@ -81,7 +79,7 @@ export function CredentialSetup({
       }
 
       setPhase("done");
-      setTimeout(() => onComplete(updatedCreds), 500);
+      setTimeout(() => onComplete(credentialConfig), 500);
     }
     run();
   }, []);

@@ -14,10 +14,5 @@ export function useProcessLogs() {
     setTick((t) => t + 1);
   }, []);
 
-  const clear = useCallback(() => {
-    linesRef.current = [];
-    setTick((t) => t + 1);
-  }, []);
-
-  return { lines: linesRef.current, addLine, clear };
+  return { lines: linesRef.current, addLine };
 }

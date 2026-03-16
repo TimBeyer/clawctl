@@ -1,6 +1,4 @@
 import { readFile } from "fs/promises";
-import { homedir } from "os";
-import { resolve } from "path";
 import { resolveEnvRefs, validateConfig } from "@clawctl/types";
 import type { InstanceConfig, VMConfig } from "@clawctl/types";
 
@@ -57,31 +55,6 @@ export function sanitizeConfig(config: InstanceConfig): Record<string, unknown> 
   delete clone.bootstrap;
 
   return clone;
-}
-
-/** Format a zod error into a readable message with field path. */
-export function formatZodError(error: import("zod").ZodError): string {
-  const issue = error.issues[0];
-  const path = issue.path.join(".");
-
-  // Use custom messages (from .min() / .refine()) when they look specific
-  if (issue.message && !issue.message.startsWith("Invalid input:")) {
-    return issue.message;
-  }
-
-  // Build a path-based message for generic zod errors
-  if (path) {
-    return `'${path}': ${issue.message}`;
-  }
-  return issue.message;
-}
-
-/** Expand leading ~ to the user's home directory. */
-export function expandTilde(path: string): string {
-  if (path.startsWith("~/") || path === "~") {
-    return resolve(homedir(), path.slice(2));
-  }
-  return path;
 }
 
 /** Read and validate a JSON config file. */

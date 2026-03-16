@@ -9,14 +9,7 @@ export type { VMDriver, VMCreateOptions, ExecResult, OnLine } from "./drivers/ty
 export { exec, execStream, execWithLogs, commandExists } from "./exec.js";
 
 // Config
-export {
-  loadConfig,
-  validateConfig,
-  configToVMConfig,
-  sanitizeConfig,
-  formatZodError,
-  expandTilde,
-} from "./config.js";
+export { loadConfig, validateConfig, configToVMConfig, sanitizeConfig } from "./config.js";
 
 // Secrets (I/O + re-exports of pure functions from @clawctl/types)
 export {

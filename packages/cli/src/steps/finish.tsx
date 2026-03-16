@@ -3,7 +3,6 @@ import { Text, Box, useApp } from "ink";
 import { StepIndicator } from "../components/step-indicator.js";
 import type { VMConfig } from "@clawctl/types";
 import { GATEWAY_PORT } from "@clawctl/types";
-import type { VMDriver } from "@clawctl/host-core";
 import { BIN_NAME } from "@clawctl/host-core";
 
 export interface FinishResult {
@@ -14,7 +13,6 @@ export interface FinishResult {
 }
 
 interface FinishProps {
-  driver: VMDriver;
   config: VMConfig;
   onboardSkipped?: boolean;
   tailscaleMode?: "off" | "serve" | "funnel";

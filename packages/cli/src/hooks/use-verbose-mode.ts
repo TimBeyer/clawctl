@@ -10,5 +10,5 @@ export function useVerboseMode() {
     }
   });
 
-  return { verbose, toggle: () => setVerbose((prev) => !prev) };
+  return { verbose };
 }

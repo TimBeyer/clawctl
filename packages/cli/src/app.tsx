@@ -138,7 +138,6 @@ export function App({ driver, creationTarget }: AppProps) {
 
         {step === "finish" && (
           <Finish
-            driver={driver}
             config={config}
             onboardSkipped={onboardSkipped}
             tailscaleMode={credentialConfig.tailscaleMode}
