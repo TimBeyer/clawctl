@@ -1,5 +1,18 @@
 # Changelog
 
+# [0.10.0](https://github.com/TimBeyer/clawctl/compare/v0.9.1...v0.10.0) (2026-03-16)
+
+
+### Bug Fixes
+
+* move AGENTS.md writes to bootstrap phase hook ([03ead54](https://github.com/TimBeyer/clawctl/commit/03ead545c7951ca3762ee04ec8467346b191a506))
+
+
+### Features
+
+* implement capability extension system ([584e0cc](https://github.com/TimBeyer/clawctl/commit/584e0cc24450465157e1c45c6d5347a5bf281800))
+* wire host-side, delete old files, add tests for capability system ([792ff42](https://github.com/TimBeyer/clawctl/commit/792ff42abd866abd3251eae86dfc4a1bb0d8b942))
+
 ## [0.9.1](https://github.com/TimBeyer/clawctl/compare/v0.9.0...v0.9.1) (2026-03-15)
 
 
