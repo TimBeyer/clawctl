@@ -78,7 +78,7 @@ export function formatLogLine(json: string): string {
       instance?: string;
     };
     const parts = [entry.ts.replace("T", " ").slice(0, 19)];
-    parts.push(`[${entry.level.toUpperCase().padEnd(5)}]`);
+    parts.push(`[${entry.level.toUpperCase()}]`);
     if (entry.task) parts.push(`[${entry.task}]`);
     if (entry.instance) parts.push(`(${entry.instance})`);
     parts.push(entry.msg);
