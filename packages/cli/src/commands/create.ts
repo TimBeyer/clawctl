@@ -168,11 +168,12 @@ function printSummary(result: HeadlessResult): void {
   }
   console.log(`  Config     ${result.projectDir}/clawctl.json`);
   console.log();
-  console.log(`  ${BIN_NAME} shell          Enter the VM`);
-  console.log(`  ${BIN_NAME} oc dashboard   Open the dashboard`);
-  console.log(`  ${BIN_NAME} status         Check instance health`);
+  const n = result.name;
+  console.log(`  ${BIN_NAME} shell ${n}          Enter the VM`);
+  console.log(`  ${BIN_NAME} oc dashboard -i ${n}   Open the dashboard`);
+  console.log(`  ${BIN_NAME} status ${n}         Check instance health`);
   if (!result.providerType) {
-    console.log(`  ${BIN_NAME} oc onboard     Configure a provider`);
+    console.log(`  ${BIN_NAME} oc onboard -i ${n}     Configure a provider`);
   }
   console.log();
 }

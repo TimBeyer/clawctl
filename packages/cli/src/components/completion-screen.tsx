@@ -47,20 +47,32 @@ export function CompletionScreen({ result }: CompletionScreenProps) {
         <Text bold>Next steps:</Text>
         <Text>
           {" "}
-          <Text dimColor>{BIN_NAME} shell</Text> Enter the VM
+          <Text dimColor>
+            {BIN_NAME} shell {result.name}
+          </Text>{" "}
+          Enter the VM
         </Text>
         <Text>
           {" "}
-          <Text dimColor>{BIN_NAME} oc dashboard</Text> Open the dashboard
+          <Text dimColor>
+            {BIN_NAME} oc dashboard -i {result.name}
+          </Text>{" "}
+          Open the dashboard
         </Text>
         <Text>
           {" "}
-          <Text dimColor>{BIN_NAME} status</Text> Check instance health
+          <Text dimColor>
+            {BIN_NAME} status {result.name}
+          </Text>{" "}
+          Check instance health
         </Text>
         {!result.providerType && (
           <Text>
             {" "}
-            <Text dimColor>{BIN_NAME} oc onboard</Text> Configure a provider
+            <Text dimColor>
+              {BIN_NAME} oc onboard -i {result.name}
+            </Text>{" "}
+            Configure a provider
           </Text>
         )}
       </Box>
