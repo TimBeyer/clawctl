@@ -152,6 +152,9 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
     const vmConfig = configToVMConfig(provisionConfig);
     await cleanupVM(driver, vmConfig.vmName, vmConfig.projectDir);
     process.exit(130);
+  } else {
+    // Ctrl-C before provisioning started — nothing to clean up, just exit.
+    process.exit(130);
   }
 }
 
