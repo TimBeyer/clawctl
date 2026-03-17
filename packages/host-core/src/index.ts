@@ -9,7 +9,22 @@ export type { VMDriver, VMCreateOptions, ExecResult, OnLine } from "./drivers/ty
 export { exec, execStream, execWithLogs, commandExists } from "./exec.js";
 
 // Config
-export { loadConfig, validateConfig, configToVMConfig, sanitizeConfig } from "./config.js";
+export {
+  loadConfig,
+  validateConfig,
+  configToVMConfig,
+  sanitizeConfig,
+  normalizeConfig,
+} from "./config.js";
+
+// Schema derivation
+export {
+  deriveConfigSchema,
+  buildCapabilitiesSchema,
+  getSecretPaths,
+  getByPath,
+  setByPath,
+} from "./schema-derive.js";
 
 // Secrets (I/O + re-exports of pure functions from @clawctl/types)
 export {

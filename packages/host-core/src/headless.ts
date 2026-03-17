@@ -1,6 +1,6 @@
 import { writeFile } from "fs/promises";
 import { join } from "path";
-import { loadConfig, configToVMConfig, sanitizeConfig } from "./config.js";
+import { loadConfig, configToVMConfig, sanitizeConfig, normalizeConfig } from "./config.js";
 import { checkPrereqs } from "./prereqs.js";
 import { provisionVM } from "./provision.js";
 import { verifyProvisioning } from "./verify.js";
@@ -73,7 +73,7 @@ export async function runHeadlessFromConfig(
   inputConfig: InstanceConfig,
   callbacks?: HeadlessCallbacks,
 ): Promise<HeadlessResult> {
-  let config = inputConfig;
+  let config = normalizeConfig(inputConfig);
   const cb: Required<HeadlessCallbacks> = {
     ...defaultCallbacks(),
     ...callbacks,
@@ -109,10 +109,6 @@ export async function runHeadlessFromConfig(
   try {
     // 2. Provision VM
     cb.onStage("provision", "running", "Starting VM provisioning...");
-    const provisionFeatures = {
-      onePassword: !!config.services?.onePassword || !!config.capabilities?.["one-password"],
-      tailscale: !!config.network?.tailscale || !!config.capabilities?.tailscale,
-    };
     await provisionVM(
       driver,
       vmConfig,
@@ -127,7 +123,8 @@ export async function runHeadlessFromConfig(
         extraMounts: vmConfig.extraMounts,
       },
       undefined,
-      provisionFeatures,
+      undefined,
+      config.capabilities,
     );
     cb.onStage("provision", "done", "VM provisioned");
 

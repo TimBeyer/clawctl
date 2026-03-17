@@ -7,6 +7,7 @@ import type { VMDriver, VMCreateOptions, OnLine } from "./drivers/types.js";
 import { initGitRepo } from "./git.js";
 import { clawPath } from "./claw-binary.js";
 
+/** @deprecated Use capabilities map directly via provisionVM's capabilities parameter. */
 export interface ProvisionFeatures {
   onePassword: boolean;
   tailscale: boolean;
@@ -93,6 +94,7 @@ export async function provisionVM(
   createOptions: VMCreateOptions = {},
   clawBinaryPath: string = clawPath,
   features: ProvisionFeatures = { onePassword: false, tailscale: false },
+  capabilities?: Record<string, true | Record<string, unknown>>,
 ): Promise<void> {
   const { onPhase, onStep, onLine } = callbacks;
 
@@ -101,9 +103,10 @@ export async function provisionVM(
   await mkdir(join(config.projectDir, "data", "state"), { recursive: true });
   onStep?.("Created project directory");
 
-  // Write provision config so claw knows which optional capabilities to enable
+  // Write provision config so claw knows which optional capabilities to enable.
+  // Prefer the new capabilities map; fall back to legacy ProvisionFeatures.
   const provisionConfig: ProvisionConfig = {
-    capabilities: {
+    capabilities: capabilities ?? {
       ...(features.onePassword && { "one-password": true }),
       ...(features.tailscale && { tailscale: true }),
     },
