@@ -1,7 +1,7 @@
 import { readFile } from "fs/promises";
 import { resolveEnvRefs, validateConfig } from "@clawctl/types";
 import type { InstanceConfig, VMConfig, CapabilityDef } from "@clawctl/types";
-import { buildCapabilitiesSchema, getSecretPaths, getByPath } from "./schema-derive.js";
+import { buildCapabilitiesSchema, getSecretPaths } from "./schema-derive.js";
 
 // Re-export validateConfig from types for convenience
 export { validateConfig } from "@clawctl/types";

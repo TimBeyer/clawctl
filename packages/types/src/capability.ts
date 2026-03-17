@@ -225,12 +225,17 @@ export interface CapabilityConfigDef<
 
 /**
  * Type-safe helper for defining a capability config.
- * Infers TConfig so field paths are validated at compile time.
+ *
+ * Validates field paths against TConfig at the definition site, then
+ * returns a type-erased `CapabilityConfigDef` for storage on `CapabilityDef`.
+ * This is intentional — the generic does its job at compile time, but the
+ * stored value doesn't carry the parameter since `CapabilityDef[]` arrays
+ * can't hold mixed generics.
  */
 export function defineCapabilityConfig<T extends Record<string, unknown>>(
   def: CapabilityConfigDef<T>,
-): CapabilityConfigDef<T> {
-  return def;
+): CapabilityConfigDef {
+  return def as CapabilityConfigDef;
 }
 
 // ---------------------------------------------------------------------------

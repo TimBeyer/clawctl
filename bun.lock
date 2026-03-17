@@ -39,13 +39,13 @@
       "dependencies": {
         "@clawctl/types": "workspace:*",
         "dedent": "^1.7.2",
-        "zod": "^4.3.6",
       },
     },
     "packages/cli": {
       "name": "@clawctl/cli",
       "version": "0.7.0",
       "dependencies": {
+        "@clawctl/capabilities": "workspace:*",
         "@clawctl/daemon": "workspace:*",
         "@clawctl/host-core": "workspace:*",
         "@clawctl/templates": "workspace:*",

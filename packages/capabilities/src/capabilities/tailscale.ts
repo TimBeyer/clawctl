@@ -3,10 +3,10 @@ import type { CapabilityDef } from "@clawctl/types";
 
 const TAILSCALE_INSTALL_URL = "https://tailscale.com/install.sh";
 
-interface TailscaleConfig {
+type TailscaleConfig = {
   authKey: string;
   mode?: "off" | "serve" | "funnel";
-}
+};
 
 export const tailscale: CapabilityDef = {
   name: "tailscale",

@@ -12,9 +12,9 @@ import { secretManagementSkillContent } from "./skill.js";
 
 const SKILLS_DIR = join(PROJECT_MOUNT_POINT, "data", "workspace", "skills");
 
-interface OnePasswordConfig {
+type OnePasswordConfig = {
   serviceAccountToken: string;
-}
+};
 
 export const onePassword: CapabilityDef = {
   name: "one-password",

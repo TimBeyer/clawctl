@@ -8,7 +8,7 @@
  */
 
 import { z } from "zod";
-import type { CapabilityConfigDef, CapabilityConfigField, CapabilityDef } from "@clawctl/types";
+import type { CapabilityConfigDef, CapabilityDef } from "@clawctl/types";
 
 // ---------------------------------------------------------------------------
 // Path resolution utilities

@@ -4,7 +4,9 @@ import TextInput from "ink-text-input";
 import SelectInput from "ink-select-input";
 import { FormField } from "../components/form-field.js";
 import { FormSection } from "../components/form-section.js";
+import { CapabilitySection } from "../components/capability-section.js";
 import { Sidebar, SIDEBAR_HELP } from "../components/sidebar.js";
+import type { SidebarContent } from "../components/sidebar.js";
 import { ConfigReview } from "../components/config-review.js";
 import {
   instanceConfigSchema,
@@ -13,54 +15,21 @@ import {
   DEFAULT_PROJECT_BASE,
 } from "@clawctl/types";
 import type { InstanceConfig } from "@clawctl/types";
+import { ALL_CAPABILITIES } from "@clawctl/capabilities";
+import { normalizeConfig } from "@clawctl/host-core";
 
 type Phase = "form" | "review";
 
-/**
- * Flat list of all navigable items. Sections are headers; fields within
- * expanded sections are sub-items.
- */
-type FocusId =
-  | "name"
-  | "project"
-  | "resources"
-  | "resources.cpus"
-  | "resources.memory"
-  | "resources.disk"
-  | "provider"
-  | "provider.type"
-  | "provider.apiKey"
-  | "provider.model"
-  | "provider.baseUrl"
-  | "provider.modelId"
-  | "services"
-  | "services.opToken"
-  | "network"
-  | "network.port"
-  | "network.tailscaleKey"
-  | "network.tailscaleMode"
-  | "bootstrap"
-  | "bootstrap.agentName"
-  | "bootstrap.agentContext"
-  | "bootstrap.userName"
-  | "bootstrap.userContext"
-  | "telegram"
-  | "telegram.botToken"
-  | "telegram.allowFrom"
-  | "action"; // "Review & Create" button
+// ---------------------------------------------------------------------------
+// Focus list: hardcoded core sections + dynamic capability sections
+// ---------------------------------------------------------------------------
 
-type SectionId = "resources" | "provider" | "services" | "network" | "bootstrap" | "telegram";
+/** Core sections that are hardcoded in the wizard. */
+type CoreSectionId = "resources" | "provider" | "network" | "bootstrap" | "telegram";
 
-const SECTIONS: SectionId[] = [
-  "resources",
-  "provider",
-  "services",
-  "network",
-  "bootstrap",
-  "telegram",
-];
+const CORE_SECTIONS: CoreSectionId[] = ["resources", "provider", "network", "bootstrap", "telegram"];
 
-const SECTION_CHILDREN: Record<SectionId, FocusId[]> = {
+const CORE_SECTION_CHILDREN: Record<CoreSectionId, string[]> = {
   resources: ["resources.cpus", "resources.memory", "resources.disk"],
   provider: [
     "provider.type",
@@ -69,8 +38,7 @@ const SECTION_CHILDREN: Record<SectionId, FocusId[]> = {
     "provider.baseUrl",
     "provider.modelId",
   ],
-  services: ["services.opToken"],
-  network: ["network.port", "network.tailscaleKey", "network.tailscaleMode"],
+  network: ["network.port"],
   bootstrap: [
     "bootstrap.agentName",
     "bootstrap.agentContext",
@@ -80,12 +48,35 @@ const SECTION_CHILDREN: Record<SectionId, FocusId[]> = {
   telegram: ["telegram.botToken", "telegram.allowFrom"],
 };
 
-function buildFocusList(expanded: Set<SectionId>): FocusId[] {
-  const list: FocusId[] = ["name", "project"];
-  for (const section of SECTIONS) {
-    list.push(section as FocusId);
+/** Non-core capabilities that have a configDef (rendered dynamically). */
+const CONFIGURABLE_CAPABILITIES = ALL_CAPABILITIES.filter((c) => !c.core && c.configDef);
+
+/** All section IDs: core sections + capability section IDs. */
+function allSectionIds(): string[] {
+  return [
+    ...CORE_SECTIONS,
+    ...CONFIGURABLE_CAPABILITIES.map((c) => `cap:${c.name}`),
+  ];
+}
+
+/** Children focus IDs for a section (core or capability). */
+function sectionChildren(sectionId: string): string[] {
+  if (sectionId in CORE_SECTION_CHILDREN) {
+    return CORE_SECTION_CHILDREN[sectionId as CoreSectionId];
+  }
+  // Dynamic capability section: cap:<name> → cap:<name>:<fieldPath>
+  const capName = sectionId.replace("cap:", "");
+  const cap = CONFIGURABLE_CAPABILITIES.find((c) => c.name === capName);
+  if (!cap?.configDef) return [];
+  return cap.configDef.fields.map((f) => `cap:${capName}:${f.path as string}`);
+}
+
+function buildFocusList(expanded: Set<string>): string[] {
+  const list: string[] = ["name", "project"];
+  for (const section of allSectionIds()) {
+    list.push(section);
     if (expanded.has(section)) {
-      list.push(...SECTION_CHILDREN[section]);
+      list.push(...sectionChildren(section));
     }
   }
   list.push("action");
@@ -94,11 +85,6 @@ function buildFocusList(expanded: Set<SectionId>): FocusId[] {
 
 const MEMORY_OPTIONS = ["4GiB", "8GiB", "16GiB", "32GiB"];
 const DISK_OPTIONS = ["30GiB", "50GiB", "100GiB", "200GiB"];
-const TS_MODE_OPTIONS = [
-  { label: "serve", value: "serve" },
-  { label: "funnel", value: "funnel" },
-  { label: "off", value: "off" },
-];
 
 interface ConfigBuilderProps {
   onComplete: (config: InstanceConfig) => void;
@@ -108,7 +94,7 @@ interface ConfigBuilderProps {
 export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   const [phase, setPhase] = useState<Phase>("form");
 
-  // Config state
+  // Core config state
   const [name, setName] = useState("");
   const [project, setProject] = useState("");
   const [cpus, setCpus] = useState("4");
@@ -122,13 +108,8 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   const [providerBaseUrl, setProviderBaseUrl] = useState("");
   const [providerModelId, setProviderModelId] = useState("");
 
-  // Services
-  const [opToken, setOpToken] = useState("");
-
-  // Network
+  // Network (gateway port only — tailscale moved to capability)
   const [gatewayPort, setGatewayPort] = useState("18789");
-  const [tailscaleKey, setTailscaleKey] = useState("");
-  const [tailscaleMode, setTailscaleMode] = useState("serve");
 
   // Bootstrap
   const [agentName, setAgentName] = useState("");
@@ -140,17 +121,29 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   const [botToken, setBotToken] = useState("");
   const [allowFrom, setAllowFrom] = useState("");
 
+  // Capability config values: { "tailscale": { "authKey": "...", "mode": "serve" }, ... }
+  const [capValues, setCapValues] = useState<Record<string, Record<string, string>>>({});
+
   // Navigation
-  const [expanded, setExpanded] = useState<Set<SectionId>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [focusIdx, setFocusIdx] = useState(0);
   const [editing, setEditing] = useState(false);
   const [selectingProviderType, setSelectingProviderType] = useState(false);
-  const [selectingTsMode, setSelectingTsMode] = useState(false);
   const [selectingMemory, setSelectingMemory] = useState(false);
   const [selectingDisk, setSelectingDisk] = useState(false);
+  // For capability select fields: "cap:tailscale:mode" or null
+  const [selectingCapField, setSelectingCapField] = useState<string | null>(null);
 
   const focusList = useMemo(() => buildFocusList(expanded), [expanded]);
   const currentFocus = focusList[focusIdx] ?? "name";
+
+  // Helper to update a single capability field value
+  const setCapValue = (capName: string, fieldPath: string, value: string) => {
+    setCapValues((prev) => ({
+      ...prev,
+      [capName]: { ...(prev[capName] ?? {}), [fieldPath]: value },
+    }));
+  };
 
   // Build the InstanceConfig from current state
   const buildConfig = (): InstanceConfig => {
@@ -177,20 +170,9 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
       }
     }
 
-    if (opToken) {
-      config.services = { onePassword: { serviceAccountToken: opToken } };
-    }
-
     const port = parseInt(gatewayPort, 10);
-    if (tailscaleKey || (port && port !== 18789)) {
-      config.network = {};
-      if (port && port !== 18789) config.network.gatewayPort = port;
-      if (tailscaleKey) {
-        config.network.tailscale = {
-          authKey: tailscaleKey,
-          mode: tailscaleMode as "off" | "serve" | "funnel",
-        };
-      }
+    if (port && port !== 18789) {
+      config.network = { ...config.network, gatewayPort: port };
     }
 
     if (agentName) {
@@ -214,7 +196,23 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
       };
     }
 
-    return config;
+    // Capability config from dynamic sections
+    for (const cap of CONFIGURABLE_CAPABILITIES) {
+      const vals = capValues[cap.name];
+      if (!vals) continue;
+      const hasAnyValue = Object.values(vals).some((v) => v);
+      if (!hasAnyValue) continue;
+      if (!config.capabilities) config.capabilities = {};
+      // Build config object from field values, filtering empty strings
+      const capConfig: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(vals)) {
+        if (v) capConfig[k] = v;
+      }
+      config.capabilities[cap.name] = capConfig;
+    }
+
+    // Normalize: bridge capabilities ↔ legacy paths
+    return normalizeConfig(config);
   };
 
   // Validate the assembled config
@@ -257,22 +255,47 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
     return { errors, warnings };
   };
 
-  // Sidebar content based on current focus
-  const sidebarFocusKey = phase === "review" ? "review" : currentFocus.split(".")[0];
-  const sidebarContent =
-    SIDEBAR_HELP[currentFocus] ?? SIDEBAR_HELP[sidebarFocusKey] ?? SIDEBAR_HELP["name"];
+  // Sidebar content: check hardcoded help first, then capability configDef help
+  const getSidebarContent = (): SidebarContent => {
+    if (phase === "review") return SIDEBAR_HELP["review"];
 
-  // Section status helpers
-  const sectionStatus = (id: SectionId): "unconfigured" | "configured" | "error" => {
+    // Direct match in hardcoded help
+    if (SIDEBAR_HELP[currentFocus]) return SIDEBAR_HELP[currentFocus];
+
+    // Capability field help: cap:<name>:<path>
+    if (currentFocus.startsWith("cap:")) {
+      const parts = currentFocus.split(":");
+      if (parts.length === 3) {
+        const [, capName, fieldPath] = parts;
+        const cap = CONFIGURABLE_CAPABILITIES.find((c) => c.name === capName);
+        const field = cap?.configDef?.fields.find((f) => (f.path as string) === fieldPath);
+        if (field?.help) return field.help;
+      }
+      // Capability section help: cap:<name>
+      if (parts.length === 2) {
+        const cap = CONFIGURABLE_CAPABILITIES.find((c) => c.name === parts[1]);
+        if (cap?.configDef?.sectionHelp) return cap.configDef.sectionHelp;
+      }
+    }
+
+    // Fall back to section-level help
+    const sectionKey = currentFocus.split(".")[0];
+    return SIDEBAR_HELP[sectionKey] ?? SIDEBAR_HELP["name"];
+  };
+
+  const sidebarContent = getSidebarContent();
+
+  // Section status helpers (core sections only)
+  const coreSectionStatus = (id: CoreSectionId): "unconfigured" | "configured" | "error" => {
     switch (id) {
       case "resources":
         return "configured"; // always has defaults
       case "provider":
         return providerType ? "configured" : "unconfigured";
-      case "services":
-        return opToken ? "configured" : "unconfigured";
-      case "network":
-        return tailscaleKey ? "configured" : "unconfigured";
+      case "network": {
+        const port = parseInt(gatewayPort, 10);
+        return port && port !== 18789 ? "configured" : "unconfigured";
+      }
       case "bootstrap":
         return agentName ? "configured" : "unconfigured";
       case "telegram":
@@ -280,16 +303,14 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
     }
   };
 
-  const sectionSummary = (id: SectionId): string => {
+  const coreSectionSummary = (id: CoreSectionId): string => {
     switch (id) {
       case "resources":
         return `${cpus} cpu \u00b7 ${memory} \u00b7 ${disk}`;
       case "provider":
         return providerType || "";
-      case "services":
-        return opToken ? "1Password" : "";
       case "network":
-        return tailscaleKey ? `Tailscale (${tailscaleMode})` : "defaults";
+        return gatewayPort !== "18789" ? `port ${gatewayPort}` : "defaults";
       case "bootstrap":
         return agentName || "";
       case "telegram":
@@ -297,7 +318,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
     }
   };
 
-  const toggleSection = (id: SectionId) => {
+  const toggleSection = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -309,7 +330,37 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
     });
   };
 
-  const isSelectMode = selectingProviderType || selectingTsMode || selectingMemory || selectingDisk;
+  const isSelectMode =
+    selectingProviderType || selectingMemory || selectingDisk || selectingCapField !== null;
+
+  /** Check if a focus ID is a section header (core or capability). */
+  const isSection = (id: string): boolean => {
+    return (
+      (CORE_SECTIONS as string[]).includes(id) ||
+      (id.startsWith("cap:") && id.split(":").length === 2)
+    );
+  };
+
+  /** Check if a capability select field is active for a given focus ID. */
+  const isCapSelectField = (focusId: string): boolean => {
+    if (!focusId.startsWith("cap:")) return false;
+    const parts = focusId.split(":");
+    if (parts.length !== 3) return false;
+    const [, capName, fieldPath] = parts;
+    const cap = CONFIGURABLE_CAPABILITIES.find((c) => c.name === capName);
+    const field = cap?.configDef?.fields.find((f) => (f.path as string) === fieldPath);
+    return field?.type === "select";
+  };
+
+  /** Find the parent section for a focus ID. */
+  const findParentSection = (focusId: string): string | null => {
+    for (const sectionId of allSectionIds()) {
+      if (sectionChildren(sectionId).includes(focusId)) {
+        return sectionId;
+      }
+    }
+    return null;
+  };
 
   // Handle input
   useInput(
@@ -352,32 +403,31 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
       } else if (key.downArrow || key.tab) {
         setFocusIdx((i) => Math.min(focusList.length - 1, i + 1));
       } else if (key.return) {
-        if (SECTIONS.includes(currentFocus as SectionId)) {
-          toggleSection(currentFocus as SectionId);
+        if (isSection(currentFocus)) {
+          toggleSection(currentFocus);
         } else if (currentFocus === "action") {
           setPhase("review");
         } else if (currentFocus === "provider.type") {
           setSelectingProviderType(true);
-        } else if (currentFocus === "network.tailscaleMode") {
-          setSelectingTsMode(true);
         } else if (currentFocus === "resources.memory") {
           setSelectingMemory(true);
         } else if (currentFocus === "resources.disk") {
           setSelectingDisk(true);
+        } else if (isCapSelectField(currentFocus)) {
+          setSelectingCapField(currentFocus);
         } else {
           setEditing(true);
         }
       } else if (key.escape) {
         // Collapse parent section
-        for (const section of SECTIONS) {
-          if (SECTION_CHILDREN[section].includes(currentFocus)) {
-            toggleSection(section);
-            // Move focus to the section header
-            const newList = buildFocusList(new Set([...expanded].filter((s) => s !== section)));
-            const sectionIdx = newList.indexOf(section as FocusId);
-            if (sectionIdx >= 0) setFocusIdx(sectionIdx);
-            break;
-          }
+        const parent = findParentSection(currentFocus);
+        if (parent) {
+          toggleSection(parent);
+          const newList = buildFocusList(
+            new Set([...expanded].filter((s) => s !== parent)),
+          );
+          const sectionIdx = newList.indexOf(parent);
+          if (sectionIdx >= 0) setFocusIdx(sectionIdx);
         }
       } else if (input.toLowerCase() === "r") {
         setPhase("review");
@@ -406,7 +456,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   }
 
   // Determine field status
-  const fieldStatus = (id: FocusId) => {
+  const fieldStatus = (id: string) => {
     if (currentFocus === id && editing) return "editing" as const;
     if (currentFocus === id) return "focused" as const;
     return "idle" as const;
@@ -479,8 +529,8 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
             {/* Resources */}
             <FormSection
               label="Resources"
-              status={sectionStatus("resources")}
-              summary={sectionSummary("resources")}
+              status={coreSectionStatus("resources")}
+              summary={coreSectionSummary("resources")}
               focused={currentFocus === "resources"}
               expanded={expanded.has("resources")}
             >
@@ -529,8 +579,8 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
             {/* Provider */}
             <FormSection
               label="Provider"
-              status={sectionStatus("provider")}
-              summary={sectionSummary("provider")}
+              status={coreSectionStatus("provider")}
+              summary={coreSectionSummary("provider")}
               focused={currentFocus === "provider"}
               expanded={expanded.has("provider")}
             >
@@ -628,37 +678,11 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
               )}
             </FormSection>
 
-            {/* Services */}
-            <FormSection
-              label="Services"
-              status={sectionStatus("services")}
-              summary={sectionSummary("services")}
-              focused={currentFocus === "services"}
-              expanded={expanded.has("services")}
-            >
-              {currentFocus === "services.opToken" && editing ? (
-                <Box>
-                  <Box width={14}>
-                    <Text bold>1P Token</Text>
-                  </Box>
-                  <TextInput value={opToken} onChange={setOpToken} mask="*" />
-                </Box>
-              ) : (
-                <FormField
-                  label="1P Token"
-                  value={opToken}
-                  status={fieldStatus("services.opToken")}
-                  masked
-                  placeholder="1Password service account token"
-                />
-              )}
-            </FormSection>
-
-            {/* Network */}
+            {/* Network (gateway port only) */}
             <FormSection
               label="Network"
-              status={sectionStatus("network")}
-              summary={sectionSummary("network")}
+              status={coreSectionStatus("network")}
+              summary={coreSectionSummary("network")}
               focused={currentFocus === "network"}
               expanded={expanded.has("network")}
             >
@@ -677,50 +701,42 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
                   placeholder="18789"
                 />
               )}
-              {currentFocus === "network.tailscaleKey" && editing ? (
-                <Box>
-                  <Box width={14}>
-                    <Text bold>TS Auth Key</Text>
-                  </Box>
-                  <TextInput value={tailscaleKey} onChange={setTailscaleKey} mask="*" />
-                </Box>
-              ) : (
-                <FormField
-                  label="TS Auth Key"
-                  value={tailscaleKey}
-                  status={fieldStatus("network.tailscaleKey")}
-                  masked
-                  placeholder="Tailscale auth key"
-                />
-              )}
-              {selectingTsMode ? (
-                <Box flexDirection="column">
-                  <Text bold>TS Mode</Text>
-                  <SelectInput
-                    items={TS_MODE_OPTIONS}
-                    initialIndex={TS_MODE_OPTIONS.findIndex((o) => o.value === tailscaleMode)}
-                    onSelect={(item) => {
-                      setTailscaleMode(item.value);
-                      setSelectingTsMode(false);
-                    }}
-                  />
-                </Box>
-              ) : (
-                <FormField
-                  label="TS Mode"
-                  value={tailscaleKey ? tailscaleMode : ""}
-                  status={fieldStatus("network.tailscaleMode")}
-                  placeholder="serve"
-                  dimValue={!tailscaleKey}
-                />
-              )}
             </FormSection>
+
+            {/* Dynamic capability sections */}
+            {CONFIGURABLE_CAPABILITIES.map((cap) => {
+              const sectionId = `cap:${cap.name}`;
+              const capVals = capValues[cap.name] ?? {};
+              // Determine which field within this capability is focused
+              let focusedField: string | null = null;
+              if (currentFocus.startsWith(`cap:${cap.name}:`)) {
+                focusedField = currentFocus.split(":").slice(2).join(":");
+              }
+              return (
+                <CapabilitySection
+                  key={cap.name}
+                  configDef={cap.configDef!}
+                  values={capVals}
+                  onChange={(path, value) => setCapValue(cap.name, path, value)}
+                  focused={currentFocus === sectionId}
+                  expanded={expanded.has(sectionId)}
+                  focusedField={focusedField}
+                  editing={editing}
+                  selectingField={
+                    selectingCapField?.startsWith(`cap:${cap.name}:`)
+                      ? selectingCapField.split(":").slice(2).join(":")
+                      : null
+                  }
+                  onSelectDone={() => setSelectingCapField(null)}
+                />
+              );
+            })}
 
             {/* Bootstrap / Agent Identity */}
             <FormSection
               label="Agent Identity"
-              status={sectionStatus("bootstrap")}
-              summary={sectionSummary("bootstrap")}
+              status={coreSectionStatus("bootstrap")}
+              summary={coreSectionSummary("bootstrap")}
               focused={currentFocus === "bootstrap"}
               expanded={expanded.has("bootstrap")}
             >
@@ -797,8 +813,8 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
             {/* Telegram */}
             <FormSection
               label="Telegram"
-              status={sectionStatus("telegram")}
-              summary={sectionSummary("telegram")}
+              status={coreSectionStatus("telegram")}
+              summary={coreSectionSummary("telegram")}
               focused={currentFocus === "telegram"}
               expanded={expanded.has("telegram")}
             >
