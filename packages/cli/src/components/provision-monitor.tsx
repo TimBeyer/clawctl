@@ -109,7 +109,7 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
 
       {/* Column headers */}
       <Box marginTop={1}>
-        <Box marginLeft={2} width={32}>
+        <Box marginLeft={2} width={44}>
           <Text dimColor bold>
             Stages
           </Text>
@@ -125,7 +125,7 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
 
       {/* Stages (left) + Steps (right) side by side, fixed height */}
       <Box height={statusHeight}>
-        <Box flexDirection="column" marginLeft={2} width={32} overflow="hidden">
+        <Box flexDirection="column" marginLeft={2} width={44} overflow="hidden">
           {activeStages.map((stageId) => {
             const info = stages.get(stageId);
             const status = info?.status ?? "pending";
