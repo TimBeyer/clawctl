@@ -1,5 +1,21 @@
 # Changelog
 
+# [0.15.0](https://github.com/TimBeyer/clawctl/compare/v0.14.0...v0.15.0) (2026-03-17)
+
+
+### Bug Fixes
+
+* exit cleanly on ctrl-c before provisioning starts ([dc3ef08](https://github.com/TimBeyer/clawctl/commit/dc3ef08ae7ddc281fe92eddf654e1035955cad1d))
+* match focus list order to visual render order in ConfigBuilder ([e5e03c9](https://github.com/TimBeyer/clawctl/commit/e5e03c944ad4bd4ed77ecac34a86fdce545c2b21))
+
+
+### Features
+
+* add unified CapabilityConfigDef with typed paths and Zod derivation ([043b2e3](https://github.com/TimBeyer/clawctl/commit/043b2e3325e3c654c74fad0002d4751b5658d61e))
+* data-driven host-side capability setup hooks ([848162e](https://github.com/TimBeyer/clawctl/commit/848162ef8f6042859f05de5f03907a5dfcbd5203))
+* dynamic TUI form rendering from capability configDef ([2acac14](https://github.com/TimBeyer/clawctl/commit/2acac1409a3b4e35774ff6b070b183549b89f5a7))
+* wire capability config validation and normalization ([60ee944](https://github.com/TimBeyer/clawctl/commit/60ee9448812a71bf299455ff8b3f79f4ad0147ff))
+
 # [0.14.0](https://github.com/TimBeyer/clawctl/compare/v0.13.0...v0.14.0) (2026-03-17)
 
 
