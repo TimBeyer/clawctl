@@ -46,7 +46,9 @@ export function validateConfig(raw: unknown, opts?: ValidateConfigOptions): Inst
     if (!capResult.success) {
       const issue = (capResult as { error: z.ZodError }).error.issues[0];
       const path = ["capabilities", ...issue.path].join(".");
-      throw new Error(issue.message.startsWith("'") ? issue.message : `'${path}': ${issue.message}`);
+      throw new Error(
+        issue.message.startsWith("'") ? issue.message : `'${path}': ${issue.message}`,
+      );
     }
   }
 

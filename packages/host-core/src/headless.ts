@@ -159,17 +159,17 @@ export async function runHeadlessFromConfig(
     for (const hook of hostHooks) {
       cb.onStage(hook.stageName as HeadlessStage, "running", `${hook.stageLabel}...`);
       const capConfig = getCapabilityConfig(config, hook.capabilityName);
-      const hookResult = await hook.run(
-        capConfig,
-        driver,
-        vmConfig.vmName,
-        (line: string) => cb.onLine(hook.stageName, line),
+      const hookResult = await hook.run(capConfig, driver, vmConfig.vmName, (line: string) =>
+        cb.onLine(hook.stageName, line),
       );
       if (hookResult.success) {
         cb.onStage(hook.stageName as HeadlessStage, "done", hookResult.detail);
       } else {
         cb.onStage(hook.stageName as HeadlessStage, "error", hookResult.error);
-        cb.onError(hook.stageName as HeadlessStage, hookResult.error ?? `${hook.stageLabel} failed`);
+        cb.onError(
+          hook.stageName as HeadlessStage,
+          hookResult.error ?? `${hook.stageLabel} failed`,
+        );
         throw new Error(`${hook.stageLabel} failed: ${hookResult.error}`);
       }
     }

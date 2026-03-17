@@ -160,13 +160,14 @@ export type ConfigFieldType = "text" | "password" | "select";
  * Recursive JSON Pointer paths for nested config objects.
  * Produces union of paths like "/auth" | "/auth/key" | "/mode".
  */
-export type JsonPointer<T> = T extends Record<string, unknown>
-  ? {
-      [K in keyof T & string]:
-        | `/${K}`
-        | (T[K] extends Record<string, unknown> ? `/${K}${JsonPointer<T[K]>}` : never);
-    }[keyof T & string]
-  : never;
+export type JsonPointer<T> =
+  T extends Record<string, unknown>
+    ? {
+        [K in keyof T & string]:
+          | `/${K}`
+          | (T[K] extends Record<string, unknown> ? `/${K}${JsonPointer<T[K]>}` : never);
+      }[keyof T & string]
+    : never;
 
 /**
  * Path into a config object.

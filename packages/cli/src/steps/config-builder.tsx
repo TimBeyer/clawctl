@@ -27,7 +27,13 @@ type Phase = "form" | "review";
 /** Core sections that are hardcoded in the wizard. */
 type CoreSectionId = "resources" | "provider" | "network" | "bootstrap" | "telegram";
 
-const CORE_SECTIONS: CoreSectionId[] = ["resources", "provider", "network", "bootstrap", "telegram"];
+const CORE_SECTIONS: CoreSectionId[] = [
+  "resources",
+  "provider",
+  "network",
+  "bootstrap",
+  "telegram",
+];
 
 const CORE_SECTION_CHILDREN: Record<CoreSectionId, string[]> = {
   resources: ["resources.cpus", "resources.memory", "resources.disk"],
@@ -53,10 +59,7 @@ const CONFIGURABLE_CAPABILITIES = ALL_CAPABILITIES.filter((c) => !c.core && c.co
 
 /** All section IDs: core sections + capability section IDs. */
 function allSectionIds(): string[] {
-  return [
-    ...CORE_SECTIONS,
-    ...CONFIGURABLE_CAPABILITIES.map((c) => `cap:${c.name}`),
-  ];
+  return [...CORE_SECTIONS, ...CONFIGURABLE_CAPABILITIES.map((c) => `cap:${c.name}`)];
 }
 
 /** Children focus IDs for a section (core or capability). */
@@ -423,9 +426,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
         const parent = findParentSection(currentFocus);
         if (parent) {
           toggleSection(parent);
-          const newList = buildFocusList(
-            new Set([...expanded].filter((s) => s !== parent)),
-          );
+          const newList = buildFocusList(new Set([...expanded].filter((s) => s !== parent)));
           const sectionIdx = newList.indexOf(parent);
           if (sectionIdx >= 0) setFocusIdx(sectionIdx);
         }

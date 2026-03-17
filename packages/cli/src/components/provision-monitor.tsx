@@ -55,13 +55,16 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
     if (input === "v") setShowLogs((s) => !s);
   });
 
-  const onStage = useCallback((stage: HeadlessStage, status: StageStatus, detail?: string) => {
-    setStages((prev) => {
-      const next = new Map(prev);
-      next.set(stage, { label: stageLabels[stage] ?? stage, status, detail });
-      return next;
-    });
-  }, [stageLabels]);
+  const onStage = useCallback(
+    (stage: HeadlessStage, status: StageStatus, detail?: string) => {
+      setStages((prev) => {
+        const next = new Map(prev);
+        next.set(stage, { label: stageLabels[stage] ?? stage, status, detail });
+        return next;
+      });
+    },
+    [stageLabels],
+  );
 
   const onStep = useCallback((label: string) => {
     setSteps((prev) => [...prev, label]);

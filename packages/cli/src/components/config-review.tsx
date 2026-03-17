@@ -91,13 +91,12 @@ export function ConfigReview({ config, validationErrors, validationWarnings }: C
         {ALL_CAPABILITIES.filter((c) => !c.core && c.configDef).map((cap) => {
           const capConfig = config.capabilities?.[cap.name];
           const isConfigured = capConfig !== undefined;
-          const summary = isConfigured && cap.configDef?.summary
-            ? cap.configDef.summary(
-                typeof capConfig === "object"
-                  ? (capConfig as Record<string, string>)
-                  : {},
-              )
-            : null;
+          const summary =
+            isConfigured && cap.configDef?.summary
+              ? cap.configDef.summary(
+                  typeof capConfig === "object" ? (capConfig as Record<string, string>) : {},
+                )
+              : null;
           return (
             <Row key={cap.name} label={cap.configDef!.sectionLabel}>
               {isConfigured ? (
@@ -159,14 +158,14 @@ export function ConfigReview({ config, validationErrors, validationWarnings }: C
           </Text>
         ))}
         {/* Capability provisioning hints */}
-        {ALL_CAPABILITIES.filter((c) => !c.core && c.configDef && config.capabilities?.[c.name]).map(
-          (cap) => (
-            <Text key={cap.name} dimColor>
-              {" "}
-              {"\u2139"} {cap.configDef!.sectionLabel} will be configured during provisioning
-            </Text>
-          ),
-        )}
+        {ALL_CAPABILITIES.filter(
+          (c) => !c.core && c.configDef && config.capabilities?.[c.name],
+        ).map((cap) => (
+          <Text key={cap.name} dimColor>
+            {" "}
+            {"\u2139"} {cap.configDef!.sectionLabel} will be configured during provisioning
+          </Text>
+        ))}
         <Text dimColor>
           {" "}
           {"\u2139"} Config will be saved to {config.project}/clawctl.json

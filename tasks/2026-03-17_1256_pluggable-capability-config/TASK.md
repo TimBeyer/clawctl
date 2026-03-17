@@ -10,6 +10,7 @@ sidebar help, secret marking — all declared in a single `configDef` on
 module and one export line.
 
 **In scope:**
+
 - Unified `CapabilityConfigDef<T>` type with typed paths, Zod derivation
 - Migrate tailscale + one-password to declare `configDef`
 - Dynamic schema validation for capability config
@@ -19,6 +20,7 @@ module and one export line.
 - Host-side setup hook registry
 
 **Out of scope:**
+
 - Making core config sections (provider, telegram, bootstrap) into capabilities
 - Nested config objects (path infrastructure is in place, not exercised yet)
 

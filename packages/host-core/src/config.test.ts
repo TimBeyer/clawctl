@@ -507,7 +507,7 @@ describe("validateConfig", () => {
         project: "/tmp",
         provider: { type: "anthropic", apiKey: "op://Vault/Anthropic/api-key" },
       }),
-    ).toThrow("one-password");  // neither services.onePassword nor capabilities["one-password"]
+    ).toThrow("one-password"); // neither services.onePassword nor capabilities["one-password"]
   });
 });
 
