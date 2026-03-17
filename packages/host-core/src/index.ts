@@ -124,3 +124,7 @@ export type { CleanupTarget } from "./cleanup.js";
 // Headless
 export { runHeadless, runHeadlessFromConfig } from "./headless.js";
 export type { HeadlessResult, HeadlessCallbacks, HeadlessStage, StageStatus } from "./headless.js";
+
+// Capability host hooks
+export { getHostHooksForConfig, getCapabilityConfig } from "./capability-hooks.js";
+export type { HostCapabilityHook } from "./capability-hooks.js";

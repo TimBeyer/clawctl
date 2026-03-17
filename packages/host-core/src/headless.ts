@@ -4,12 +4,12 @@ import { loadConfig, configToVMConfig, sanitizeConfig, normalizeConfig } from ".
 import { checkPrereqs } from "./prereqs.js";
 import { provisionVM } from "./provision.js";
 import { verifyProvisioning } from "./verify.js";
-import { setupOnePassword, setupTailscale } from "./credentials.js";
 import { findSecretRefs, hasOpRefs, resolveOpRefs, getNestedValue } from "./secrets.js";
 import type { ResolvedSecretRef } from "./secrets.js";
 import { syncSecretsToVM, writeEnvSecrets } from "./secrets-sync.js";
 import { bootstrapOpenclaw } from "./bootstrap.js";
 import { cleanupVM, onSignalCleanup } from "./cleanup.js";
+import { getHostHooksForConfig, getCapabilityConfig } from "./capability-hooks.js";
 import { GATEWAY_PORT } from "@clawctl/types";
 import type { InstanceConfig } from "@clawctl/types";
 import { BIN_NAME } from "./bin-name.js";
@@ -154,21 +154,23 @@ export async function runHeadlessFromConfig(
     }
     cb.onStage("verify", "done", "All tools verified");
 
-    // 4. Services: 1Password
-    if (config.services?.onePassword) {
-      cb.onStage("onepassword", "running", "Setting up 1Password...");
-      const opResult = await setupOnePassword(
+    // 4. Host-side capability setup hooks
+    const hostHooks = getHostHooksForConfig(config);
+    for (const hook of hostHooks) {
+      cb.onStage(hook.stageName as HeadlessStage, "running", `${hook.stageLabel}...`);
+      const capConfig = getCapabilityConfig(config, hook.capabilityName);
+      const hookResult = await hook.run(
+        capConfig,
         driver,
         vmConfig.vmName,
-        config.services.onePassword.serviceAccountToken,
-        (line: string) => cb.onLine("1password", line),
+        (line: string) => cb.onLine(hook.stageName, line),
       );
-      if (opResult.valid) {
-        cb.onStage("onepassword", "done", `Token validated (${opResult.account})`);
+      if (hookResult.success) {
+        cb.onStage(hook.stageName as HeadlessStage, "done", hookResult.detail);
       } else {
-        cb.onStage("onepassword", "error", opResult.error);
-        cb.onError("onepassword", opResult.error ?? "Token validation failed");
-        throw new Error("1Password setup failed");
+        cb.onStage(hook.stageName as HeadlessStage, "error", hookResult.error);
+        cb.onError(hook.stageName as HeadlessStage, hookResult.error ?? `${hook.stageLabel} failed`);
+        throw new Error(`${hook.stageLabel} failed: ${hookResult.error}`);
       }
     }
 
@@ -202,24 +204,6 @@ export async function runHeadlessFromConfig(
       await writeEnvSecrets(config.project, resolvedMap, (line: string) =>
         cb.onLine("secrets", line),
       );
-    }
-
-    // 5. Network: Tailscale
-    if (config.network?.tailscale) {
-      cb.onStage("tailscale", "running", "Connecting to Tailscale...");
-      const tsResult = await setupTailscale(
-        driver,
-        vmConfig.vmName,
-        config.network.tailscale.authKey,
-        (line: string) => cb.onLine("tailscale", line),
-      );
-      if (tsResult.connected) {
-        cb.onStage("tailscale", "done", `Connected as ${tsResult.hostname}`);
-      } else {
-        cb.onStage("tailscale", "error", tsResult.error);
-        cb.onError("tailscale", tsResult.error ?? "Connection failed");
-        throw new Error("Tailscale connection failed");
-      }
     }
 
     // 6. Bootstrap openclaw (if provider configured)

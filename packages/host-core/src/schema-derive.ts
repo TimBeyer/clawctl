@@ -8,7 +8,7 @@
  */
 
 import { z } from "zod";
-import type { CapabilityConfigDef, CapabilityDef } from "@clawctl/types";
+import type { CapabilityConfigDef, CapabilityConfigField, CapabilityDef } from "@clawctl/types";
 
 // ---------------------------------------------------------------------------
 // Path resolution utilities
@@ -72,7 +72,7 @@ function deriveFieldSchema(field: CapabilityConfigField): z.ZodTypeAny {
       break;
     }
     case "select": {
-      const values = (field.options ?? []).map((o) => o.value);
+      const values = (field.options ?? []).map((o: { label: string; value: string }) => o.value);
       if (values.length >= 2) {
         schema = z.enum(values as [string, string, ...string[]]);
       } else if (values.length === 1) {
@@ -82,6 +82,8 @@ function deriveFieldSchema(field: CapabilityConfigField): z.ZodTypeAny {
       }
       break;
     }
+    default:
+      schema = z.string();
   }
 
   if (field.defaultValue != null) {
