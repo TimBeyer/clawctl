@@ -57,9 +57,19 @@ const CORE_SECTION_CHILDREN: Record<CoreSectionId, string[]> = {
 /** Non-core capabilities that have a configDef (rendered dynamically). */
 const CONFIGURABLE_CAPABILITIES = ALL_CAPABILITIES.filter((c) => !c.core && c.configDef);
 
-/** All section IDs: core sections + capability section IDs. */
+/**
+ * All section IDs in visual render order.
+ * Capability sections appear after network, before bootstrap/telegram.
+ */
 function allSectionIds(): string[] {
-  return [...CORE_SECTIONS, ...CONFIGURABLE_CAPABILITIES.map((c) => `cap:${c.name}`)];
+  return [
+    "resources",
+    "provider",
+    "network",
+    ...CONFIGURABLE_CAPABILITIES.map((c) => `cap:${c.name}`),
+    "bootstrap",
+    "telegram",
+  ];
 }
 
 /** Children focus IDs for a section (core or capability). */
