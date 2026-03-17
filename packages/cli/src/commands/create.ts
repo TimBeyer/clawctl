@@ -67,6 +67,8 @@ export async function runCreateFromConfig(driver: VMDriver, configPath: string):
     const { result } = exitResult as { action: string; result: HeadlessResult };
     await registerInstance(result, driver.name);
     printSummary(result);
+    // The headless pipeline's subprocesses can keep the event loop alive.
+    process.exit(0);
   } else {
     // Ctrl-C or error — clean up VM and project dir
     const vmConfig = configToVMConfig(config);
