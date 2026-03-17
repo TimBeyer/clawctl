@@ -84,7 +84,11 @@ export async function bootstrapOpenclaw(
 
   // Tailscale gateway mode (serve/funnel/off) — defaults to "serve" when
   // Tailscale is configured, so the user gets HTTPS on the tailnet automatically
-  const tsMode = config.network?.tailscale ? (config.network.tailscale.mode ?? "serve") : undefined;
+  const tsCap = config.capabilities?.tailscale;
+  const tsMode =
+    tsCap && typeof tsCap === "object" && "authKey" in tsCap
+      ? ((tsCap.mode as string) ?? "serve")
+      : undefined;
 
   if (tsMode && tsMode !== "off") {
     configCmds.push(`openclaw config set gateway.tailscale.mode ${tsMode}`);

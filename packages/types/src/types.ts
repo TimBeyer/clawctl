@@ -39,16 +39,6 @@ export interface InstanceConfig {
     gatewayPort?: number;
     /** Gateway auth token. Injected into openclaw config if set. */
     gatewayToken?: string;
-    tailscale?: {
-      authKey: string;
-      /** Gateway mode: "serve" (HTTPS on tailnet), "funnel" (public), "off". */
-      mode?: "off" | "serve" | "funnel";
-    };
-  };
-
-  /** External service integrations. */
-  services?: {
-    onePassword?: { serviceAccountToken: string };
   };
 
   /** Additional tools to install (future, deprecated — use capabilities). */

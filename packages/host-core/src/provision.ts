@@ -7,11 +7,6 @@ import type { VMDriver, VMCreateOptions, OnLine } from "./drivers/types.js";
 import { initGitRepo } from "./git.js";
 import { clawPath } from "./claw-binary.js";
 
-export interface ProvisionFeatures {
-  onePassword: boolean;
-  tailscale: boolean;
-}
-
 export interface ProvisionCallbacks {
   onPhase?: (phase: string) => void;
   onStep?: (step: string) => void;
@@ -92,7 +87,7 @@ export async function provisionVM(
   callbacks: ProvisionCallbacks = {},
   createOptions: VMCreateOptions = {},
   clawBinaryPath: string = clawPath,
-  features: ProvisionFeatures = { onePassword: false, tailscale: false },
+  capabilities: Record<string, true | Record<string, unknown>> = {},
 ): Promise<void> {
   const { onPhase, onStep, onLine } = callbacks;
 
@@ -102,12 +97,7 @@ export async function provisionVM(
   onStep?.("Created project directory");
 
   // Write provision config so claw knows which optional capabilities to enable
-  const provisionConfig: ProvisionConfig = {
-    capabilities: {
-      ...(features.onePassword && { "one-password": true }),
-      ...(features.tailscale && { tailscale: true }),
-    },
-  };
+  const provisionConfig: ProvisionConfig = { capabilities };
   await writeFile(
     join(config.projectDir, "data", PROVISION_CONFIG_FILE),
     JSON.stringify(provisionConfig, null, 2) + "\n",

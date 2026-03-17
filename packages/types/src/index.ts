@@ -16,14 +16,20 @@ export type {
   CapabilityDef,
   CapabilityState,
   ProvisionConfig,
+  ConfigFieldType,
+  ConfigPath,
+  JsonPointer,
+  CapabilityConfigField,
+  CapabilityConfigDef,
+  HostSetupResult,
 } from "./capability.js";
+export { defineCapabilityConfig } from "./capability.js";
 
 // Schemas
 export {
   instanceConfigSchema,
   resourcesSchema,
   networkSchema,
-  servicesSchema,
   agentSchema,
   toolsSchema,
   capabilitiesSchema,
@@ -51,6 +57,7 @@ export type { ProviderDef, ProviderConfig } from "./providers.js";
 export { PROVIDERS, PROVIDER_TYPES, ALL_PROVIDER_TYPES } from "./providers.js";
 
 // Config (pure functions)
+export type { ValidateConfigOptions } from "./config.js";
 export { validateConfig } from "./config.js";
 
 // Secrets (pure functions)

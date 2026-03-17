@@ -15,11 +15,13 @@ describe("findSecretRefs", () => {
 
   test("finds env:// references", () => {
     const refs = findSecretRefs({
-      services: { onePassword: { serviceAccountToken: "env://OP_SERVICE_ACCOUNT_TOKEN" } },
+      capabilities: {
+        "one-password": { serviceAccountToken: "env://OP_SERVICE_ACCOUNT_TOKEN" },
+      },
     });
     expect(refs).toEqual([
       {
-        path: ["services", "onePassword", "serviceAccountToken"],
+        path: ["capabilities", "one-password", "serviceAccountToken"],
         reference: "env://OP_SERVICE_ACCOUNT_TOKEN",
         scheme: "env",
       },
@@ -30,7 +32,7 @@ describe("findSecretRefs", () => {
     const refs = findSecretRefs({
       provider: { apiKey: "op://V/I/f" },
       telegram: { botToken: "op://V/Bot/token" },
-      services: { onePassword: { serviceAccountToken: "env://OP_TOKEN" } },
+      capabilities: { "one-password": { serviceAccountToken: "env://OP_TOKEN" } },
     });
     expect(refs).toHaveLength(3);
     expect(refs.map((r) => r.scheme)).toEqual(
@@ -117,11 +119,10 @@ describe("resolveEnvRefs", () => {
 
   test("resolves env:// references from process.env", () => {
     const result = resolveEnvRefs({
-      services: { onePassword: { serviceAccountToken: "env://TEST_API_KEY" } },
+      capabilities: { "one-password": { serviceAccountToken: "env://TEST_API_KEY" } },
     });
-    expect(
-      (result.services as Record<string, Record<string, string>>).onePassword.serviceAccountToken,
-    ).toBe("resolved-api-key");
+    const caps = result.capabilities as Record<string, Record<string, string>>;
+    expect(caps["one-password"].serviceAccountToken).toBe("resolved-api-key");
   });
 
   test("resolves multiple env:// references", () => {
@@ -174,8 +175,10 @@ describe("resolveEnvRefs", () => {
 
   test("includes field path in error message", () => {
     expect(() =>
-      resolveEnvRefs({ services: { onePassword: { token: "env://MISSING_XYZ" } } }),
-    ).toThrow("services.onePassword.token");
+      resolveEnvRefs({
+        capabilities: { "one-password": { token: "env://MISSING_XYZ" } },
+      }),
+    ).toThrow("capabilities.one-password.token");
   });
 });
 

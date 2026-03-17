@@ -45,6 +45,7 @@
       "name": "@clawctl/cli",
       "version": "0.7.0",
       "dependencies": {
+        "@clawctl/capabilities": "workspace:*",
         "@clawctl/daemon": "workspace:*",
         "@clawctl/host-core": "workspace:*",
         "@clawctl/templates": "workspace:*",

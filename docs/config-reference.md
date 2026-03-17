@@ -41,15 +41,15 @@ and `project` are required. Everything else is optional and has sensible default
   "network": {
     "forwardGateway": true,
     "gatewayPort": 18789,
-    "gatewayToken": "my-secret-token",
+    "gatewayToken": "my-secret-token"
+  },
+  "capabilities": {
+    "one-password": {
+      "serviceAccountToken": "ops_..."
+    },
     "tailscale": {
       "authKey": "tskey-auth-...",
       "mode": "serve"
-    }
-  },
-  "services": {
-    "onePassword": {
-      "serviceAccountToken": "ops_..."
     }
   },
   "provider": {
@@ -107,23 +107,23 @@ VM resource allocation. Omit the entire section to use defaults.
 
 Network and connectivity settings.
 
-| Field               | Type    | Default   | Description                                                                                                                                       |
-| ------------------- | ------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `forwardGateway`    | boolean | `true`    | Forward the gateway port from guest to host. Set `false` if using Tailscale only — the gateway is reachable over the tailnet.                     |
-| `gatewayPort`       | number  | `18789`   | Host-side port for the gateway forward. Must be 1024–65535.                                                                                       |
-| `gatewayToken`      | string  | —         | Gateway auth token. Auto-generated if not set.                                                                                                    |
-| `tailscale`         | object  | —         | If present, connects the VM to your Tailscale network non-interactively.                                                                          |
-| `tailscale.authKey` | string  | —         | Tailscale auth key (`tskey-auth-...`). Generate one at [Tailscale Admin → Keys](https://login.tailscale.com/admin/settings/keys).                 |
-| `tailscale.mode`    | string  | `"serve"` | Gateway mode: `"serve"` (HTTPS on tailnet), `"funnel"` (public HTTPS), or `"off"`. See [Tailscale Setup](tailscale-setup.md#gateway-integration). |
+| Field            | Type    | Default | Description                                                                                                                   |
+| ---------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `forwardGateway` | boolean | `true`  | Forward the gateway port from guest to host. Set `false` if using Tailscale only — the gateway is reachable over the tailnet. |
+| `gatewayPort`    | number  | `18789` | Host-side port for the gateway forward. Must be 1024–65535.                                                                   |
+| `gatewayToken`   | string  | —       | Gateway auth token. Auto-generated if not set.                                                                                |
 
-## `services`
+## `capabilities`
 
-External service integrations. Presence of a section means "configure this service."
+Capability integrations. Presence of a capability section means "configure this capability."
 
-| Field                             | Type   | Description                                                                                                                            |
-| --------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `onePassword`                     | object | If present, validates and persists a 1Password service account token in the VM. Enables `op://` reference resolution.                  |
-| `onePassword.serviceAccountToken` | string | 1Password service account token (`ops_...`) or `env://VAR_NAME` reference. Stored at `~/.openclaw/credentials/op-token` inside the VM. |
+| Field                              | Type   | Default   | Description                                                                                                                                       |
+| ---------------------------------- | ------ | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `one-password`                     | object | —         | If present, validates and persists a 1Password service account token in the VM. Enables `op://` reference resolution.                             |
+| `one-password.serviceAccountToken` | string | —         | 1Password service account token (`ops_...`) or `env://VAR_NAME` reference. Stored at `~/.openclaw/credentials/op-token` inside the VM.            |
+| `tailscale`                        | object | —         | If present, connects the VM to your Tailscale network non-interactively.                                                                          |
+| `tailscale.authKey`                | string | —         | Tailscale auth key (`tskey-auth-...`). Generate one at [Tailscale Admin → Keys](https://login.tailscale.com/admin/settings/keys).                 |
+| `tailscale.mode`                   | string | `"serve"` | Gateway mode: `"serve"` (HTTPS on tailnet), `"funnel"` (public HTTPS), or `"off"`. See [Tailscale Setup](tailscale-setup.md#gateway-integration). |
 
 ## `tools`
 
@@ -206,7 +206,7 @@ Telegram channel configuration (optional). Applied during bootstrap after onboar
 String values in the config can use URI references instead of plaintext secrets:
 
 - **`env://VAR_NAME`** — resolved from the host environment at config-load time. Bun auto-loads `.env` files.
-- **`op://vault/item/field`** — resolved inside the VM via `op read` after 1Password setup. Requires `services.onePassword`.
+- **`op://vault/item/field`** — resolved inside the VM via `op read` after 1Password setup. Requires `capabilities["one-password"]`.
 
 This means configs with `op://` and `env://` references contain zero plaintext
 secrets and can be safely committed to git. See

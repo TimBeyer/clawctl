@@ -26,9 +26,11 @@ describe("validateConfig", () => {
         forwardGateway: false,
         gatewayPort: 9000,
         gatewayToken: "my-token",
-        tailscale: { authKey: "tskey-auth-abc" },
       },
-      services: { onePassword: { serviceAccountToken: "ops_abc" } },
+      capabilities: {
+        tailscale: { authKey: "tskey-auth-abc" },
+        "one-password": { serviceAccountToken: "ops_abc" },
+      },
       tools: { docker: true, python: true },
       mounts: [
         { location: "~/.ssh", mountPoint: "/mnt/ssh" },
@@ -48,8 +50,8 @@ describe("validateConfig", () => {
     expect(config.network?.forwardGateway).toBe(false);
     expect(config.network?.gatewayPort).toBe(9000);
     expect(config.network?.gatewayToken).toBe("my-token");
-    expect(config.network?.tailscale?.authKey).toBe("tskey-auth-abc");
-    expect(config.services?.onePassword?.serviceAccountToken).toBe("ops_abc");
+    expect(config.capabilities?.tailscale).toEqual({ authKey: "tskey-auth-abc" });
+    expect(config.capabilities?.["one-password"]).toEqual({ serviceAccountToken: "ops_abc" });
     expect(config.tools?.docker).toBe(true);
     expect(config.mounts).toEqual([
       { location: "~/.ssh", mountPoint: "/mnt/ssh" },
@@ -170,76 +172,26 @@ describe("validateConfig", () => {
     ).toThrow();
   });
 
-  test("throws on bad network.tailscale", () => {
-    expect(() =>
-      validateConfig({ name: "t", project: "/tmp", network: { tailscale: { authKey: "" } } }),
-    ).toThrow("tailscale.authKey");
-
-    expect(() =>
-      validateConfig({ name: "t", project: "/tmp", network: { tailscale: "key" } }),
-    ).toThrow("tailscale");
-  });
-
-  // -- network.tailscale.mode --------------------------------------------------
-
-  test("accepts tailscale.mode 'off'", () => {
+  test("accepts capabilities config", () => {
     const config = validateConfig({
       name: "t",
       project: "/tmp",
-      network: { tailscale: { authKey: "tskey-auth-abc", mode: "off" } },
+      capabilities: {
+        tailscale: { authKey: "tskey-auth-abc", mode: "serve" },
+        "one-password": { serviceAccountToken: "ops_abc" },
+      },
     });
-    expect(config.network?.tailscale?.mode).toBe("off");
+    expect(config.capabilities?.tailscale).toEqual({ authKey: "tskey-auth-abc", mode: "serve" });
+    expect(config.capabilities?.["one-password"]).toEqual({ serviceAccountToken: "ops_abc" });
   });
 
-  test("accepts tailscale.mode 'serve'", () => {
+  test("accepts capability enabled with true", () => {
     const config = validateConfig({
       name: "t",
       project: "/tmp",
-      network: { tailscale: { authKey: "tskey-auth-abc", mode: "serve" } },
+      capabilities: { tailscale: true },
     });
-    expect(config.network?.tailscale?.mode).toBe("serve");
-  });
-
-  test("accepts tailscale.mode 'funnel'", () => {
-    const config = validateConfig({
-      name: "t",
-      project: "/tmp",
-      network: { tailscale: { authKey: "tskey-auth-abc", mode: "funnel" } },
-    });
-    expect(config.network?.tailscale?.mode).toBe("funnel");
-  });
-
-  test("accepts tailscale without mode (optional)", () => {
-    const config = validateConfig({
-      name: "t",
-      project: "/tmp",
-      network: { tailscale: { authKey: "tskey-auth-abc" } },
-    });
-    expect(config.network?.tailscale?.mode).toBeUndefined();
-  });
-
-  test("throws on invalid tailscale.mode", () => {
-    expect(() =>
-      validateConfig({
-        name: "t",
-        project: "/tmp",
-        network: { tailscale: { authKey: "tskey-auth-abc", mode: "invalid" } },
-      }),
-    ).toThrow();
-  });
-
-  test("throws on bad services.onePassword", () => {
-    expect(() =>
-      validateConfig({
-        name: "t",
-        project: "/tmp",
-        services: { onePassword: { serviceAccountToken: "" } },
-      }),
-    ).toThrow("serviceAccountToken");
-
-    expect(() =>
-      validateConfig({ name: "t", project: "/tmp", services: { onePassword: true } }),
-    ).toThrow("onePassword");
+    expect(config.capabilities?.tailscale).toBe(true);
   });
 
   test("throws on non-array mounts", () => {
@@ -490,24 +442,24 @@ describe("validateConfig", () => {
 
   // -- op:// cross-validation -------------------------------------------------
 
-  test("accepts op:// references when onePassword is configured", () => {
+  test("accepts op:// references when one-password capability is configured", () => {
     const config = validateConfig({
       name: "t",
       project: "/tmp",
-      services: { onePassword: { serviceAccountToken: "ops_abc" } },
+      capabilities: { "one-password": { serviceAccountToken: "ops_abc" } },
       provider: { type: "anthropic", apiKey: "op://Vault/Anthropic/api-key" },
     });
     expect(config.provider?.apiKey).toBe("op://Vault/Anthropic/api-key");
   });
 
-  test("throws on op:// references without onePassword configured", () => {
+  test("throws on op:// references without one-password capability", () => {
     expect(() =>
       validateConfig({
         name: "t",
         project: "/tmp",
         provider: { type: "anthropic", apiKey: "op://Vault/Anthropic/api-key" },
       }),
-    ).toThrow("services.onePassword is not configured");
+    ).toThrow("one-password");
   });
 });
 
@@ -588,44 +540,18 @@ describe("sanitizeConfig", () => {
     expect((result.provider as Record<string, unknown>).apiKey).toBeUndefined();
   });
 
-  test("strips network.gatewayToken and network.tailscale.authKey", () => {
+  test("strips network.gatewayToken", () => {
     const result = sanitizeConfig({
       name: "t",
       project: "/tmp",
       network: {
         gatewayToken: "secret-token",
         gatewayPort: 9000,
-        tailscale: { authKey: "tskey-secret" },
       },
     });
     const net = result.network as Record<string, unknown>;
     expect(net.gatewayToken).toBeUndefined();
     expect(net.gatewayPort).toBe(9000);
-    expect((net.tailscale as Record<string, unknown>).authKey).toBeUndefined();
-  });
-
-  test("strips tailscale.authKey but preserves tailscale.mode", () => {
-    const result = sanitizeConfig({
-      name: "t",
-      project: "/tmp",
-      network: {
-        tailscale: { authKey: "tskey-secret", mode: "serve" },
-      },
-    });
-    const net = result.network as Record<string, unknown>;
-    const ts = net.tailscale as Record<string, unknown>;
-    expect(ts.authKey).toBeUndefined();
-    expect(ts.mode).toBe("serve");
-  });
-
-  test("strips services.onePassword.serviceAccountToken", () => {
-    const result = sanitizeConfig({
-      name: "t",
-      project: "/tmp",
-      services: { onePassword: { serviceAccountToken: "ops_secret" } },
-    });
-    const op = (result.services as Record<string, unknown>).onePassword as Record<string, unknown>;
-    expect(op.serviceAccountToken).toBeUndefined();
   });
 
   test("strips telegram.botToken", () => {
@@ -711,11 +637,14 @@ describe("loadConfig", () => {
         JSON.stringify({
           name: "test-vm",
           project: "/tmp/test-vm",
-          services: { onePassword: { serviceAccountToken: "env://CLAWCTL_TEST_TOKEN" } },
+          capabilities: {
+            "one-password": { serviceAccountToken: "env://CLAWCTL_TEST_TOKEN" },
+          },
         }),
       );
       const config = await loadConfig(tmp);
-      expect(config.services?.onePassword?.serviceAccountToken).toBe("ops_resolved_token");
+      const opCap = config.capabilities?.["one-password"] as Record<string, unknown>;
+      expect(opCap?.serviceAccountToken).toBe("ops_resolved_token");
     });
 
     test("throws on unset env:// reference", async () => {
@@ -725,7 +654,9 @@ describe("loadConfig", () => {
         JSON.stringify({
           name: "test-vm",
           project: "/tmp/test-vm",
-          services: { onePassword: { serviceAccountToken: "env://NONEXISTENT_VAR_99" } },
+          capabilities: {
+            "one-password": { serviceAccountToken: "env://NONEXISTENT_VAR_99" },
+          },
         }),
       );
       await expect(loadConfig(tmp)).rejects.toThrow("NONEXISTENT_VAR_99");

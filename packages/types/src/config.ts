@@ -22,8 +22,13 @@ function formatZodError(error: z.ZodError): string {
   return issue.message;
 }
 
+export interface ValidateConfigOptions {
+  /** Strict Zod schema for the capabilities section (built from capability configDefs). */
+  capabilitySchema?: z.ZodTypeAny;
+}
+
 /** Validate raw JSON and return a typed InstanceConfig. */
-export function validateConfig(raw: unknown): InstanceConfig {
+export function validateConfig(raw: unknown, opts?: ValidateConfigOptions): InstanceConfig {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
     throw new Error("Config must be a JSON object");
   }
@@ -35,12 +40,27 @@ export function validateConfig(raw: unknown): InstanceConfig {
 
   const config = result.data;
 
-  // Cross-validate: op:// references require services.onePassword
+  // Validate capability-specific config against strict schemas
+  if (opts?.capabilitySchema && config.capabilities) {
+    const capResult = opts.capabilitySchema.safeParse(config.capabilities);
+    if (!capResult.success) {
+      const issue = (capResult as { error: z.ZodError }).error.issues[0];
+      const path = ["capabilities", ...issue.path].join(".");
+      throw new Error(
+        issue.message.startsWith("'") ? issue.message : `'${path}': ${issue.message}`,
+      );
+    }
+  }
+
+  // Cross-validate: op:// references require capabilities["one-password"]
   const opRefs = findSecretRefs(raw as Record<string, unknown>).filter((r) => r.scheme === "op");
-  if (opRefs.length > 0 && !config.services?.onePassword) {
-    throw new Error(
-      `Config has op:// references (${opRefs[0].path.join(".")}) but services.onePassword is not configured`,
-    );
+  if (opRefs.length > 0) {
+    const hasOp = config.capabilities && "one-password" in config.capabilities;
+    if (!hasOp) {
+      throw new Error(
+        `Config has op:// references (${opRefs[0].path.join(".")}) but capabilities["one-password"] is not configured`,
+      );
+    }
   }
 
   return {

@@ -1,6 +1,7 @@
 import React from "react";
 import { Text, Box } from "ink";
 import type { InstanceConfig } from "@clawctl/types";
+import { ALL_CAPABILITIES } from "@clawctl/capabilities";
 
 interface ConfigReviewProps {
   config: InstanceConfig;
@@ -86,26 +87,30 @@ export function ConfigReview({ config, validationErrors, validationWarnings }: C
 
         <Text> </Text>
 
-        <Row label="1Password">
-          {config.services?.onePassword ? (
-            <Text color="green">{"\u2713"} configured</Text>
-          ) : (
-            <Text dimColor>
-              {"\u2500\u2500"} not configured {"\u2500\u2500"}
-            </Text>
-          )}
-        </Row>
-        <Row label="Tailscale">
-          {config.network?.tailscale ? (
-            <Text color="green">
-              {"\u2713"} {config.network.tailscale.mode ?? "serve"} (auth key provided)
-            </Text>
-          ) : (
-            <Text dimColor>
-              {"\u2500\u2500"} not configured {"\u2500\u2500"}
-            </Text>
-          )}
-        </Row>
+        {/* Dynamic capability rows */}
+        {ALL_CAPABILITIES.filter((c) => !c.core && c.configDef).map((cap) => {
+          const capConfig = config.capabilities?.[cap.name];
+          const isConfigured = capConfig !== undefined;
+          const summary =
+            isConfigured && cap.configDef?.summary
+              ? cap.configDef.summary(
+                  typeof capConfig === "object" ? (capConfig as Record<string, string>) : {},
+                )
+              : null;
+          return (
+            <Row key={cap.name} label={cap.configDef!.sectionLabel}>
+              {isConfigured ? (
+                <Text color="green">
+                  {"\u2713"} {summary || "configured"}
+                </Text>
+              ) : (
+                <Text dimColor>
+                  {"\u2500\u2500"} not configured {"\u2500\u2500"}
+                </Text>
+              )}
+            </Row>
+          );
+        })}
 
         <Text> </Text>
 
@@ -152,12 +157,15 @@ export function ConfigReview({ config, validationErrors, validationWarnings }: C
             {"\u2139"} {warn}
           </Text>
         ))}
-        {config.services?.onePassword && (
-          <Text dimColor> {"\u2139"} 1Password token will be validated during provisioning</Text>
-        )}
-        {config.network?.tailscale && (
-          <Text dimColor> {"\u2139"} Tailscale auth key will be used (no interactive login)</Text>
-        )}
+        {/* Capability provisioning hints */}
+        {ALL_CAPABILITIES.filter(
+          (c) => !c.core && c.configDef && config.capabilities?.[c.name],
+        ).map((cap) => (
+          <Text key={cap.name} dimColor>
+            {" "}
+            {"\u2139"} {cap.configDef!.sectionLabel} will be configured during provisioning
+          </Text>
+        ))}
         <Text dimColor>
           {" "}
           {"\u2139"} Config will be saved to {config.project}/clawctl.json

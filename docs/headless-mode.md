@@ -33,9 +33,9 @@ All three modes run the same provisioning stages:
 2. **Install Lima** — via Homebrew, if not already present
 3. **Create and provision VM** — generate lima.yaml, boot Ubuntu 24.04, run provisioning
 4. **Verify installed tools** — Node.js 22, Tailscale, Homebrew, 1Password CLI
-5. **Set up 1Password** — if `services.onePassword` is configured
+5. **Set up 1Password** — if `capabilities["one-password"]` is configured
 6. **Resolve secrets** — if `op://` references are present in the config
-7. **Connect Tailscale** — if `network.tailscale` is configured
+7. **Connect Tailscale** — if `capabilities.tailscale` is configured
 8. **Bootstrap gateway** — if `provider` is configured (runs `openclaw onboard --non-interactive`)
 9. **Register instance** — write `clawctl.json` and update the instance registry
 
@@ -91,7 +91,7 @@ from the environment at load time:
     "type": "anthropic",
     "apiKey": "env://ANTHROPIC_API_KEY"
   },
-  "network": {
+  "capabilities": {
     "tailscale": {
       "authKey": "env://TAILSCALE_AUTH_KEY"
     }

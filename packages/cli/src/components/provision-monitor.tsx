@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Text, Box, useInput } from "ink";
 import { Spinner } from "./spinner.js";
 import { LogOutput } from "./log-output.js";
 import { useTerminalSize } from "../hooks/use-terminal-size.js";
 import type { VMDriver } from "@clawctl/host-core";
-import { runHeadlessFromConfig } from "@clawctl/host-core";
+import { runHeadlessFromConfig, getHostHooksForConfig } from "@clawctl/host-core";
 import type {
   HeadlessResult,
   HeadlessCallbacks,
@@ -19,13 +19,11 @@ interface StageInfo {
   detail?: string;
 }
 
-const STAGE_LABELS: Record<HeadlessStage, string> = {
+const CORE_STAGE_LABELS: Record<string, string> = {
   prereqs: "Prerequisites",
   provision: "Provisioning VM",
   verify: "Verifying installation",
-  onepassword: "Setting up 1Password",
   secrets: "Resolving secrets",
-  tailscale: "Connecting Tailscale",
   bootstrap: "Bootstrapping OpenClaw",
   done: "Complete",
 };
@@ -39,22 +37,34 @@ interface ProvisionMonitorProps {
 
 export function ProvisionMonitor({ driver, config, onComplete, onError }: ProvisionMonitorProps) {
   const { rows } = useTerminalSize();
-  const [stages, setStages] = useState<Map<HeadlessStage, StageInfo>>(() => new Map());
+  const [stages, setStages] = useState<Map<string, StageInfo>>(() => new Map());
   const [steps, setSteps] = useState<string[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [showLogs, setShowLogs] = useState(true);
+
+  // Build stage label lookup from core labels + dynamic host hooks
+  const stageLabels = useMemo(() => {
+    const labels = { ...CORE_STAGE_LABELS };
+    for (const hook of getHostHooksForConfig(config)) {
+      labels[hook.stageName] = hook.stageLabel;
+    }
+    return labels;
+  }, [config]);
 
   useInput((input) => {
     if (input === "v") setShowLogs((s) => !s);
   });
 
-  const onStage = useCallback((stage: HeadlessStage, status: StageStatus, detail?: string) => {
-    setStages((prev) => {
-      const next = new Map(prev);
-      next.set(stage, { label: STAGE_LABELS[stage], status, detail });
-      return next;
-    });
-  }, []);
+  const onStage = useCallback(
+    (stage: HeadlessStage, status: StageStatus, detail?: string) => {
+      setStages((prev) => {
+        const next = new Map(prev);
+        next.set(stage, { label: stageLabels[stage] ?? stage, status, detail });
+        return next;
+      });
+    },
+    [stageLabels],
+  );
 
   const onStep = useCallback((label: string) => {
     setSteps((prev) => [...prev, label]);
@@ -79,15 +89,17 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
     runHeadlessFromConfig(driver, config, callbacks).then(onComplete).catch(onError);
   }, []);
 
-  // Determine which stages are relevant for this config
-  const activeStages: HeadlessStage[] = [
-    "prereqs",
-    "provision",
-    "verify",
-    ...(config.services?.onePassword ? ["onepassword" as HeadlessStage] : []),
-    ...(config.network?.tailscale ? ["tailscale" as HeadlessStage] : []),
-    ...(config.provider ? ["bootstrap" as HeadlessStage] : []),
-  ];
+  // Determine which stages are relevant for this config (derived from host hooks)
+  const activeStages = useMemo(() => {
+    const hostHookStages = getHostHooksForConfig(config).map((h) => h.stageName);
+    return [
+      "prereqs",
+      "provision",
+      "verify",
+      ...hostHookStages,
+      ...(config.provider ? ["bootstrap"] : []),
+    ];
+  }, [config]);
 
   // The status panel: header(1) + stages + 2 extra rows for steps overflow.
   const statusHeight = 1 + activeStages.length + 2;
@@ -117,7 +129,7 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
           {activeStages.map((stageId) => {
             const info = stages.get(stageId);
             const status = info?.status ?? "pending";
-            const label = STAGE_LABELS[stageId];
+            const label = stageLabels[stageId] ?? stageId;
             const detail = info?.detail;
 
             return (

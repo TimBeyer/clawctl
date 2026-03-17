@@ -48,15 +48,10 @@ describe("registry", () => {
       expect(isEnabled(ts, makeConfig({ tailscale: true }))).toBe(true);
     });
 
-    it("one-password enabled via backwards-compat flag", () => {
+    it("one-password enabled via capabilities map", () => {
       const op = ALL_CAPABILITIES.find((c) => c.name === "one-password")!;
-      expect(isEnabled(op, { capabilities: {}, onePassword: true })).toBe(true);
-      expect(isEnabled(op, { capabilities: {}, onePassword: false })).toBe(false);
-    });
-
-    it("tailscale enabled via backwards-compat flag", () => {
-      const ts = ALL_CAPABILITIES.find((c) => c.name === "tailscale")!;
-      expect(isEnabled(ts, { capabilities: {}, tailscale: true })).toBe(true);
+      expect(isEnabled(op, makeConfig({ "one-password": true }))).toBe(true);
+      expect(isEnabled(op, makeConfig())).toBe(false);
     });
   });
 

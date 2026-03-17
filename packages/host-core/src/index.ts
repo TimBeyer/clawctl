@@ -11,6 +11,15 @@ export { exec, execStream, execWithLogs, commandExists } from "./exec.js";
 // Config
 export { loadConfig, validateConfig, configToVMConfig, sanitizeConfig } from "./config.js";
 
+// Schema derivation
+export {
+  deriveConfigSchema,
+  buildCapabilitiesSchema,
+  getSecretPaths,
+  getByPath,
+  setByPath,
+} from "./schema-derive.js";
+
 // Secrets (I/O + re-exports of pure functions from @clawctl/types)
 export {
   resolveOpRefs,
@@ -24,7 +33,7 @@ export type { SecretRef, ResolvedSecretRef } from "./secrets.js";
 
 // Provision
 export { provisionVM } from "./provision.js";
-export type { ProvisionCallbacks, ProvisionFeatures } from "./provision.js";
+export type { ProvisionCallbacks } from "./provision.js";
 
 // Claw binary (embedded asset in compiled mode, direct path in dev mode)
 export { clawPath } from "./claw-binary.js";
@@ -109,3 +118,7 @@ export type { CleanupTarget } from "./cleanup.js";
 // Headless
 export { runHeadless, runHeadlessFromConfig } from "./headless.js";
 export type { HeadlessResult, HeadlessCallbacks, HeadlessStage, StageStatus } from "./headless.js";
+
+// Capability host hooks
+export { getHostHooksForConfig, getCapabilityConfig } from "./capability-hooks.js";
+export type { HostCapabilityHook } from "./capability-hooks.js";

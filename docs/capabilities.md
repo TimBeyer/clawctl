@@ -73,10 +73,20 @@ The split is intentional:
 
 ## Writing a capability
 
-A capability is a `CapabilityDef` constant. Here's the structure:
+A capability is a `CapabilityDef` constant. Optional capabilities declare a
+`configDef` that drives config validation (Zod is derived automatically),
+TUI form rendering, sidebar help, and secret sanitization — all from one
+definition.
 
 ```typescript
+import { defineCapabilityConfig } from "@clawctl/types";
 import type { CapabilityDef } from "@clawctl/types";
+
+// 1. Define the config type — this is the contract
+type MyToolConfig = {
+  apiToken: string;
+  region?: "us" | "eu";
+};
 
 export const myTool: CapabilityDef = {
   name: "my-tool",
@@ -84,14 +94,41 @@ export const myTool: CapabilityDef = {
   version: "1.0.0",
   core: false, // true = always enabled
   dependsOn: ["homebrew"], // runs after homebrew in same phase
-  enabled: (
-    config, // when to activate (non-core only)
-  ) => "my-tool" in (config.capabilities ?? {}),
+  enabled: (config) => config.capabilities?.["my-tool"] !== undefined,
 
+  // 2. Unified config definition — replaces configSchema, formDef, secretFields
+  //    defineCapabilityConfig<T>() validates field paths at compile time
+  configDef: defineCapabilityConfig<MyToolConfig>({
+    sectionLabel: "My Tool",
+    sectionHelp: { title: "My Tool", lines: ["Integration with My Tool service."] },
+    fields: [
+      {
+        path: "apiToken", // typed: must be keyof MyToolConfig
+        label: "API Token",
+        type: "password",
+        required: true,
+        secret: true, // stripped from clawctl.json, masked in TUI
+        placeholder: "mt-...",
+        help: { title: "API Token", lines: ["Your My Tool API token."] },
+      },
+      {
+        path: "region",
+        label: "Region",
+        type: "select",
+        defaultValue: "us",
+        options: [
+          { label: "US", value: "us" },
+          { label: "EU", value: "eu" },
+        ],
+      },
+    ],
+    summary: (v) => (v.apiToken ? `My Tool (${v.region ?? "us"})` : ""),
+  }),
+
+  // 3. Lifecycle hooks (VM-side provisioning)
   hooks: {
     "provision-tools": {
-      // hook key = phase or pre:/post: phase
-      execContext: "user", // "root" or "user"
+      execContext: "user",
       steps: [
         {
           name: "my-tool-install",
@@ -103,7 +140,6 @@ export const myTool: CapabilityDef = {
         },
       ],
       doctorChecks: [
-        // optional health checks
         {
           name: "path-my-tool",
           availableAfter: "provision-tools",
@@ -114,7 +150,6 @@ export const myTool: CapabilityDef = {
       ],
     },
     bootstrap: {
-      // post-onboard AGENTS.md section
       execContext: "user",
       steps: [
         {
@@ -131,15 +166,27 @@ export const myTool: CapabilityDef = {
 };
 ```
 
+The user's config file uses the capabilities map:
+
+```json
+{
+  "capabilities": {
+    "my-tool": { "apiToken": "mt-abc123", "region": "eu" }
+  }
+}
+```
+
 ### Registration
 
 After writing the module:
 
-1. Export it from `packages/capabilities/src/index.ts`
-2. Import it in `packages/vm-cli/src/capabilities/registry.ts` and add it
-   to `ALL_CAPABILITIES`
+1. Export it from `packages/capabilities/src/index.ts` and add it to
+   `ALL_CAPABILITIES`
+2. If the capability needs host-side setup (token validation, auth flows),
+   add a hook entry in `packages/host-core/src/capability-hooks.ts`
 
-The runner discovers hooks automatically from the registry.
+The TUI wizard, config validation, sidebar help, and secret sanitization
+all derive from the `configDef` automatically — no other files to edit.
 
 ### Step functions
 
