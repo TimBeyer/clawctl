@@ -1,7 +1,14 @@
 import { openSync } from "node:fs";
 import { ReadStream } from "node:tty";
 import type { VMDriver } from "@clawctl/host-core";
-import { addInstance, loadConfig, runHeadless, configToVMConfig, cleanupVM, BIN_NAME } from "@clawctl/host-core";
+import {
+  addInstance,
+  loadConfig,
+  runHeadless,
+  configToVMConfig,
+  cleanupVM,
+  BIN_NAME,
+} from "@clawctl/host-core";
 import type { RegistryEntry, HeadlessResult } from "@clawctl/host-core";
 import type { InstanceConfig } from "@clawctl/types";
 
@@ -39,10 +46,7 @@ export async function runCreateFromConfig(driver: VMDriver, configPath: string):
   }
 
   const renderOpts = inkStdin ? { stdin: inkStdin } : undefined;
-  const instance = render(
-    React.createElement(ProvisionApp, { driver, config }),
-    renderOpts,
-  );
+  const instance = render(React.createElement(ProvisionApp, { driver, config }), renderOpts);
 
   let exitResult: unknown;
   try {

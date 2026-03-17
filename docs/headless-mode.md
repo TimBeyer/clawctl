@@ -9,10 +9,10 @@ For CI/CD or piped environments, add `--plain` for a simple streaming log.
 
 ## Modes
 
-| Command | Output |
-|---------|--------|
-| `clawctl create` | Full interactive wizard |
-| `clawctl create --config <path>` | TUI progress (stages, steps, logs) |
+| Command                                  | Output                             |
+| ---------------------------------------- | ---------------------------------- |
+| `clawctl create`                         | Full interactive wizard            |
+| `clawctl create --config <path>`         | TUI progress (stages, steps, logs) |
 | `clawctl create --config <path> --plain` | Plain `[prefix] message` log lines |
 
 The TUI mode uses the alternate screen buffer with Ctrl-C cleanup — same

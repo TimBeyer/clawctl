@@ -6,7 +6,12 @@ import { FormField } from "../components/form-field.js";
 import { FormSection } from "../components/form-section.js";
 import { Sidebar, SIDEBAR_HELP } from "../components/sidebar.js";
 import { ConfigReview } from "../components/config-review.js";
-import { instanceConfigSchema, providerSchema, ALL_PROVIDER_TYPES, DEFAULT_PROJECT_BASE } from "@clawctl/types";
+import {
+  instanceConfigSchema,
+  providerSchema,
+  ALL_PROVIDER_TYPES,
+  DEFAULT_PROJECT_BASE,
+} from "@clawctl/types";
 import type { InstanceConfig } from "@clawctl/types";
 
 type Phase = "form" | "review";
@@ -450,7 +455,9 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
                 <TextInput
                   value={project}
                   onChange={setProject}
-                  placeholder={name ? `${DEFAULT_PROJECT_BASE}/${name}` : `${DEFAULT_PROJECT_BASE}/my-agent`}
+                  placeholder={
+                    name ? `${DEFAULT_PROJECT_BASE}/${name}` : `${DEFAULT_PROJECT_BASE}/my-agent`
+                  }
                 />
               </Box>
             ) : (
@@ -458,7 +465,9 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
                 label="Project"
                 value={project}
                 status={fieldStatus("project")}
-                placeholder={name ? `${DEFAULT_PROJECT_BASE}/${name}` : `${DEFAULT_PROJECT_BASE}/my-agent`}
+                placeholder={
+                  name ? `${DEFAULT_PROJECT_BASE}/${name}` : `${DEFAULT_PROJECT_BASE}/my-agent`
+                }
               />
             )}
           </Box>

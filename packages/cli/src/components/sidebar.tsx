@@ -9,7 +9,14 @@ interface SidebarProps {
 
 export function Sidebar({ title, lines, width = 36 }: SidebarProps) {
   return (
-    <Box flexDirection="column" flexGrow={1} borderStyle="round" borderColor="gray" paddingX={1} width={width}>
+    <Box
+      flexDirection="column"
+      flexGrow={1}
+      borderStyle="round"
+      borderColor="gray"
+      paddingX={1}
+      width={width}
+    >
       <Text bold color="cyan">
         {"\u2139"} {title}
       </Text>

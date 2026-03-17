@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback, useContext } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Text, Box, useInput } from "ink";
 import { Spinner } from "./spinner.js";
 import { LogOutput } from "./log-output.js";
-import { VerboseContext } from "../hooks/verbose-context.js";
 import { useTerminalSize } from "../hooks/use-terminal-size.js";
 import type { VMDriver } from "@clawctl/host-core";
 import { runHeadlessFromConfig } from "@clawctl/host-core";
@@ -39,7 +38,6 @@ interface ProvisionMonitorProps {
 }
 
 export function ProvisionMonitor({ driver, config, onComplete, onError }: ProvisionMonitorProps) {
-  const verbose = useContext(VerboseContext);
   const { rows } = useTerminalSize();
   const [stages, setStages] = useState<Map<HeadlessStage, StageInfo>>(() => new Map());
   const [steps, setSteps] = useState<string[]>([]);
@@ -113,7 +111,9 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
       {/* Stages (left) + Steps (right) side by side, fixed height */}
       <Box marginTop={1} height={statusHeight}>
         <Box flexDirection="column" marginLeft={2} width={32}>
-          <Text dimColor bold>Stages</Text>
+          <Text dimColor bold>
+            Stages
+          </Text>
           {activeStages.map((stageId) => {
             const info = stages.get(stageId);
             const status = info?.status ?? "pending";
@@ -142,7 +142,9 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
 
         {steps.length > 0 && (
           <Box flexDirection="column" marginLeft={2} flexGrow={1} overflow="hidden">
-            <Text dimColor bold>Steps</Text>
+            <Text dimColor bold>
+              Steps
+            </Text>
             {visibleSteps.map((step, i) => (
               <Text key={i} dimColor>
                 {"\u2500"} {step}

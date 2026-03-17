@@ -36,7 +36,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function ConfigReview({ config, validationErrors, validationWarnings, focused }: ConfigReviewProps) {
+export function ConfigReview({ config, validationErrors, validationWarnings }: ConfigReviewProps) {
   const resources = config.resources ?? {};
   const cpus = resources.cpus ?? 4;
   const memory = resources.memory ?? "8GiB";
