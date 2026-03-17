@@ -89,13 +89,12 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
     ...(config.provider ? ["bootstrap" as HeadlessStage] : []),
   ];
 
-  // The status panel has a fixed height: 1 header + stage count.
-  // Steps column scrolls within that same height.
-  const statusHeight = 1 + activeStages.length + 2;
+  // The status panel has a fixed height: stage count + 2 extra for steps.
+  const statusHeight = activeStages.length + 2;
 
   // Compute dynamic maxLines for the log viewer:
-  // header border(3) + margin(1) + statusHeight + margin(1) + log border(3) + help(1)
-  const fixed = 3 + 1 + statusHeight + 1 + 3 + 1;
+  // header border(3) + margin(1) + column headers(1) + statusHeight + margin(1) + log border(3) + help(1)
+  const fixed = 3 + 1 + 1 + statusHeight + 1 + 3 + 1;
   const maxLines = Math.max(3, rows - fixed);
 
   // Show the most recent steps that fit (statusHeight - 1 for header)
@@ -108,12 +107,25 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
         <Text bold> Provisioning: {config.name}</Text>
       </Box>
 
-      {/* Stages (left) + Steps (right) side by side, fixed height */}
-      <Box marginTop={1} height={statusHeight}>
-        <Box flexDirection="column" marginLeft={2} width={32}>
+      {/* Column headers */}
+      <Box marginTop={1}>
+        <Box marginLeft={2} width={32}>
           <Text dimColor bold>
             Stages
           </Text>
+        </Box>
+        {steps.length > 0 && (
+          <Box marginLeft={2}>
+            <Text dimColor bold>
+              Steps
+            </Text>
+          </Box>
+        )}
+      </Box>
+
+      {/* Stages (left) + Steps (right) side by side, fixed height */}
+      <Box height={statusHeight}>
+        <Box flexDirection="column" marginLeft={2} width={32} overflow="hidden">
           {activeStages.map((stageId) => {
             const info = stages.get(stageId);
             const status = info?.status ?? "pending";
@@ -142,9 +154,6 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
 
         {steps.length > 0 && (
           <Box flexDirection="column" marginLeft={2} flexGrow={1} overflow="hidden">
-            <Text dimColor bold>
-              Steps
-            </Text>
             {visibleSteps.map((step, i) => (
               <Text key={i} dimColor>
                 {"\u2500"} {step}
