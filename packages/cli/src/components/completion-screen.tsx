@@ -55,9 +55,9 @@ export function CompletionScreen({ result }: CompletionScreenProps) {
         <Text>
           {" "}
           <Text dimColor>
-            {BIN_NAME} oc -i {result.name} dashboard
+            {BIN_NAME} oc -i {result.name} tui
           </Text>{" "}
-          Open the dashboard
+          Chat with your agent
         </Text>
         <Text>
           {" "}
