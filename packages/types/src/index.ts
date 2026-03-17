@@ -16,7 +16,14 @@ export type {
   CapabilityDef,
   CapabilityState,
   ProvisionConfig,
+  ConfigFieldType,
+  ConfigPath,
+  JsonPointer,
+  CapabilityConfigField,
+  CapabilityConfigDef,
+  HostSetupResult,
 } from "./capability.js";
+export { defineCapabilityConfig } from "./capability.js";
 
 // Schemas
 export {

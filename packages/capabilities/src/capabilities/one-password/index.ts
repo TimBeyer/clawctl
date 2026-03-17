@@ -1,6 +1,6 @@
 import dedent from "dedent";
 import { join } from "path";
-import { PROJECT_MOUNT_POINT } from "@clawctl/types";
+import { PROJECT_MOUNT_POINT, defineCapabilityConfig } from "@clawctl/types";
 import type { CapabilityDef } from "@clawctl/types";
 import {
   provisionOpCli,
@@ -12,6 +12,10 @@ import { secretManagementSkillContent } from "./skill.js";
 
 const SKILLS_DIR = join(PROJECT_MOUNT_POINT, "data", "workspace", "skills");
 
+interface OnePasswordConfig {
+  serviceAccountToken: string;
+}
+
 export const onePassword: CapabilityDef = {
   name: "one-password",
   label: "1Password",
@@ -20,6 +24,40 @@ export const onePassword: CapabilityDef = {
   dependsOn: ["homebrew"],
   enabled: (config) =>
     config.capabilities?.["one-password"] !== undefined || config.onePassword === true,
+  configDef: defineCapabilityConfig<OnePasswordConfig>({
+    sectionLabel: "1Password",
+    sectionHelp: {
+      title: "1Password",
+      lines: [
+        "Inject secrets via op:// refs.",
+        "Installs the op CLI and skills.",
+        "",
+        "Requires a service account token.",
+      ],
+    },
+    fields: [
+      {
+        path: "serviceAccountToken",
+        label: "SA Token",
+        type: "password",
+        required: true,
+        secret: true,
+        placeholder: "1Password service account token",
+        help: {
+          title: "1Password Token",
+          lines: [
+            "Service account token for the",
+            "1Password CLI.",
+            "",
+            "Create one at:",
+            "  my.1password.com/developer",
+            "  /service-accounts",
+          ],
+        },
+      },
+    ],
+    summary: (v) => (v.serviceAccountToken ? "1Password" : ""),
+  }),
   hooks: {
     // Phase 1: Install the op CLI binary
     "provision-tools": {
