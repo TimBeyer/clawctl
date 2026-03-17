@@ -1,75 +1,99 @@
-import { writeFile } from "fs/promises";
 import { openSync } from "node:fs";
 import { ReadStream } from "node:tty";
-import { join } from "path";
 import type { VMDriver } from "@clawctl/host-core";
 import {
   addInstance,
-  getTailscaleHostname,
-  cleanupVM,
+  loadConfig,
   runHeadless,
-  extractGatewayToken,
-  loadRegistry,
-  saveRegistry,
+  configToVMConfig,
+  cleanupVM,
   BIN_NAME,
 } from "@clawctl/host-core";
-import type { RegistryEntry, CleanupTarget } from "@clawctl/host-core";
-import { GATEWAY_PORT } from "@clawctl/types";
+import type { RegistryEntry, HeadlessResult } from "@clawctl/host-core";
+import type { InstanceConfig } from "@clawctl/types";
 
 /**
- * Run the headless create path: load config, provision, register.
+ * Run the plain (CI-friendly) create path: load config, provision with
+ * streaming log output, register. No TUI.
  */
-export async function runCreateHeadless(driver: VMDriver, configPath: string): Promise<void> {
+export async function runCreatePlain(driver: VMDriver, configPath: string): Promise<void> {
   const result = await runHeadless(driver, configPath);
-
-  const entry: RegistryEntry = {
-    name: result.name,
-    projectDir: result.projectDir,
-    vmName: result.vmName,
-    driver: result.driver,
-    createdAt: new Date().toISOString(),
-    providerType: result.providerType,
-    gatewayPort: result.gatewayPort,
-    tailscaleUrl: result.tailscaleUrl,
-  };
-  await addInstance(entry);
+  await registerInstance(result, driver.name);
 }
 
 /**
- * Run the interactive wizard create path.
- * Returns when the wizard exits (either via onboard or finish).
+ * Run config-driven create with the TUI provision monitor.
+ * Loads the config from disk, then renders ProvisionApp for the visual
+ * progress view (stages, steps, logs).
+ */
+export async function runCreateFromConfig(driver: VMDriver, configPath: string): Promise<void> {
+  const config = await loadConfig(configPath);
+
+  const React = (await import("react")).default;
+  const { render } = await import("ink");
+  const { ProvisionApp } = await import("../app.js");
+
+  let inkStdin: ReadStream | undefined;
+  try {
+    inkStdin = new ReadStream(openSync("/dev/tty", "r"));
+  } catch {
+    // /dev/tty unavailable — Ink will use process.stdin
+  }
+
+  const useAltScreen = process.stdout.isTTY;
+  if (useAltScreen) {
+    process.stdout.write("\x1b[?1049h");
+  }
+
+  const renderOpts = inkStdin ? { stdin: inkStdin } : undefined;
+  const instance = render(React.createElement(ProvisionApp, { driver, config }), renderOpts);
+
+  let exitResult: unknown;
+  try {
+    exitResult = await instance.waitUntilExit();
+  } finally {
+    if (useAltScreen) {
+      process.stdout.write("\x1b[?1049l");
+    }
+    inkStdin?.destroy();
+  }
+
+  if (
+    exitResult &&
+    typeof exitResult === "object" &&
+    "action" in exitResult &&
+    (exitResult as { action: string }).action === "created"
+  ) {
+    const { result } = exitResult as { action: string; result: HeadlessResult };
+    await registerInstance(result, driver.name);
+    printSummary(result);
+    // The headless pipeline's subprocesses can keep the event loop alive.
+    process.exit(0);
+  } else {
+    // Ctrl-C or error — clean up VM and project dir
+    const vmConfig = configToVMConfig(config);
+    await cleanupVM(driver, vmConfig.vmName, vmConfig.projectDir);
+    process.exit(130);
+  }
+}
+
+/**
+ * Run the interactive TUI create path.
+ *
+ * Uses the alternate screen buffer so each phase renders on a clean canvas
+ * without ghost elements. On exit, the original terminal content is restored
+ * and a summary is printed to the main buffer.
  */
 export async function runCreateWizard(driver: VMDriver): Promise<void> {
   const React = (await import("react")).default;
   const { render } = await import("ink");
   const { App } = await import("../app.js");
 
-  type OnboardResult = {
-    action: "onboard";
-    vmName: string;
-    projectDir: string;
-    tailscaleMode?: "off" | "serve" | "funnel";
-  };
-  type FinishResult = {
-    action: "finish";
-    vmName: string;
-    projectDir: string;
-    tailscaleMode?: "off" | "serve" | "funnel";
-  };
-
-  // Track VM creation so we can clean up on interrupt.
-  // App sets vmName/projectDir when entering the create-vm step.
-  const creationTarget: CleanupTarget = { vmName: "", projectDir: "" };
-
-  // SIGTERM handler (SIGINT is caught by Ink in raw mode, not delivered as a signal)
-  const onTerm = async () => {
-    if (creationTarget.vmName) {
-      console.error("\nCaught SIGTERM, cleaning up...");
-      await cleanupVM(driver, creationTarget.vmName, creationTarget.projectDir);
-    }
-    process.exit(143);
-  };
-  process.on("SIGTERM", onTerm);
+  // Capture config when provisioning starts so we can clean up on Ctrl-C.
+  // Ink intercepts Ctrl-C in raw mode (as a character, not SIGINT), so the
+  // process-level signal handlers registered by runHeadlessFromConfig never
+  // fire. We handle cleanup here instead.
+  let provisionConfig: InstanceConfig | null = null;
 
   // Give Ink its own stdin stream via /dev/tty so it never touches
   // process.stdin. After Ink exits, the subprocess can inherit
@@ -81,191 +105,89 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
     // /dev/tty unavailable (CI, piped, etc.) — Ink will use process.stdin
   }
 
+  // Enter alternate screen buffer for a clean canvas. This prevents ghost
+  // elements from Ink's differential rendering when the output height
+  // shrinks between phases. On exit, the original terminal is restored.
+  const useAltScreen = process.stdout.isTTY;
+  if (useAltScreen) {
+    process.stdout.write("\x1b[?1049h");
+  }
+
   const renderOpts = inkStdin ? { stdin: inkStdin } : undefined;
-  const instance = render(React.createElement(App, { driver, creationTarget }), renderOpts);
-  const result = await instance.waitUntilExit();
+  const instance = render(
+    React.createElement(App, {
+      driver,
+      onProvisionStart: (cfg: InstanceConfig) => {
+        provisionConfig = cfg;
+      },
+    }),
+    renderOpts,
+  );
 
-  // Destroy Ink's private stdin — doesn't affect process.stdin
-  inkStdin?.destroy();
-
-  // If the wizard was interrupted (Ctrl+C → Ink exits without an action result),
-  // clean up any partially-created VM and exit.
-  const isNormalExit = result && typeof result === "object" && "action" in result;
-  if (!isNormalExit) {
-    process.off("SIGTERM", onTerm);
-    if (creationTarget.vmName) {
-      console.error("\nInterrupted, cleaning up...");
-      await cleanupVM(driver, creationTarget.vmName, creationTarget.projectDir);
+  let exitResult: unknown;
+  try {
+    exitResult = await instance.waitUntilExit();
+  } finally {
+    // Leave alternate screen buffer — restores original terminal content
+    if (useAltScreen) {
+      process.stdout.write("\x1b[?1049l");
     }
-    return;
+    inkStdin?.destroy();
   }
 
-  // Wizard completed normally — stop cleaning up on SIGTERM.
-  // From here the VM is intentional; post-wizard work (onboarding etc.)
-  // is retryable and shouldn't trigger VM deletion.
-  process.off("SIGTERM", onTerm);
-
-  // Write minimal clawctl.json for wizard-created instances
-  const writeMinimalConfig = async (vmName: string, projectDir: string) => {
-    const minimal = { name: vmName, project: projectDir };
-    await writeFile(join(projectDir, "clawctl.json"), JSON.stringify(minimal, null, 2) + "\n");
-  };
-
-  // Register the instance
-  const registerWizardInstance = async (
-    vmName: string,
-    projectDir: string,
-    tailscaleUrl?: string,
-  ) => {
-    const entry: RegistryEntry = {
-      name: vmName,
-      projectDir,
-      vmName,
-      driver: driver.name,
-      createdAt: new Date().toISOString(),
-      gatewayPort: GATEWAY_PORT,
-      tailscaleUrl,
-    };
-    await addInstance(entry);
-  };
-
+  // Register instance if provisioning completed successfully
   if (
-    result &&
-    typeof result === "object" &&
-    "action" in result &&
-    (result as OnboardResult).action === "onboard"
+    exitResult &&
+    typeof exitResult === "object" &&
+    "action" in exitResult &&
+    (exitResult as { action: string }).action === "created"
   ) {
-    const { vmName, projectDir, tailscaleMode } = result as OnboardResult;
-
-    await registerWizardInstance(vmName, projectDir);
-    await writeMinimalConfig(vmName, projectDir);
-
-    console.log("");
-    console.log("--- OpenClaw Onboarding (running inside VM) ---");
-    console.log("");
-
-    try {
-      const onboardResult = await driver.execInteractive(vmName, "openclaw onboard --skip-daemon");
-      console.log("");
-
-      if (onboardResult.exitCode !== 0) {
-        console.log(`Warning: Onboarding exited with code ${onboardResult.exitCode}`);
-        console.log(`   You can retry: ${BIN_NAME} oc onboard`);
-      } else {
-        console.log("Installing gateway service...");
-        const installResult = await driver.exec(
-          vmName,
-          "openclaw daemon install --runtime node --force",
-        );
-        if (installResult.exitCode !== 0) {
-          console.log("Warning: Gateway service install failed. You can retry:");
-          console.log(`   ${BIN_NAME} oc daemon install --runtime node --force`);
-        } else {
-          console.log("Starting gateway...");
-          await driver.exec(vmName, "openclaw daemon start");
-          await driver.exec(vmName, "openclaw config set tools.profile full");
-          await driver.exec(
-            vmName,
-            "openclaw config set agents.defaults.workspace /mnt/project/data/workspace",
-          );
-          // Configure Tailscale gateway mode + allowedOrigins before restart
-          if (tailscaleMode && tailscaleMode !== "off") {
-            await driver.exec(
-              vmName,
-              `openclaw config set gateway.tailscale.mode ${tailscaleMode}`,
-            );
-            const tsHostname = await getTailscaleHostname(driver, vmName);
-            if (tsHostname) {
-              const tsUrl = `https://${tsHostname}`;
-              await driver.exec(
-                vmName,
-                `openclaw config set gateway.controlUi.allowedOrigins '["${tsUrl}"]'`,
-              );
-            }
-          }
-
-          await driver.exec(vmName, "openclaw daemon restart");
-
-          const envResult = await driver.exec(
-            vmName,
-            "systemctl --user show openclaw-gateway.service -p Environment",
-          );
-          const token = extractGatewayToken(envResult.stdout);
-
-          const doctorResult = await driver.exec(vmName, "openclaw doctor");
-          if (doctorResult.exitCode === 0) {
-            console.log("OpenClaw setup complete — openclaw doctor passed");
-          } else {
-            console.log("Warning: Setup finished but openclaw doctor reported issues");
-          }
-
-          console.log("");
-          if (token) {
-            console.log(`Dashboard: http://localhost:${GATEWAY_PORT}/#token=${token}`);
-          } else {
-            console.log(`Dashboard: http://localhost:${GATEWAY_PORT}`);
-          }
-          console.log(`Enter VM:  ${BIN_NAME} shell`);
-
-          // Update registry with Tailscale URL if serve/funnel mode
-          if (tailscaleMode && tailscaleMode !== "off") {
-            const tsHostnameForRegistry = await getTailscaleHostname(driver, vmName);
-            if (tsHostnameForRegistry) {
-              const tsBaseUrl = `https://${tsHostnameForRegistry}`;
-              console.log(`Tailscale: ${tsBaseUrl}`);
-              console.log("  First tailnet connection requires device approval:");
-              console.log(`  ${BIN_NAME} oc devices list`);
-              console.log(`  ${BIN_NAME} oc devices approve <requestId>`);
-              const registry = await loadRegistry();
-              if (registry.instances[vmName]) {
-                registry.instances[vmName].tailscaleUrl = tsBaseUrl;
-                await saveRegistry(registry);
-              }
-            }
-          }
-
-          const bootstrapCheck = await driver.exec(
-            vmName,
-            "test -f ~/.openclaw/workspace/BOOTSTRAP.md && echo yes || echo no",
-          );
-          if (bootstrapCheck.stdout.trim() === "yes") {
-            console.log("");
-            console.log("--- First conversation (the agent wants to meet you) ---");
-            console.log("");
-            try {
-              await driver.execInteractive(
-                vmName,
-                "openclaw tui --message 'You just woke up. Time to figure out who you are.'",
-              );
-            } catch {
-              // User Ctrl-C'd out of the first conversation — that's fine
-            }
-          }
-
-          // AGENTS.md managed section is now written VM-side during provision-workspace.
-          // See @clawctl/capabilities runner.ts.
-        }
-      }
-    } catch (err) {
-      console.error("Failed to run onboarding:", err);
-      console.log(`   You can retry: ${BIN_NAME} oc onboard`);
-    }
-  } else if (
-    result &&
-    typeof result === "object" &&
-    "action" in result &&
-    (result as FinishResult).action === "finish"
-  ) {
-    const { vmName, projectDir, tailscaleMode } = result as FinishResult;
-
-    // Query Tailscale URL if serve/funnel mode was selected
-    let tailscaleUrl: string | undefined;
-    if (tailscaleMode && tailscaleMode !== "off") {
-      const tsHostname = await getTailscaleHostname(driver, vmName);
-      if (tsHostname) tailscaleUrl = `https://${tsHostname}`;
-    }
-
-    await registerWizardInstance(vmName, projectDir, tailscaleUrl);
-    await writeMinimalConfig(vmName, projectDir);
+    const { result } = exitResult as { action: string; result: HeadlessResult };
+    await registerInstance(result, driver.name);
+    printSummary(result);
+  } else if (provisionConfig) {
+    // Ctrl-C or error during provisioning — clean up the VM and project dir.
+    // The abandoned headless pipeline's subprocesses keep the event loop
+    // alive, so we must force-exit after cleanup.
+    const vmConfig = configToVMConfig(provisionConfig);
+    await cleanupVM(driver, vmConfig.vmName, vmConfig.projectDir);
+    process.exit(130);
   }
+}
+
+/** Print a summary to the main terminal after leaving the alternate screen. */
+function printSummary(result: HeadlessResult): void {
+  const dashboardUrl = result.gatewayToken
+    ? `http://localhost:${result.gatewayPort}/#token=${result.gatewayToken}`
+    : `http://localhost:${result.gatewayPort}`;
+
+  console.log(`\n\x1b[32m\u2713\x1b[0m \x1b[1m${result.name}\x1b[0m is ready\n`);
+  console.log(`  Dashboard  ${dashboardUrl}`);
+  if (result.tailscaleUrl) {
+    console.log(`  Tailscale  ${result.tailscaleUrl}`);
+  }
+  console.log(`  Config     ${result.projectDir}/clawctl.json`);
+  console.log();
+  const n = result.name;
+  console.log(`  ${BIN_NAME} shell ${n}          Enter the VM`);
+  console.log(`  ${BIN_NAME} oc -i ${n} tui   Chat with your agent`);
+  console.log(`  ${BIN_NAME} status ${n}         Check instance health`);
+  if (!result.providerType) {
+    console.log(`  ${BIN_NAME} oc -i ${n} onboard     Configure a provider`);
+  }
+  console.log();
+}
+
+async function registerInstance(result: HeadlessResult, driverName: string): Promise<void> {
+  const entry: RegistryEntry = {
+    name: result.name,
+    projectDir: result.projectDir,
+    vmName: result.vmName,
+    driver: driverName,
+    createdAt: new Date().toISOString(),
+    providerType: result.providerType,
+    gatewayPort: result.gatewayPort,
+    tailscaleUrl: result.tailscaleUrl,
+  };
+  await addInstance(entry);
 }

@@ -105,7 +105,8 @@ export function generateZshCompletion(binName: string): string {
           case \${words[1]} in
             create)
               _arguments ${BS}
-                '--config[Config file for headless mode]:config file:_files' ${BS}
+                '--config[Config file (skips wizard, shows TUI progress)]:config file:_files' ${BS}
+                '--plain[Plain log output instead of TUI (for CI/automation)]' ${BS}
                 '--help[Show help]'
               ;;
             list)

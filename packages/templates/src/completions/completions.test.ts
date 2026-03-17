@@ -57,6 +57,7 @@ describe("generateBashCompletion", () => {
 
   test("includes per-command options", () => {
     expect(script).toContain("--config");
+    expect(script).toContain("--plain");
     expect(script).toContain("--purge");
     expect(script).toContain("--global");
     expect(script).toContain("--instance");
@@ -142,6 +143,7 @@ describe("generateZshCompletion", () => {
 
   test("includes per-command options", () => {
     expect(script).toContain("--config");
+    expect(script).toContain("--plain");
     expect(script).toContain("--purge");
     expect(script).toContain("--global");
     expect(script).toContain("--instance");

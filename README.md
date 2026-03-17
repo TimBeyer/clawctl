@@ -73,7 +73,8 @@ provisioning, and — optionally — credential setup and OpenClaw onboarding.
 | Command                                    | Description                                       |
 | ------------------------------------------ | ------------------------------------------------- |
 | `clawctl create`                           | Interactive wizard                                |
-| `clawctl create --config <path>`           | Headless mode (config-file-driven)                |
+| `clawctl create --config <path>`           | Config-driven with TUI progress                   |
+| `clawctl create --config <path> --plain`   | Plain log output (CI/automation)                  |
 | `clawctl list`                             | List all instances with live status               |
 | `clawctl status [name]`                    | Detailed info for one instance                    |
 | `clawctl start [name]`                     | Start a stopped instance                          |

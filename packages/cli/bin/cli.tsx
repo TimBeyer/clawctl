@@ -4,7 +4,8 @@ import { Command } from "commander";
 import pkg from "../../../package.json";
 import { LimaDriver, BIN_NAME } from "@clawctl/host-core";
 import {
-  runCreateHeadless,
+  runCreateFromConfig,
+  runCreatePlain,
   runCreateWizard,
   runList,
   runStatus,
@@ -41,11 +42,14 @@ const program = new Command()
 program
   .command("create")
   .description("Create a new OpenClaw instance")
-  .option("--config <path>", "Config file for headless mode")
-  .action(async (opts: { config?: string }) => {
+  .option("--config <path>", "Config file (skips wizard, shows TUI progress)")
+  .option("--plain", "Plain log output instead of TUI (for CI/automation)")
+  .action(async (opts: { config?: string; plain?: boolean }) => {
     try {
-      if (opts.config) {
-        await runCreateHeadless(driver, opts.config);
+      if (opts.config && opts.plain) {
+        await runCreatePlain(driver, opts.config);
+      } else if (opts.config) {
+        await runCreateFromConfig(driver, opts.config);
       } else {
         await runCreateWizard(driver);
       }

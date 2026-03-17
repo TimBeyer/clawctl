@@ -40,7 +40,7 @@ describe("state", () => {
   });
 
   describe("findMigrationPath", () => {
-    const noop = async () => ({ status: "ok" as const, changed: false });
+    const noop = async () => ({ name: "test", status: "unchanged" as const });
 
     it("returns empty array when not installed", () => {
       const cap = makeCap("foo", "2.0.0", [{ from: "1.0.0", to: "2.0.0", run: noop }]);

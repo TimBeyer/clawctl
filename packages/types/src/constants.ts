@@ -1,4 +1,5 @@
 export const PROJECT_MOUNT_POINT = "/mnt/project";
+export const DEFAULT_PROJECT_BASE = "~/openclaw-vms";
 export const GATEWAY_PORT = 18789;
 export const CHECKPOINT_REQUEST_FILE = ".checkpoint-request";
 export const PROVISION_CONFIG_FILE = "provision.json";

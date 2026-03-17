@@ -40,6 +40,7 @@ export {
   CHECKPOINT_REQUEST_FILE,
   PROVISION_CONFIG_FILE,
   CLAW_BIN_PATH,
+  DEFAULT_PROJECT_BASE,
   LIFECYCLE_PHASES,
   phaseReached,
 } from "./constants.js";
