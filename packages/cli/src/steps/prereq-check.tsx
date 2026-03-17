@@ -68,7 +68,7 @@ export function PrereqCheck({ driver, onComplete }: PrereqCheckProps) {
   );
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" flexGrow={1}>
       <Box borderStyle="round" borderColor="cyan" paddingX={2} paddingY={0} marginBottom={1}>
         <Box flexDirection="column">
           <Text bold>clawctl</Text>
@@ -96,7 +96,7 @@ export function PrereqCheck({ driver, onComplete }: PrereqCheckProps) {
       )}
 
       {phase === "installing" && (
-        <Box marginLeft={2} marginTop={1}>
+        <Box marginLeft={2} marginTop={1} flexGrow={1}>
           <ProcessOutput
             label="Installing Lima via Homebrew..."
             logs={installLogs}
@@ -112,6 +112,13 @@ export function PrereqCheck({ driver, onComplete }: PrereqCheckProps) {
           </Text>
         </Box>
       )}
+
+      {/* Spacer pushes help text to bottom */}
+      {phase !== "installing" && <Box flexGrow={1} />}
+
+      <Box marginLeft={2}>
+        <Text dimColor>Press [v] to {verbose ? "hide" : "show"} process logs</Text>
+      </Box>
     </Box>
   );
 }

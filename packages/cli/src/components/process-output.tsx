@@ -14,7 +14,7 @@ export function ProcessOutput({ label, logs, verbose, maxLines = 20 }: ProcessOu
   const lastLine = logs.length > 0 ? logs[logs.length - 1] : undefined;
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" flexGrow={1}>
       <Spinner label={label} />
       {verbose && logs.length > 0 ? (
         <LogOutput lines={logs} maxLines={maxLines} />

@@ -3,6 +3,7 @@ import { Text, Box, useInput } from "ink";
 import { Spinner } from "./spinner.js";
 import { LogOutput } from "./log-output.js";
 import { VerboseContext } from "../hooks/verbose-context.js";
+import { useTerminalSize } from "../hooks/use-terminal-size.js";
 import type { VMDriver } from "@clawctl/host-core";
 import { runHeadlessFromConfig } from "@clawctl/host-core";
 import type {
@@ -39,10 +40,11 @@ interface ProvisionMonitorProps {
 
 export function ProvisionMonitor({ driver, config, onComplete, onError }: ProvisionMonitorProps) {
   const verbose = useContext(VerboseContext);
+  const { rows } = useTerminalSize();
   const [stages, setStages] = useState<Map<HeadlessStage, StageInfo>>(() => new Map());
   const [steps, setSteps] = useState<string[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
-  const [showLogs, setShowLogs] = useState(verbose);
+  const [showLogs, setShowLogs] = useState(true);
 
   useInput((input) => {
     if (input === "v") setShowLogs((s) => !s);
@@ -89,52 +91,71 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
     ...(config.provider ? ["bootstrap" as HeadlessStage] : []),
   ];
 
+  // The status panel has a fixed height: 1 header + stage count.
+  // Steps column scrolls within that same height.
+  const statusHeight = 1 + activeStages.length + 2;
+
+  // Compute dynamic maxLines for the log viewer:
+  // header border(3) + margin(1) + statusHeight + margin(1) + log border(3) + help(1)
+  const fixed = 3 + 1 + statusHeight + 1 + 3 + 1;
+  const maxLines = Math.max(3, rows - fixed);
+
+  // Show the most recent steps that fit (statusHeight - 1 for header)
+  const maxSteps = Math.max(1, statusHeight - 1);
+  const visibleSteps = steps.slice(-maxSteps);
+
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" flexGrow={1}>
       <Box borderStyle="round" borderColor="cyan" paddingX={2} flexDirection="column">
         <Text bold> Provisioning: {config.name}</Text>
       </Box>
 
-      <Box flexDirection="column" marginTop={1} marginLeft={2}>
-        {activeStages.map((stageId) => {
-          const info = stages.get(stageId);
-          const status = info?.status ?? "pending";
-          const label = STAGE_LABELS[stageId];
-          const detail = info?.detail;
+      {/* Stages (left) + Steps (right) side by side, fixed height */}
+      <Box marginTop={1} height={statusHeight}>
+        <Box flexDirection="column" marginLeft={2} width={32}>
+          <Text dimColor bold>Stages</Text>
+          {activeStages.map((stageId) => {
+            const info = stages.get(stageId);
+            const status = info?.status ?? "pending";
+            const label = STAGE_LABELS[stageId];
+            const detail = info?.detail;
 
-          return (
-            <Box key={stageId}>
-              {status === "done" ? (
-                <Text color="green">{"\u2713"} </Text>
-              ) : status === "running" ? (
-                <Spinner label="" />
-              ) : status === "error" ? (
-                <Text color="red">{"\u2717"} </Text>
-              ) : (
-                <Text dimColor>{"\u25cb"} </Text>
-              )}
-              <Text bold={status === "running"} dimColor={status === "pending"}>
-                {label}
+            return (
+              <Box key={stageId}>
+                {status === "done" ? (
+                  <Text color="green">{"\u2713"} </Text>
+                ) : status === "running" ? (
+                  <Spinner label="" />
+                ) : status === "error" ? (
+                  <Text color="red">{"\u2717"} </Text>
+                ) : (
+                  <Text dimColor>{"\u25cb"} </Text>
+                )}
+                <Text bold={status === "running"} dimColor={status === "pending"}>
+                  {label}
+                </Text>
+                {detail && status === "done" && <Text dimColor> {detail}</Text>}
+              </Box>
+            );
+          })}
+        </Box>
+
+        {steps.length > 0 && (
+          <Box flexDirection="column" marginLeft={2} flexGrow={1} overflow="hidden">
+            <Text dimColor bold>Steps</Text>
+            {visibleSteps.map((step, i) => (
+              <Text key={i} dimColor>
+                {"\u2500"} {step}
               </Text>
-              {detail && status === "done" && <Text dimColor> {detail}</Text>}
-            </Box>
-          );
-        })}
+            ))}
+          </Box>
+        )}
       </Box>
 
-      {steps.length > 0 && (
-        <Box flexDirection="column" marginTop={1} marginLeft={4}>
-          {steps.slice(-5).map((step, i) => (
-            <Text key={i} dimColor>
-              {"\u2500"} {step}
-            </Text>
-          ))}
-        </Box>
-      )}
-
-      {showLogs && logs.length > 0 && (
+      {showLogs && logs.length > 0 ? (
         <Box
           flexDirection="column"
+          flexGrow={1}
           borderStyle="round"
           borderColor="gray"
           marginTop={1}
@@ -144,11 +165,13 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
             {" "}
             Log
           </Text>
-          <LogOutput lines={logs} maxLines={8} />
+          <LogOutput lines={logs} maxLines={maxLines} />
         </Box>
+      ) : (
+        <Box flexGrow={1} />
       )}
 
-      <Box marginTop={1} marginLeft={2}>
+      <Box marginLeft={2}>
         <Text dimColor>[v] {showLogs ? "hide" : "show"} logs</Text>
       </Box>
     </Box>

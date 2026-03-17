@@ -1,4 +1,4 @@
-export { runCreateHeadless, runCreateWizard } from "./create.js";
+export { runCreateFromConfig, runCreatePlain, runCreateWizard } from "./create.js";
 export { runList } from "./list.js";
 export { runStatus } from "./status.js";
 export { runStart } from "./start.js";

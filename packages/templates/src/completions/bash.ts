@@ -97,7 +97,7 @@ export function generateBashCompletion(binName: string): string {
 
       case "$cmd" in
         create)
-          COMPREPLY=( $(compgen -W "--config --help" -- "$cur") )
+          COMPREPLY=( $(compgen -W "--config --plain --help" -- "$cur") )
           ;;
         list)
           COMPREPLY=( $(compgen -W "--help" -- "$cur") )

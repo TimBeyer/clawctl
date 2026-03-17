@@ -10,7 +10,7 @@ export function LogOutput({ lines, maxLines = 10 }: LogOutputProps) {
   const visible = lines.slice(-maxLines);
 
   return (
-    <Box flexDirection="column" marginLeft={2}>
+    <Box flexDirection="column" flexGrow={1} overflow="hidden" marginLeft={2}>
       {visible.map((line, i) => (
         <Text key={i} dimColor>
           {line}

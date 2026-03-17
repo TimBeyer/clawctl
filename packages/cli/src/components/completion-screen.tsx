@@ -13,7 +13,7 @@ export function CompletionScreen({ result }: CompletionScreenProps) {
     : `http://localhost:${result.gatewayPort}`;
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" flexGrow={1}>
       <Box borderStyle="round" borderColor="green" paddingX={2} flexDirection="column">
         <Text bold color="green">
           {"\u2713"} {result.name} is ready
@@ -64,6 +64,8 @@ export function CompletionScreen({ result }: CompletionScreenProps) {
           </Text>
         )}
       </Box>
+
+      <Box flexGrow={1} />
     </Box>
   );
 }

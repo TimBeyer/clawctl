@@ -6,7 +6,7 @@ import { FormField } from "../components/form-field.js";
 import { FormSection } from "../components/form-section.js";
 import { Sidebar, SIDEBAR_HELP } from "../components/sidebar.js";
 import { ConfigReview } from "../components/config-review.js";
-import { instanceConfigSchema, providerSchema, ALL_PROVIDER_TYPES } from "@clawctl/types";
+import { instanceConfigSchema, providerSchema, ALL_PROVIDER_TYPES, DEFAULT_PROJECT_BASE } from "@clawctl/types";
 import type { InstanceConfig } from "@clawctl/types";
 
 type Phase = "form" | "review";
@@ -151,7 +151,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   const buildConfig = (): InstanceConfig => {
     const config: InstanceConfig = {
       name: name.trim(),
-      project: project.trim() || `~/agents/${name.trim()}`,
+      project: project.trim() || `${DEFAULT_PROJECT_BASE}/${name.trim()}`,
     };
 
     const cpuNum = parseInt(cpus, 10);
@@ -336,7 +336,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
           setEditing(false);
           // Auto-fill project if empty
           if (currentFocus === "name" && !project && name) {
-            setProject(`~/agents/${name.trim()}`);
+            setProject(`${DEFAULT_PROJECT_BASE}/${name.trim()}`);
           }
         }
         return;
@@ -385,7 +385,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   if (phase === "review") {
     const { errors, warnings } = validate();
     return (
-      <Box>
+      <Box flexGrow={1}>
         <Box flexDirection="column" flexGrow={1}>
           <ConfigReview
             config={buildConfig()}
@@ -410,14 +410,14 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   const providerTypeItems = ALL_PROVIDER_TYPES.map((t) => ({ label: t, value: t }));
 
   return (
-    <Box>
+    <Box flexGrow={1}>
       <Box flexDirection="column" flexGrow={1}>
         <Box borderStyle="round" borderColor="cyan" paddingX={2} flexDirection="column">
           <Text bold> clawctl create</Text>
           <Text dimColor> Configure a new OpenClaw instance</Text>
         </Box>
 
-        <Box flexDirection="column" marginTop={1}>
+        <Box flexDirection="column" marginTop={1} flexGrow={1} overflow="hidden">
           {/* Instance fields (always visible) */}
           <Box flexDirection="column" marginLeft={2}>
             {currentFocus === "name" && editing ? (
@@ -450,7 +450,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
                 <TextInput
                   value={project}
                   onChange={setProject}
-                  placeholder={name ? `~/agents/${name}` : "~/agents/my-agent"}
+                  placeholder={name ? `${DEFAULT_PROJECT_BASE}/${name}` : `${DEFAULT_PROJECT_BASE}/my-agent`}
                 />
               </Box>
             ) : (
@@ -458,7 +458,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
                 label="Project"
                 value={project}
                 status={fieldStatus("project")}
-                placeholder={name ? `~/agents/${name}` : "~/agents/my-agent"}
+                placeholder={name ? `${DEFAULT_PROJECT_BASE}/${name}` : `${DEFAULT_PROJECT_BASE}/my-agent`}
               />
             )}
           </Box>
@@ -845,8 +845,8 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
           </Box>
         </Box>
 
-        {/* Keybinding hints */}
-        <Box marginTop={1} marginLeft={2}>
+        {/* Keybinding hints (pinned bottom) */}
+        <Box marginLeft={2}>
           <Text dimColor>
             [{"\u2191\u2193"}] navigate {"\u00b7"} [Enter] {editing ? "confirm" : "edit/expand"}{" "}
             {"\u00b7"} [Esc] {editing ? "cancel" : "collapse"} {"\u00b7"} [R] review

@@ -16,7 +16,7 @@ function MaskedValue({ value, label }: { value?: string; label?: string }) {
         {"\u2500\u2500"} not configured {"\u2500\u2500"}
       </Text>
     );
-  const masked = value.slice(0, 6) + "\u2022".repeat(Math.min(value.length - 6, 18));
+  const masked = value.slice(0, 6) + "\u2022".repeat(Math.max(0, Math.min(value.length - 6, 18)));
   return (
     <Text>
       {label ? `${label} ` : ""}
@@ -36,7 +36,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function ConfigReview({ config, validationErrors, validationWarnings }: ConfigReviewProps) {
+export function ConfigReview({ config, validationErrors, validationWarnings, focused }: ConfigReviewProps) {
   const resources = config.resources ?? {};
   const cpus = resources.cpus ?? 4;
   const memory = resources.memory ?? "8GiB";
@@ -49,7 +49,7 @@ export function ConfigReview({ config, validationErrors, validationWarnings }: C
     : null;
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" flexGrow={1}>
       <Box borderStyle="round" borderColor="cyan" paddingX={2} flexDirection="column">
         <Text bold> Review Configuration</Text>
       </Box>
@@ -164,7 +164,9 @@ export function ConfigReview({ config, validationErrors, validationWarnings }: C
         </Text>
       </Box>
 
-      <Box marginTop={1} marginLeft={2}>
+      <Box flexGrow={1} />
+
+      <Box marginLeft={2}>
         {validationErrors.length > 0 ? (
           <Text dimColor>[Esc] Back to editor (fix errors first)</Text>
         ) : (

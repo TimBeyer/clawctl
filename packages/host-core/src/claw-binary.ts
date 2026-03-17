@@ -1,3 +1,4 @@
+// @ts-expect-error — Bun `with { type: "file" }` import resolves to a string path at runtime
 import embeddedClawPath from "../../../dist/claw" with { type: "file" };
 import { readFileSync, writeFileSync, mkdtempSync } from "node:fs";
 import { join } from "node:path";

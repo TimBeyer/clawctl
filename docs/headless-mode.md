@@ -1,32 +1,43 @@
-# Headless Mode
+# Config-Driven Mode
 
-`clawctl create --config <path>` runs the full provisioning pipeline without
-interactive prompts. Use it for CI/CD, scripted setups, or reproducible team
-onboarding.
+`clawctl create --config <path>` runs the provisioning pipeline from a JSON
+config file, skipping the interactive wizard. By default it shows the same
+fullscreen TUI as the wizard — with stage progress, step history, and a live
+log viewer.
 
-## When to use it
+For CI/CD or piped environments, add `--plain` for a simple streaming log.
 
-- **CI/CD pipelines** — spin up OpenClaw gateways as part of automated workflows
-- **Scripted setups** — provision multiple instances from a shell script
-- **Team onboarding** — share a config file so teammates get identical environments
-- **Reproducible rebuilds** — recreate a VM from a checked-in config
+## Modes
+
+| Command | Output |
+|---------|--------|
+| `clawctl create` | Full interactive wizard |
+| `clawctl create --config <path>` | TUI progress (stages, steps, logs) |
+| `clawctl create --config <path> --plain` | Plain `[prefix] message` log lines |
+
+The TUI mode uses the alternate screen buffer with Ctrl-C cleanup — same
+behavior as the interactive wizard. The `--plain` mode writes directly to
+stdout and is safe for non-TTY environments.
+
+## When to use each mode
+
+- **Interactive wizard** — first-time setup, exploring options
+- **Config + TUI** — re-provisioning, team onboarding, watching progress
+- **Config + `--plain`** — CI/CD pipelines, scripted setups, log files
 
 ## Pipeline
 
-The headless pipeline runs these stages in order:
+All three modes run the same provisioning stages:
 
-1. **Load config** — read and validate the JSON config file
-2. **Check prerequisites** — macOS, Apple Silicon, Homebrew
-3. **Install Lima** — via Homebrew, if not already present
-4. **Create and provision VM** — generate lima.yaml, boot Ubuntu 24.04, run provisioning scripts
-5. **Verify installed tools** — Node.js 22, Tailscale, Homebrew, 1Password CLI
-6. **Set up 1Password** — if `services.onePassword` is configured
+1. **Check prerequisites** — macOS, Apple Silicon, Homebrew
+2. **Install Lima** — via Homebrew, if not already present
+3. **Create and provision VM** — generate lima.yaml, boot Ubuntu 24.04, run provisioning
+4. **Verify installed tools** — Node.js 22, Tailscale, Homebrew, 1Password CLI
+5. **Set up 1Password** — if `services.onePassword` is configured
+6. **Resolve secrets** — if `op://` references are present in the config
 7. **Connect Tailscale** — if `network.tailscale` is configured
 8. **Bootstrap gateway** — if `provider` is configured (runs `openclaw onboard --non-interactive`)
 9. **Register instance** — write `clawctl.json` and update the instance registry
-
-Progress is printed as `[prefix] message` lines — suitable for terminals and
-CI logs.
 
 Without a `provider` section, onboarding is skipped. Run `openclaw onboard`
 in the VM when ready.
@@ -59,6 +70,15 @@ For the full schema and all available fields, see the
 [Config Reference](config-reference.md).
 
 ## Tips for CI
+
+### Use `--plain` for automation
+
+CI environments typically don't have a TTY, so the TUI can't render. Use
+`--plain` explicitly to get clean, parseable log output:
+
+```bash
+clawctl create --config ./vm-bootstrap.json --plain
+```
 
 ### Use `env://` for secrets
 
