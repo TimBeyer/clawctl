@@ -1,150 +1,90 @@
-import React, { useState } from "react";
-import { Box, Text } from "ink";
-import { Welcome } from "./steps/welcome.js";
-import { Configure } from "./steps/configure.js";
-import { Credentials } from "./steps/credentials.js";
-import { HostSetup } from "./steps/host-setup.js";
-import { CreateVM } from "./steps/create-vm.js";
-import { ProvisionStatus } from "./steps/provision-status.js";
-import { CredentialSetup } from "./steps/credential-setup.js";
-import { Finish } from "./steps/finish.js";
-import { Onboard } from "./steps/onboard.js";
+import React, { useState, useEffect, useRef } from "react";
+import { Box, Text, useApp } from "ink";
+import { PrereqCheck } from "./steps/prereq-check.js";
+import { ConfigBuilder } from "./steps/config-builder.js";
+import { ProvisionMonitor } from "./components/provision-monitor.js";
+import { CompletionScreen } from "./components/completion-screen.js";
 import { useVerboseMode } from "./hooks/use-verbose-mode.js";
 import { VerboseContext } from "./hooks/verbose-context.js";
-import type { VMConfig } from "@clawctl/types";
-import type { VMDriver, CleanupTarget } from "@clawctl/host-core";
-import type { WizardStep, PrereqStatus, CredentialConfig } from "./types.js";
+import type { InstanceConfig } from "@clawctl/types";
+import type { VMDriver, HeadlessResult } from "@clawctl/host-core";
 
-const PROCESS_STEPS: WizardStep[] = ["host-setup", "create-vm", "provision", "credential-setup"];
+type AppPhase = "prereqs" | "config" | "provision" | "done" | "error";
+
+export interface AppResult {
+  action: "created";
+  result: HeadlessResult;
+}
 
 interface AppProps {
   driver: VMDriver;
-  /** Mutable ref set when VM creation starts, so the caller can clean up on interrupt. */
-  creationTarget?: CleanupTarget;
 }
 
-export function App({ driver, creationTarget }: AppProps) {
-  const [step, setStep] = useState<WizardStep>("welcome");
+export function App({ driver }: AppProps) {
+  const { exit } = useApp();
+  const [phase, setPhase] = useState<AppPhase>("prereqs");
   const { verbose } = useVerboseMode();
-  const [prereqs, setPrereqs] = useState<PrereqStatus>({
-    isMacOS: false,
-    isArm64: false,
-    hasHomebrew: false,
-    hasVMBackend: false,
-  });
-  const [config, setConfig] = useState<VMConfig>({
-    projectDir: "",
-    vmName: "",
-    cpus: 4,
-    memory: "8GiB",
-    disk: "50GiB",
-  });
-  const [credentialConfig, setCredentialConfig] = useState<CredentialConfig>({});
-  const [onboardSkipped, setOnboardSkipped] = useState(false);
+  const [config, setConfig] = useState<InstanceConfig | null>(null);
+  const [result, setResult] = useState<HeadlessResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const exited = useRef(false);
 
-  const showHint = PROCESS_STEPS.includes(step);
+  // Exit Ink on completion or error so waitUntilExit() resolves
+  useEffect(() => {
+    if (phase === "done" && result && !exited.current) {
+      exited.current = true;
+      // Brief delay so the completion screen renders
+      setTimeout(() => {
+        exit({ action: "created", result } as AppResult);
+      }, 1000);
+    }
+  }, [phase, result]);
 
   return (
     <VerboseContext.Provider value={verbose}>
       <Box flexDirection="column">
-        {step === "welcome" && (
-          <Welcome
-            driver={driver}
-            onComplete={(p) => {
-              setPrereqs(p);
-              if (!p.isMacOS || !p.hasHomebrew) {
-                return;
-              }
-              setStep(p.hasVMBackend ? "configure" : "host-setup");
+        {phase === "prereqs" && (
+          <PrereqCheck driver={driver} onComplete={() => setPhase("config")} />
+        )}
+
+        {phase === "config" && (
+          <ConfigBuilder
+            onComplete={(cfg) => {
+              setConfig(cfg);
+              setPhase("provision");
             }}
           />
         )}
 
-        {step === "host-setup" && (
-          <HostSetup
-            driver={driver}
-            prereqs={prereqs}
-            onComplete={(updated) => {
-              setPrereqs(updated);
-              setStep("configure");
-            }}
-          />
-        )}
-
-        {step === "configure" && (
-          <Configure
-            onComplete={(c) => {
-              setConfig(c);
-              if (creationTarget) {
-                creationTarget.vmName = c.vmName;
-                creationTarget.projectDir = c.projectDir;
-              }
-              setStep("credentials");
-            }}
-          />
-        )}
-
-        {step === "credentials" && (
-          <Credentials
-            onComplete={(creds) => {
-              setCredentialConfig(creds);
-              setStep("create-vm");
-            }}
-          />
-        )}
-
-        {step === "create-vm" && (
-          <CreateVM
+        {phase === "provision" && config && (
+          <ProvisionMonitor
             driver={driver}
             config={config}
-            provisionFeatures={{
-              onePassword: !!credentialConfig.opToken,
-              tailscale: !!credentialConfig.tailscaleAuthKey,
+            onComplete={(res) => {
+              setResult(res);
+              setPhase("done");
             }}
-            onComplete={() => setStep("provision")}
-          />
-        )}
-
-        {step === "provision" && (
-          <ProvisionStatus
-            driver={driver}
-            config={config}
-            onComplete={() => setStep("credential-setup")}
-          />
-        )}
-
-        {step === "credential-setup" && (
-          <CredentialSetup
-            driver={driver}
-            config={config}
-            credentialConfig={credentialConfig}
-            onComplete={(creds) => {
-              setCredentialConfig(creds);
-              setStep("onboard");
+            onError={(err) => {
+              setError(err.message);
+              setPhase("error");
             }}
           />
         )}
 
-        {step === "onboard" && (
-          <Onboard
-            config={config}
-            tailscaleMode={credentialConfig.tailscaleMode}
-            onComplete={(skipped) => {
-              setOnboardSkipped(skipped);
-              setStep("finish");
-            }}
-          />
+        {phase === "done" && result && <CompletionScreen result={result} />}
+
+        {phase === "error" && (
+          <Box flexDirection="column" marginTop={1}>
+            <Text color="red" bold>
+              {"\u2717"} Provisioning failed
+            </Text>
+            <Box marginLeft={2}>
+              <Text color="red">{error}</Text>
+            </Box>
+          </Box>
         )}
 
-        {step === "finish" && (
-          <Finish
-            config={config}
-            onboardSkipped={onboardSkipped}
-            tailscaleMode={credentialConfig.tailscaleMode}
-          />
-        )}
-
-        {showHint && (
+        {(phase === "prereqs" || phase === "provision") && (
           <Box marginTop={1} marginLeft={2}>
             <Text dimColor>Press [v] to {verbose ? "hide" : "show"} process logs</Text>
           </Box>

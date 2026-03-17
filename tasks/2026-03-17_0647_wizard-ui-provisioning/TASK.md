@@ -7,6 +7,7 @@
 Replace the 9-step interactive wizard with a config-building TUI that produces an `InstanceConfig` and delegates to the existing headless pipeline. This unifies two code paths into one, covers the full schema, and provides a better UX.
 
 **In scope:**
+
 - Two-pane TUI (form + contextual sidebar)
 - Collapsible sections for all InstanceConfig fields
 - Inline Zod validation per field/section
@@ -16,6 +17,7 @@ Replace the 9-step interactive wizard with a config-building TUI that produces a
 - Cleanup of old wizard steps
 
 **Out of scope:**
+
 - Changing headless pipeline logic
 - New capabilities
 - Interactive Tailscale login (require auth key)

@@ -45,7 +45,7 @@ export { checkPrereqs } from "./prereqs.js";
 export type { PrereqStatus } from "./prereqs.js";
 
 // Credentials
-export { setupOnePassword, setupTailscale, connectTailscaleInteractive } from "./credentials.js";
+export { setupOnePassword, setupTailscale } from "./credentials.js";
 export type { OpResult, TailscaleResult } from "./credentials.js";
 
 // Secrets sync
@@ -107,5 +107,5 @@ export { cleanupVM, onSignalCleanup } from "./cleanup.js";
 export type { CleanupTarget } from "./cleanup.js";
 
 // Headless
-export { runHeadless } from "./headless.js";
-export type { HeadlessResult } from "./headless.js";
+export { runHeadless, runHeadlessFromConfig } from "./headless.js";
+export type { HeadlessResult, HeadlessCallbacks, HeadlessStage, StageStatus } from "./headless.js";

@@ -11,20 +11,3 @@ export interface ProvisioningStep {
   status: "pending" | "running" | "done" | "error";
   error?: string;
 }
-
-export interface CredentialConfig {
-  opToken?: string;
-  tailscaleAuthKey?: string;
-  tailscaleMode?: "off" | "serve" | "funnel";
-}
-
-export type WizardStep =
-  | "welcome"
-  | "configure"
-  | "credentials"
-  | "host-setup"
-  | "create-vm"
-  | "provision"
-  | "credential-setup"
-  | "onboard"
-  | "finish";
