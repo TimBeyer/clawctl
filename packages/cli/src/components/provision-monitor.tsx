@@ -109,8 +109,8 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
 
       {/* Stages (left) + Steps (right) side by side */}
       <Box marginTop={1} height={statusHeight}>
-        {/* Stages column — sizes to content */}
-        <Box flexDirection="column" marginLeft={2} flexShrink={0}>
+        {/* Stages column — 50/50 split */}
+        <Box flexDirection="column" marginLeft={2} flexGrow={1} flexBasis={0} overflow="hidden">
           <Text dimColor bold>
             Stages
           </Text>
@@ -140,21 +140,19 @@ export function ProvisionMonitor({ driver, config, onComplete, onError }: Provis
           })}
         </Box>
 
-        {/* Steps column — fills remaining width, scrolls within fixed height */}
-        {steps.length > 0 && (
-          <Box flexDirection="column" marginLeft={2} flexGrow={1}>
-            <Text dimColor bold>
-              Steps
-            </Text>
-            <Box flexDirection="column" flexGrow={1} overflow="hidden">
-              {visibleSteps.map((step, i) => (
-                <Text key={i} dimColor>
-                  {"\u2500"} {step}
-                </Text>
-              ))}
-            </Box>
+        {/* Steps column — 50/50 split, scrolls within fixed height */}
+        <Box flexDirection="column" marginLeft={2} flexGrow={1} flexBasis={0}>
+          <Text dimColor bold>
+            Steps
+          </Text>
+          <Box flexDirection="column" flexGrow={1} overflow="hidden">
+            {visibleSteps.map((step, i) => (
+              <Text key={i} dimColor>
+                {"\u2500"} {step}
+              </Text>
+            ))}
           </Box>
-        )}
+        </Box>
       </Box>
 
       {showLogs && logs.length > 0 ? (
