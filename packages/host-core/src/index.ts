@@ -9,13 +9,7 @@ export type { VMDriver, VMCreateOptions, ExecResult, OnLine } from "./drivers/ty
 export { exec, execStream, execWithLogs, commandExists } from "./exec.js";
 
 // Config
-export {
-  loadConfig,
-  validateConfig,
-  configToVMConfig,
-  sanitizeConfig,
-  normalizeConfig,
-} from "./config.js";
+export { loadConfig, validateConfig, configToVMConfig, sanitizeConfig } from "./config.js";
 
 // Schema derivation
 export {
@@ -39,7 +33,7 @@ export type { SecretRef, ResolvedSecretRef } from "./secrets.js";
 
 // Provision
 export { provisionVM } from "./provision.js";
-export type { ProvisionCallbacks, ProvisionFeatures } from "./provision.js";
+export type { ProvisionCallbacks } from "./provision.js";
 
 // Claw binary (embedded asset in compiled mode, direct path in dev mode)
 export { clawPath } from "./claw-binary.js";

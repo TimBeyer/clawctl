@@ -16,7 +16,9 @@ describe("sanitizeKey", () => {
   });
 
   test("lowercases mixed case", () => {
-    expect(sanitizeKey(["services", "onePassword", "token"])).toBe("services_onepassword_token");
+    expect(sanitizeKey(["capabilities", "one-password", "token"])).toBe(
+      "capabilities_one-password_token",
+    );
   });
 });
 

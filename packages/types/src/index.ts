@@ -30,7 +30,6 @@ export {
   instanceConfigSchema,
   resourcesSchema,
   networkSchema,
-  servicesSchema,
   agentSchema,
   toolsSchema,
   capabilitiesSchema,

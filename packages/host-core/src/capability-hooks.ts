@@ -72,33 +72,17 @@ const HOST_HOOKS: HostCapabilityHook[] = [
  */
 export function getHostHooksForConfig(config: InstanceConfig): HostCapabilityHook[] {
   const caps = config.capabilities ?? {};
-  // Also check legacy paths
-  const enabledNames = new Set(Object.keys(caps));
-  if (config.services?.onePassword) enabledNames.add("one-password");
-  if (config.network?.tailscale) enabledNames.add("tailscale");
-
-  return HOST_HOOKS.filter((hook) => enabledNames.has(hook.capabilityName));
+  return HOST_HOOKS.filter((hook) => hook.capabilityName in caps);
 }
 
 /**
  * Get the capability-specific config for a host hook from the InstanceConfig.
- * Handles both new capabilities map and legacy config paths.
  */
 export function getCapabilityConfig(
   config: InstanceConfig,
   capabilityName: string,
 ): Record<string, unknown> {
-  // New path: capabilities map
   const capConfig = config.capabilities?.[capabilityName];
   if (typeof capConfig === "object") return capConfig;
-
-  // Legacy paths
-  if (capabilityName === "one-password" && config.services?.onePassword) {
-    return config.services.onePassword as unknown as Record<string, unknown>;
-  }
-  if (capabilityName === "tailscale" && config.network?.tailscale) {
-    return config.network.tailscale as unknown as Record<string, unknown>;
-  }
-
   return {};
 }

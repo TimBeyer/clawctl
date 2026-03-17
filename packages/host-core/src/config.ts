@@ -38,21 +38,9 @@ export function sanitizeConfig(
     delete (clone.provider as Record<string, unknown>).apiKey;
   }
 
-  // network.gatewayToken, network.tailscale.authKey
+  // network.gatewayToken
   if (clone.network && typeof clone.network === "object") {
-    const net = clone.network as Record<string, unknown>;
-    delete net.gatewayToken;
-    if (net.tailscale && typeof net.tailscale === "object") {
-      delete (net.tailscale as Record<string, unknown>).authKey;
-    }
-  }
-
-  // services.onePassword.serviceAccountToken
-  if (clone.services && typeof clone.services === "object") {
-    const svc = clone.services as Record<string, unknown>;
-    if (svc.onePassword && typeof svc.onePassword === "object") {
-      delete (svc.onePassword as Record<string, unknown>).serviceAccountToken;
-    }
+    delete (clone.network as Record<string, unknown>).gatewayToken;
   }
 
   // telegram.botToken
@@ -94,70 +82,10 @@ export function sanitizeConfig(
 }
 
 /**
- * Normalize config by bridging legacy paths and capabilities.
- *
- * - If `services.onePassword` exists but `capabilities["one-password"]` doesn't → create it
- * - If `network.tailscale` exists but `capabilities.tailscale` doesn't → create it
- * - If capabilities exist but legacy paths don't → populate legacy paths for backwards compat
- */
-export function normalizeConfig(config: InstanceConfig): InstanceConfig {
-  const result = { ...config };
-
-  // Initialize capabilities map
-  if (!result.capabilities) {
-    result.capabilities = {};
-  }
-
-  // Legacy services.onePassword → capabilities["one-password"]
-  if (result.services?.onePassword && !result.capabilities["one-password"]) {
-    result.capabilities["one-password"] = {
-      serviceAccountToken: result.services.onePassword.serviceAccountToken,
-    };
-  }
-  // Reverse: capabilities["one-password"] → services.onePassword
-  if (result.capabilities["one-password"] && !result.services?.onePassword) {
-    const capConfig = result.capabilities["one-password"];
-    if (typeof capConfig === "object" && "serviceAccountToken" in capConfig) {
-      result.services = {
-        ...result.services,
-        onePassword: { serviceAccountToken: capConfig.serviceAccountToken as string },
-      };
-    }
-  }
-
-  // Legacy network.tailscale → capabilities.tailscale
-  if (result.network?.tailscale && !result.capabilities.tailscale) {
-    result.capabilities.tailscale = {
-      authKey: result.network.tailscale.authKey,
-      ...(result.network.tailscale.mode && { mode: result.network.tailscale.mode }),
-    };
-  }
-  // Reverse: capabilities.tailscale → network.tailscale
-  if (result.capabilities.tailscale && !result.network?.tailscale) {
-    const capConfig = result.capabilities.tailscale;
-    if (typeof capConfig === "object" && "authKey" in capConfig) {
-      const mode =
-        "mode" in capConfig && typeof capConfig.mode === "string"
-          ? (capConfig.mode as "off" | "serve" | "funnel")
-          : undefined;
-      result.network = {
-        ...result.network,
-        tailscale: {
-          authKey: capConfig.authKey as string,
-          ...(mode && { mode }),
-        },
-      };
-    }
-  }
-
-  return result;
-}
-
-/**
  * Read and validate a JSON config file.
  *
  * @param capabilities - When provided, validates capability config sections
- *   against their configDef-derived Zod schemas and normalizes legacy paths.
+ *   against their configDef-derived Zod schemas.
  */
 export async function loadConfig(
   path: string,
@@ -183,11 +111,5 @@ export async function loadConfig(
   }
 
   const capabilitySchema = capabilities ? buildCapabilitiesSchema(capabilities) : undefined;
-  let config = validateConfig(parsed, { capabilitySchema });
-
-  if (capabilities) {
-    config = normalizeConfig(config);
-  }
-
-  return config;
+  return validateConfig(parsed, { capabilitySchema });
 }

@@ -22,8 +22,7 @@ export const onePassword: CapabilityDef = {
   version: "1.0.0",
   core: false,
   dependsOn: ["homebrew"],
-  enabled: (config) =>
-    config.capabilities?.["one-password"] !== undefined || config.onePassword === true,
+  enabled: (config) => config.capabilities?.["one-password"] !== undefined,
   configDef: defineCapabilityConfig<OnePasswordConfig>({
     sectionLabel: "1Password",
     sectionHelp: {

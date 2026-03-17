@@ -52,15 +52,13 @@ export function validateConfig(raw: unknown, opts?: ValidateConfigOptions): Inst
     }
   }
 
-  // Cross-validate: op:// references require services.onePassword or capabilities["one-password"]
+  // Cross-validate: op:// references require capabilities["one-password"]
   const opRefs = findSecretRefs(raw as Record<string, unknown>).filter((r) => r.scheme === "op");
   if (opRefs.length > 0) {
-    const hasOp =
-      config.services?.onePassword ||
-      (config.capabilities && "one-password" in config.capabilities);
+    const hasOp = config.capabilities && "one-password" in config.capabilities;
     if (!hasOp) {
       throw new Error(
-        `Config has op:// references (${opRefs[0].path.join(".")}) but neither services.onePassword nor capabilities["one-password"] is configured`,
+        `Config has op:// references (${opRefs[0].path.join(".")}) but capabilities["one-password"] is not configured`,
       );
     }
   }

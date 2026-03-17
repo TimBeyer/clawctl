@@ -14,8 +14,7 @@ export const tailscale: CapabilityDef = {
   version: "1.0.0",
   core: false,
   dependsOn: ["system-base"],
-  enabled: (config) =>
-    config.capabilities?.["tailscale"] !== undefined || config.tailscale === true,
+  enabled: (config) => config.capabilities?.["tailscale"] !== undefined,
   configDef: defineCapabilityConfig<TailscaleConfig>({
     sectionLabel: "Tailscale",
     sectionHelp: {

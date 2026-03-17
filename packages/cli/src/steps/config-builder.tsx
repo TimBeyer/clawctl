@@ -16,7 +16,6 @@ import {
 } from "@clawctl/types";
 import type { InstanceConfig } from "@clawctl/types";
 import { ALL_CAPABILITIES } from "@clawctl/capabilities";
-import { normalizeConfig } from "@clawctl/host-core";
 
 type Phase = "form" | "review";
 
@@ -224,8 +223,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
       config.capabilities[cap.name] = capConfig;
     }
 
-    // Normalize: bridge capabilities ↔ legacy paths
-    return normalizeConfig(config);
+    return config;
   };
 
   // Validate the assembled config

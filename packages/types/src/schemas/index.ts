@@ -4,14 +4,7 @@
  * Each section is defined in its own module and assembled here.
  */
 import { z } from "zod";
-import {
-  resourcesSchema,
-  networkSchema,
-  servicesSchema,
-  agentSchema,
-  toolsSchema,
-  mountsSchema,
-} from "./base.js";
+import { resourcesSchema, networkSchema, agentSchema, toolsSchema, mountsSchema } from "./base.js";
 import { providerSchema } from "./provider.js";
 import { telegramSchema } from "./telegram.js";
 import { bootstrapSchema } from "./bootstrap.js";
@@ -26,7 +19,6 @@ export const instanceConfigSchema = z.object({
   project: z.string().min(1, "Config requires a non-empty 'project' string"),
   resources: resourcesSchema.optional(),
   network: networkSchema.optional(),
-  services: servicesSchema.optional(),
   tools: toolsSchema.optional(),
   capabilities: capabilitiesSchema,
   mounts: mountsSchema.optional(),
@@ -36,7 +28,7 @@ export const instanceConfigSchema = z.object({
   telegram: telegramSchema.optional(),
 });
 
-export { resourcesSchema, networkSchema, servicesSchema, agentSchema, toolsSchema, mountsSchema };
+export { resourcesSchema, networkSchema, agentSchema, toolsSchema, mountsSchema };
 export { providerSchema };
 export { bootstrapSchema };
 export { telegramSchema };

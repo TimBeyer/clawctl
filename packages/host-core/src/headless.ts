@@ -1,6 +1,6 @@
 import { writeFile } from "fs/promises";
 import { join } from "path";
-import { loadConfig, configToVMConfig, sanitizeConfig, normalizeConfig } from "./config.js";
+import { loadConfig, configToVMConfig, sanitizeConfig } from "./config.js";
 import { checkPrereqs } from "./prereqs.js";
 import { provisionVM } from "./provision.js";
 import { verifyProvisioning } from "./verify.js";
@@ -73,7 +73,7 @@ export async function runHeadlessFromConfig(
   inputConfig: InstanceConfig,
   callbacks?: HeadlessCallbacks,
 ): Promise<HeadlessResult> {
-  let config = normalizeConfig(inputConfig);
+  let config = inputConfig;
   const cb: Required<HeadlessCallbacks> = {
     ...defaultCallbacks(),
     ...callbacks,
@@ -122,7 +122,6 @@ export async function runHeadlessFromConfig(
         gatewayPort: config.network?.gatewayPort,
         extraMounts: vmConfig.extraMounts,
       },
-      undefined,
       undefined,
       config.capabilities,
     );

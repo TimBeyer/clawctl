@@ -138,8 +138,8 @@ OP_SERVICE_ACCOUNT_TOKEN=ops_your_token_here
 
 ```json
 {
-  "services": {
-    "onePassword": {
+  "capabilities": {
+    "one-password": {
       "serviceAccountToken": "env://OP_SERVICE_ACCOUNT_TOKEN"
     }
   }
@@ -154,8 +154,8 @@ in memory only -- never written to disk.
 
 ```json
 {
-  "services": {
-    "onePassword": {
+  "capabilities": {
+    "one-password": {
       "serviceAccountToken": "env://OP_SERVICE_ACCOUNT_TOKEN"
     }
   },
@@ -169,7 +169,7 @@ in memory only -- never written to disk.
 }
 ```
 
-Config files with `op://` references require `services.onePassword` to be
+Config files with `op://` references require `capabilities["one-password"]` to be
 configured (validation will reject configs with `op://` refs but no 1Password
 service account).
 

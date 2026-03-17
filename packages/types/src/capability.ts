@@ -306,19 +306,8 @@ export interface CapabilityState {
   installed: Record<string, { version: string; installedAt: string }>;
 }
 
-/**
- * Feature flags / capability config written by the host, read by claw.
- *
- * The `capabilities` map replaces the old boolean flags.
- * Old fields are kept for backwards compatibility.
- */
+/** Feature flags / capability config written by the host, read by claw. */
 export interface ProvisionConfig {
   /** Enabled capabilities and their config. true = enabled with defaults. */
   capabilities: Record<string, true | Record<string, unknown>>;
-
-  // --- Backwards compatibility (deprecated, mapped to capabilities internally) ---
-  /** @deprecated Use capabilities["one-password"] instead. */
-  onePassword?: boolean;
-  /** @deprecated Use capabilities["tailscale"] instead. */
-  tailscale?: boolean;
 }

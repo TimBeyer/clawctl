@@ -1,5 +1,5 @@
 /**
- * Zod schemas for stable config sections: resources, network, services,
+ * Zod schemas for stable config sections: resources, network,
  * agent, tools, mounts.
  */
 import { z } from "zod";
@@ -14,22 +14,6 @@ export const networkSchema = z.object({
   forwardGateway: z.boolean().optional(),
   gatewayPort: z.number().int().min(1024).max(65535).optional(),
   gatewayToken: z.string().min(1).optional(),
-  tailscale: z
-    .object({
-      authKey: z.string().min(1, "'network.tailscale.authKey' must be a non-empty string"),
-      mode: z.enum(["off", "serve", "funnel"]).optional(),
-    })
-    .optional(),
-});
-
-export const servicesSchema = z.object({
-  onePassword: z
-    .object({
-      serviceAccountToken: z
-        .string()
-        .min(1, "'services.onePassword.serviceAccountToken' must be a non-empty string"),
-    })
-    .optional(),
 });
 
 export const agentSchema = z.object({
