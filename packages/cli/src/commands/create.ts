@@ -170,10 +170,10 @@ function printSummary(result: HeadlessResult): void {
   console.log();
   const n = result.name;
   console.log(`  ${BIN_NAME} shell ${n}          Enter the VM`);
-  console.log(`  ${BIN_NAME} oc dashboard -i ${n}   Open the dashboard`);
+  console.log(`  ${BIN_NAME} oc -i ${n} dashboard   Open the dashboard`);
   console.log(`  ${BIN_NAME} status ${n}         Check instance health`);
   if (!result.providerType) {
-    console.log(`  ${BIN_NAME} oc onboard -i ${n}     Configure a provider`);
+    console.log(`  ${BIN_NAME} oc -i ${n} onboard     Configure a provider`);
   }
   console.log();
 }

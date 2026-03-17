@@ -55,7 +55,7 @@ export function CompletionScreen({ result }: CompletionScreenProps) {
         <Text>
           {" "}
           <Text dimColor>
-            {BIN_NAME} oc dashboard -i {result.name}
+            {BIN_NAME} oc -i {result.name} dashboard
           </Text>{" "}
           Open the dashboard
         </Text>
@@ -70,7 +70,7 @@ export function CompletionScreen({ result }: CompletionScreenProps) {
           <Text>
             {" "}
             <Text dimColor>
-              {BIN_NAME} oc onboard -i {result.name}
+              {BIN_NAME} oc -i {result.name} onboard
             </Text>{" "}
             Configure a provider
           </Text>
