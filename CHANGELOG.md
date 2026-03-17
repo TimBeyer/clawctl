@@ -1,5 +1,26 @@
 # Changelog
 
+# [0.14.0](https://github.com/TimBeyer/clawctl/compare/v0.13.0...v0.14.0) (2026-03-17)
+
+
+### Bug Fixes
+
+* correct flag position in oc subcommands ([5f44774](https://github.com/TimBeyer/clawctl/commit/5f44774b74966d7bf4f80770fa8da5491a6d1277))
+* include instance name in next-steps commands ([d0364e9](https://github.com/TimBeyer/clawctl/commit/d0364e90913f23a9a7112906cff0aec017a50c9c))
+* lint and format issues ([94d5dd0](https://github.com/TimBeyer/clawctl/commit/94d5dd0b47f4efe25f460eb4211b91b7786d0be1))
+* process hangs after successful config-driven deploy ([2ff4842](https://github.com/TimBeyer/clawctl/commit/2ff4842b4839bd8c1ffaac75ced48fe2d43aff6e))
+* provision monitor stages overflow and steps header scrolling ([f2f6db3](https://github.com/TimBeyer/clawctl/commit/f2f6db311d18705c52c362f0e16611ec2a1bb81b))
+* stable 50/50 column split for stages and steps ([8ffdef4](https://github.com/TimBeyer/clawctl/commit/8ffdef4d19128e686a4c28a6cbaa7d4cc8aa6099))
+* suggest oc tui instead of oc dashboard in next steps ([143a1c2](https://github.com/TimBeyer/clawctl/commit/143a1c266a6d46c636eb31805c4bdf3721940239))
+* use dynamic flexbox sizing for stages column ([98cbf31](https://github.com/TimBeyer/clawctl/commit/98cbf31cef5ab824090fd39e4e77e8cc2f428373))
+* widen stages column from 32 to 44 chars ([364338f](https://github.com/TimBeyer/clawctl/commit/364338fcc74e6e4039c8c8b130bbd6fdbdae5318))
+
+
+### Features
+
+* fullscreen TUI layout, config-driven TUI mode, --plain flag ([ded9e5f](https://github.com/TimBeyer/clawctl/commit/ded9e5fa6174fae90d467f5e5fbfc3e95952cbcc))
+* replace wizard with config-first TUI and unified headless pipeline ([baaadc7](https://github.com/TimBeyer/clawctl/commit/baaadc74f1cdc8a8a268d292f2e0b979be2dc956))
+
 # [0.13.0](https://github.com/TimBeyer/clawctl/compare/v0.12.0...v0.13.0) (2026-03-16)
 
 
