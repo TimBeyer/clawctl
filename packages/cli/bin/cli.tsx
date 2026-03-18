@@ -270,9 +270,7 @@ program.hook("preAction", async (_thisCommand, actionCommand) => {
     if (result === "updated") process.exit(0);
   } catch (err) {
     // Update check/apply failed — don't block the user's command
-    console.error(
-      `Warning: update check failed: ${err instanceof Error ? err.message : err}`,
-    );
+    console.error(`Warning: update check failed: ${err instanceof Error ? err.message : err}`);
   }
 });
 
