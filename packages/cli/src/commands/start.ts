@@ -28,20 +28,23 @@ export async function runStart(driver: VMDriver, opts: { instance?: string }): P
     try {
       await deployClaw(driver, entry.vmName, clawPath);
       const migrateResult = await driver.exec(entry.vmName, `${CLAW_BIN_PATH} migrate --json`);
-      if (migrateResult.exitCode !== 0) {
-        console.error(`Warning: claw migrate exited ${migrateResult.exitCode}`);
-      }
 
-      // Clear the pending flag
       const registry = await loadRegistry();
       const current = registry.instances[entry.name];
-      if (current) {
+
+      if (migrateResult.exitCode !== 0) {
+        // Don't clear the flag — retry on next start. A future clawctl
+        // update may ship a fixed claw that unblocks it.
+        console.error(
+          `Warning: claw migrate failed (exit ${migrateResult.exitCode}). Will retry on next start.`,
+        );
+      } else if (current) {
         current.pendingClawUpdate = false;
-        current.clawVersion = undefined;
         await saveRegistry(registry);
+        console.log("Claw update applied.");
       }
-      console.log("Claw update applied.");
     } catch (err) {
+      // deployClaw failed — flag stays set, will retry next start
       console.error(
         `Warning: pending claw update failed: ${err instanceof Error ? err.message : err}`,
       );

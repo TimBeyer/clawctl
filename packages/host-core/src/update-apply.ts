@@ -67,14 +67,23 @@ export async function applyVmUpdates(configDir?: string): Promise<VmUpdateResult
         // Run capability migrations only
         const migrateResult = await driver.exec(entry.vmName, `${CLAW_BIN_PATH} migrate --json`);
 
-        const detail =
-          migrateResult.exitCode === 0
-            ? "claw updated and migrations applied"
-            : `claw updated, migrate exited ${migrateResult.exitCode}`;
-
-        entry.clawVersion = undefined; // Will be set from package version by caller
-        entry.pendingClawUpdate = false;
-        results.push({ name, status: "updated", detail });
+        if (migrateResult.exitCode === 0) {
+          entry.pendingClawUpdate = false;
+          results.push({
+            name,
+            status: "updated",
+            detail: "claw updated and migrations applied",
+          });
+        } else {
+          // Keep pendingClawUpdate set — retry on next start or next update.
+          // A future clawctl update may ship a fixed claw that unblocks it.
+          entry.pendingClawUpdate = true;
+          results.push({
+            name,
+            status: "pending",
+            detail: `claw updated but migrate failed (exit ${migrateResult.exitCode}) — will retry`,
+          });
+        }
       } else if (vmStatus === "Stopped") {
         entry.pendingClawUpdate = true;
         results.push({ name, status: "pending", detail: "VM stopped — will update on next start" });
