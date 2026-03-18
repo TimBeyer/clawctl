@@ -18,3 +18,4 @@ export {
   runDaemonLogs,
   runDaemonRun,
 } from "./daemon.js";
+export { runUpdate } from "./update.js";

@@ -25,8 +25,10 @@ import {
   runDaemonStatus,
   runDaemonLogs,
   runDaemonRun,
+  runUpdate,
 } from "../src/commands/index.js";
 import { ensureDaemon } from "@clawctl/daemon";
+import { checkAndPromptUpdate } from "../src/update-hook.js";
 
 const driver = new LimaDriver();
 
@@ -237,5 +239,39 @@ completionsCmd
   .action(async (opts: { instance?: string }) => {
     await runCompletionsUpdateOc(driver, opts);
   });
+
+program
+  .command("update")
+  .description("Check for and apply clawctl updates")
+  .option("--apply-vm", "Apply VM updates after binary replacement (internal)")
+  .action(async (opts: { applyVm?: boolean }) => {
+    try {
+      await runUpdate(opts);
+    } catch (err) {
+      console.error(err instanceof Error ? `Error: ${err.message}` : err);
+      process.exit(1);
+    }
+  });
+
+// Pre-command update check (skip for commands that handle updates themselves or are non-interactive)
+const SKIP_UPDATE_COMMANDS = new Set(["update", "daemon", "completions"]);
+
+program.hook("preAction", async (_thisCommand, actionCommand) => {
+  // Walk up to find the top-level subcommand name
+  let cmd = actionCommand;
+  while (cmd.parent && cmd.parent !== program) {
+    cmd = cmd.parent;
+  }
+  const commandName = cmd.name();
+  if (SKIP_UPDATE_COMMANDS.has(commandName)) return;
+
+  try {
+    const result = await checkAndPromptUpdate(pkg.version);
+    if (result === "updated") process.exit(0);
+  } catch (err) {
+    // Update check/apply failed — don't block the user's command
+    console.error(`Warning: update check failed: ${err instanceof Error ? err.message : err}`);
+  }
+});
 
 await program.parseAsync();

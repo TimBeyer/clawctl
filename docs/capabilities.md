@@ -304,8 +304,50 @@ migrations: [
 ],
 ```
 
-If no migration path exists, the runner falls through to re-provision
-(since steps are idempotent, this is safe).
+### Versioning and migrations
+
+There are two contexts where version drift is handled:
+
+**Full provisioning** (`claw provision`) — the runner checks for
+migrations, and if none exist (no chain declared, or a gap), falls
+through to re-running the capability's provision steps. Since steps are
+idempotent this is safe, though it may be slower than a targeted
+migration.
+
+**Binary updates** (`claw migrate`) — runs after a `clawctl update`
+pushes a new claw binary. Only explicit migration chains are executed.
+If no migration path exists, the version is bumped with no VM-side
+action — the assumption is that the version bump only needed new binary
+code, not VM state changes.
+
+This means a version bump without a migration is fine when:
+
+- The change is in claw binary code only (new command, bug fix, better
+  config interface)
+- The change is in provision steps that only matter for fresh installs
+
+A migration is required when the update needs VM-side action on existing
+instances:
+
+- Config file format changes
+- New files that must be written (SKILL.md, wrapper scripts)
+- Package installs or removals
+- systemd unit changes
+
+### Divergence risk
+
+Fresh provisioning always produces the "current version" state. Migrations
+produce it incrementally. There is an inherent risk that a migration
+chain doesn't exactly reproduce what a clean install would — for example,
+a migration might forget to remove an old config key that a clean install
+never creates.
+
+The escape hatch is re-provisioning from scratch: delete the VM and
+re-create it. This is always safe and produces a known-good state.
+
+If we ever need to trigger a full re-provision during an update (without
+deleting the VM), it should be built as an explicit capability hook —
+not as a silent fallback from a missing migration chain.
 
 ## Core vs optional capabilities
 

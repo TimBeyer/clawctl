@@ -62,8 +62,9 @@ export function needsMigration(state: CapabilityState, capability: CapabilityDef
  * Find the migration path from installed version to current version.
  *
  * Returns an ordered array of migrations to apply, or an empty array if
- * no migration path exists (in which case the capability should be
- * re-provisioned from scratch, which is idempotent).
+ * no migration path exists (no migrations declared, or a gap in the chain).
+ * See docs/capabilities.md "Versioning and migrations" for how callers
+ * handle the empty case.
  */
 export function findMigrationPath(
   capability: CapabilityDef,
@@ -81,7 +82,6 @@ export function findMigrationPath(
     const next = capability.migrations.find((m) => m.from === current);
     if (!next) {
       // No migration from current version — gap in the chain.
-      // Fall back to re-provision (return empty path).
       return [];
     }
     path.push(next);
