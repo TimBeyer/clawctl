@@ -50,8 +50,13 @@ export interface VmUpdateResult {
 /**
  * Push the new claw binary to all instances and run migrations.
  * Called by the NEW binary after self-replacement.
+ *
+ * @param clawVersion - Version string of the new claw binary (from package.json)
  */
-export async function applyVmUpdates(configDir?: string): Promise<VmUpdateResult[]> {
+export async function applyVmUpdates(
+  clawVersion: string,
+  configDir?: string,
+): Promise<VmUpdateResult[]> {
   const registry = await loadRegistry(configDir);
   const driver = new LimaDriver();
   const results: VmUpdateResult[] = [];
@@ -69,6 +74,7 @@ export async function applyVmUpdates(configDir?: string): Promise<VmUpdateResult
 
         if (migrateResult.exitCode === 0) {
           entry.pendingClawUpdate = false;
+          entry.clawVersion = clawVersion;
           results.push({
             name,
             status: "updated",

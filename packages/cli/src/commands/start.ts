@@ -8,6 +8,7 @@ import {
 } from "@clawctl/host-core";
 import { CLAW_BIN_PATH } from "@clawctl/types";
 import { notifyDaemon } from "@clawctl/daemon";
+import pkg from "../../../../package.json";
 
 export async function runStart(driver: VMDriver, opts: { instance?: string }): Promise<void> {
   const entry = await requireInstance(opts);
@@ -40,6 +41,7 @@ export async function runStart(driver: VMDriver, opts: { instance?: string }): P
         );
       } else if (current) {
         current.pendingClawUpdate = false;
+        current.clawVersion = pkg.version;
         await saveRegistry(registry);
         console.log("Claw update applied.");
       }

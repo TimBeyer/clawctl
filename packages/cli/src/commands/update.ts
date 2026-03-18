@@ -6,7 +6,7 @@ export async function runUpdate(opts: { applyVm?: boolean }): Promise<void> {
   if (opts.applyVm) {
     // Internal mode: called by the NEW binary after self-replacement
     console.log("Updating VMs with new claw binary...");
-    const results = await applyVmUpdates();
+    const results = await applyVmUpdates(pkg.version);
     for (const r of results) {
       const icon = r.status === "updated" ? "\u2713" : r.status === "pending" ? "\u25cb" : "\u00d7";
       console.log(`  ${icon} ${r.name}: ${r.detail ?? r.status}`);
