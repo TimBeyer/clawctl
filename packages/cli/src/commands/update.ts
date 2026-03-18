@@ -21,6 +21,13 @@ export async function runUpdate(opts: { applyVm?: boolean }): Promise<void> {
     return;
   }
 
+  // Dev mode: running via bun, not a compiled binary — can't self-update
+  if (process.execPath.endsWith("/bun")) {
+    console.log("Dev mode detected — self-update is not available.");
+    console.log("Build a release binary with `bun run build` to use auto-update.");
+    return;
+  }
+
   // Normal mode: check + download + re-exec
   console.log(`Current version: v${pkg.version}`);
   const update = await checkForUpdate(pkg.version);
