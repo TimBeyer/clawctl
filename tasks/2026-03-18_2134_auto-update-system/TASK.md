@@ -5,6 +5,7 @@
 ## Scope
 
 Add a complete auto-update system that:
+
 - Notifies users of new GitHub releases via pre-command check (4h TTL cache)
 - Downloads and atomically replaces the clawctl binary
 - Re-execs as the new binary to push updated claw to running VMs
@@ -12,6 +13,7 @@ Add a complete auto-update system that:
 - Adds `claw migrate` for migration-only updates (no full re-provisioning)
 
 Does NOT cover:
+
 - Host-side schema migrations (registry already has `version: 1`)
 - Auto-update without user consent (always prompts)
 
@@ -29,6 +31,7 @@ handled for free by `ensureDaemon()` detecting binary hash changes.
 ## Plan
 
 10-step implementation:
+
 1. Add `semver` dependency
 2. Update state management (`update-state.ts`)
 3. GitHub release checker (`update-check.ts`)
@@ -41,6 +44,7 @@ handled for free by `ensureDaemon()` detecting binary hash changes.
 10. Pending update on start
 
 Key design decisions:
+
 - Per-version dismissal: saying "no" to v0.15.0 suppresses until v0.16.0+
 - `claw migrate` runs only explicit migrations, not full re-provisioning
 - Silent degradation on network failure (3s timeout)

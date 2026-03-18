@@ -65,10 +65,7 @@ export async function applyVmUpdates(configDir?: string): Promise<VmUpdateResult
         await deployClaw(driver, entry.vmName, clawPath);
 
         // Run capability migrations only
-        const migrateResult = await driver.exec(
-          entry.vmName,
-          `${CLAW_BIN_PATH} migrate --json`,
-        );
+        const migrateResult = await driver.exec(entry.vmName, `${CLAW_BIN_PATH} migrate --json`);
 
         const detail =
           migrateResult.exitCode === 0

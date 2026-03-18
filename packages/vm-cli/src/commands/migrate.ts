@@ -2,7 +2,12 @@ import { Command } from "commander";
 import { setJsonMode, ok, fail, log } from "../output.js";
 import { createCapabilityContext } from "../capabilities/context.js";
 import { getEnabledCapabilities } from "../capabilities/registry.js";
-import { readCapabilityState, needsMigration, findMigrationPath, markInstalled } from "../capabilities/state.js";
+import {
+  readCapabilityState,
+  needsMigration,
+  findMigrationPath,
+  markInstalled,
+} from "../capabilities/state.js";
 import { readProvisionConfig } from "../tools/provision-config.js";
 import type { ProvisionResult } from "@clawctl/types";
 
@@ -49,7 +54,9 @@ async function runMigrate(): Promise<MigrateResult> {
       const result = await migration.run(ctx);
       results.push(result);
       const icon = result.status === "failed" ? "\u2717" : "\u2713";
-      log(`  ${icon} ${result.name}: ${result.status}${result.detail ? ` — ${result.detail}` : ""}${result.error ? ` — ${result.error}` : ""}`);
+      log(
+        `  ${icon} ${result.name}: ${result.status}${result.detail ? ` — ${result.detail}` : ""}${result.error ? ` — ${result.error}` : ""}`,
+      );
 
       if (result.status === "failed") {
         anyFailed = true;
@@ -78,7 +85,10 @@ export function registerMigrateCommand(program: Command): void {
       const result = await runMigrate();
 
       if (result.failed.length > 0) {
-        fail(result.failed.map((name) => `${name}: migration failed`), result);
+        fail(
+          result.failed.map((name) => `${name}: migration failed`),
+          result,
+        );
         process.exit(1);
       }
 
