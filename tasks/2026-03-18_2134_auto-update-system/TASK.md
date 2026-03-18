@@ -1,6 +1,6 @@
 # Auto-Update System for clawctl
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -48,17 +48,29 @@ Key design decisions:
 
 ## Steps
 
-- [ ] Step 1: Add semver dependency
-- [ ] Step 2: Create update-state.ts
-- [ ] Step 3: Create update-check.ts
-- [ ] Step 4: Add registry fields
-- [ ] Step 5: Export deployClaw
-- [ ] Step 6: Create update-apply.ts
-- [ ] Step 7: Create update command
-- [ ] Step 8: Create pre-command update hook
-- [ ] Step 9: Create claw migrate command
-- [ ] Step 10: Pending update on start
+- [x] Step 1: Add semver dependency
+- [x] Step 2: Create update-state.ts
+- [x] Step 3: Create update-check.ts
+- [x] Step 4: Add registry fields
+- [x] Step 5: Export deployClaw
+- [x] Step 6: Create update-apply.ts
+- [x] Step 7: Create update command
+- [x] Step 8: Create pre-command update hook
+- [x] Step 9: Create claw migrate command
+- [x] Step 10: Pending update on start
 
 ## Notes
 
 ## Outcome
+
+All 10 steps implemented. The auto-update system covers:
+
+- **Host-side**: `update-state.ts` (cached state with 4h TTL), `update-check.ts`
+  (GitHub API with 3s timeout, silent degradation), `update-apply.ts` (atomic
+  binary replacement + VM update push)
+- **CLI**: `clawctl update` command, pre-command hook with per-version dismissal
+- **VM-side**: `claw migrate` command that runs only capability migration chains
+- **Lifecycle**: `pendingClawUpdate` flag in registry, applied on next `clawctl start`
+
+Tests added for update-state round-trip and staleness logic. All existing tests pass.
+Typecheck and lint clean.
