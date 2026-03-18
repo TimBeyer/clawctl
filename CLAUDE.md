@@ -132,11 +132,14 @@ clawctl-dev create --config ./vm-bootstrap.json
 - Name: `YYYY-MM-DD_hhmm_descriptive-kebab-case` (e.g., `2026-02-24_1337_log-coloring`)
 - **Get the timestamp from the OS** (`date +%Y-%m-%d_%H%M`) — do not guess or make up a time
 - A task is a concrete, completable unit of work — not an epic or a backlog
-- Include a TASK.md with: scope, plan, steps, current status
+- Include a TASK.md with: scope, context, plan, steps, current status
 - Keep TASK.md updated as work progresses
 - When coding work is done: mark TASK.md status as **Resolved** — the task directory stays in `tasks/`
 - `tasks/archive/` is for periodic manual cleanup, not part of the PR workflow
 - Commit task+plan first, before implementation code
+- Since we will usually clear the context before implementation when using the plan mode,
+  your plan MUST include any context that we want to be included in the `TASK.md`,
+  especially concerning user inputs and feedback, and explicit design choices
 
 ### TASK.md Structure
 
@@ -151,9 +154,32 @@ Every TASK.md should have these sections:
 
 What this task covers and — just as importantly — what it does not.
 
+## Context
+
+The motivation and background behind this task. Capture:
+
+- Why we're doing this — the problem, constraint, or goal that triggered it
+- Relevant background the user provided (domain knowledge, prior decisions,
+  architectural constraints) that shaped the approach
+- Key requirements or invariants that must hold
+
+This section is written at the start of the task, drawn from the initial
+prompt and early discussion. It's the "why" behind the "what".
+
 ## Plan
 
-Numbered high-level steps.
+The design and approach, not just a numbered list of steps. Capture:
+
+- The chosen approach and _why_ it was chosen
+- Alternatives that were considered and why they were rejected
+- Pushback or refinements from discussion — if the initial idea was
+  changed, record what changed and why
+- Trade-offs acknowledged (e.g., "simpler but less flexible", "more work
+  now but avoids X later")
+
+The plan should read as a record of the design process, not just its
+output. A future reader should understand not only what we decided to do,
+but what we decided _not_ to do and why.
 
 ## Steps
 
@@ -161,16 +187,16 @@ Checkbox list (- [x] / - [ ]) of concrete work items.
 
 ## Notes
 
-Running log of observations, questions, and decisions made during the work.
+Running log of observations and decisions made _during implementation_.
 Write these as you go — not after the fact. Include:
 
-- Design decisions and _why_ (not just what)
-- Alternatives you considered and why they were rejected
+- Implementation-time discoveries that affected the approach
 - Anything a future reader would look at in the code and wonder "why?"
 - Links to relevant docs, issues, or conversations
 
 Don't log routine fixes (type errors, lint fixes, minor API quirks) —
 only things where the reasoning isn't obvious from the code itself.
+Design-level reasoning belongs in Context and Plan, not here.
 
 ## Outcome
 
@@ -182,9 +208,11 @@ Written when marking the task as Resolved. A short summary of:
 ```
 
 **Why this matters**: Task documents are the project's decision log. When
-someone later asks "why did we do X?", the answer should be findable by
-scanning task Notes and Outcomes — not locked in someone's head or lost
-in a chat transcript.
+someone later asks "why did we do X?" or "why didn't we do Y?", the
+answer should be findable by scanning task Context, Plan, and Notes —
+not locked in someone's head or lost in a chat transcript. Recording
+the design process (not just the result) means we don't re-litigate
+the same trade-offs when revisiting a decision later.
 
 ## Committing
 
