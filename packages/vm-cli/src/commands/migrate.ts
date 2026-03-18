@@ -36,7 +36,9 @@ async function runMigrate(): Promise<MigrateResult> {
 
     const migrations = findMigrationPath(capability, state);
     if (migrations.length === 0) {
-      // Version bump with no migration chain — skip (binary update is enough)
+      // No migration chain (or gap in chain) — the version bump only needed
+      // a binary update, no VM-side action. If we ever need re-provisioning
+      // during updates, it should be an explicit capability hook.
       log(
         `${capability.label}: v${state.installed[capability.name]?.version} → v${capability.version} (no migration needed)`,
       );
