@@ -4,6 +4,7 @@ import { Command } from "commander";
 import { registerProvisionCommand } from "../src/commands/provision/index.js";
 import { registerDoctorCommand } from "../src/commands/doctor.js";
 import { registerCheckpointCommand } from "../src/commands/checkpoint.js";
+import { registerMigrateCommand } from "../src/commands/migrate.js";
 
 const program = new Command()
   .name("claw")
@@ -13,5 +14,6 @@ const program = new Command()
 registerProvisionCommand(program);
 registerDoctorCommand(program);
 registerCheckpointCommand(program);
+registerMigrateCommand(program);
 
 await program.parseAsync();
