@@ -18,7 +18,7 @@ export interface ProvisionCallbacks {
  * Uses `driver.copy()` (limactl copy) to transfer the file, then moves
  * it to /usr/local/bin with sudo.
  */
-async function deployClaw(
+export async function deployClaw(
   driver: VMDriver,
   vmName: string,
   clawBinaryPath: string,

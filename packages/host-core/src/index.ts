@@ -32,7 +32,7 @@ export {
 export type { SecretRef, ResolvedSecretRef } from "./secrets.js";
 
 // Provision
-export { provisionVM } from "./provision.js";
+export { provisionVM, deployClaw } from "./provision.js";
 export type { ProvisionCallbacks } from "./provision.js";
 
 // Claw binary (embedded asset in compiled mode, direct path in dev mode)
@@ -122,3 +122,15 @@ export type { HeadlessResult, HeadlessCallbacks, HeadlessStage, StageStatus } fr
 // Capability host hooks
 export { getHostHooksForConfig, getCapabilityConfig } from "./capability-hooks.js";
 export type { HostCapabilityHook } from "./capability-hooks.js";
+
+// Update state
+export { loadUpdateState, saveUpdateState, isCheckStale } from "./update-state.js";
+export type { UpdateState } from "./update-state.js";
+
+// Update check
+export { checkForUpdate } from "./update-check.js";
+export type { UpdateInfo } from "./update-check.js";
+
+// Update apply
+export { downloadAndReplace, applyVmUpdates } from "./update-apply.js";
+export type { VmUpdateResult } from "./update-apply.js";

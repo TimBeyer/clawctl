@@ -12,6 +12,8 @@ export interface RegistryEntry {
   providerType?: string;
   gatewayPort: number;
   tailscaleUrl?: string;
+  clawVersion?: string;
+  pendingClawUpdate?: boolean;
 }
 
 export interface Registry {
