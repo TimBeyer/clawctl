@@ -1,6 +1,5 @@
 import { writeFile, rename, chmod, rm, mkdtemp } from "fs/promises";
 import { dirname, join } from "path";
-import { tmpdir } from "os";
 import { execa } from "execa";
 import { CLAW_BIN_PATH } from "@clawctl/types";
 import { deployClaw } from "./provision.js";
