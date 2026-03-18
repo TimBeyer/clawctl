@@ -1,5 +1,22 @@
 # Changelog
 
+# [0.16.0](https://github.com/TimBeyer/clawctl/compare/v0.15.0...v0.16.0) (2026-03-18)
+
+
+### Bug Fixes
+
+* don't clear pendingClawUpdate when migrate fails ([4c7f61f](https://github.com/TimBeyer/clawctl/commit/4c7f61ff31ef79aefc01a2310f3bee2ac3a5b690))
+* move semver to host-core, add preAction error handling, set clawVersion ([9650088](https://github.com/TimBeyer/clawctl/commit/9650088e47824fc7ff61f5ece9e1fa5ab059c20b))
+* skip self-update in dev mode ([1a2764a](https://github.com/TimBeyer/clawctl/commit/1a2764af725d4246c996df20887e20eb9c0f5c54))
+
+
+### Features
+
+* add claw migrate command for capability migrations ([fc4f4b1](https://github.com/TimBeyer/clawctl/commit/fc4f4b18f11ed78a00a81e4f304034d19f5b089b))
+* add clawctl update command and pre-command hook ([57114d7](https://github.com/TimBeyer/clawctl/commit/57114d77bab06b5ea15c8988e8af323846056e14))
+* add host-core update infrastructure ([5e9e324](https://github.com/TimBeyer/clawctl/commit/5e9e32461b3ff2a7ab460ba429d5c82f06ea4dbc))
+* apply pending claw update on instance start ([64b659a](https://github.com/TimBeyer/clawctl/commit/64b659a393a57e64be53243a8668e3c26a34fc94))
+
 # [0.15.0](https://github.com/TimBeyer/clawctl/compare/v0.14.0...v0.15.0) (2026-03-17)
 
 
