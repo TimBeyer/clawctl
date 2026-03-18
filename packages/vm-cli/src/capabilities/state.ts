@@ -63,13 +63,8 @@ export function needsMigration(state: CapabilityState, capability: CapabilityDef
  *
  * Returns an ordered array of migrations to apply, or an empty array if
  * no migration path exists (no migrations declared, or a gap in the chain).
- *
- * Callers handle the empty case based on context:
- * - `runner.ts` (full provisioning): falls through to re-provision steps
- * - `migrate.ts` (update path): skips — version bump with no VM-side action
- *
- * If we ever need explicit re-provisioning during updates, it should be
- * built as a dedicated capability hook, not as a silent fallback here.
+ * See docs/capabilities.md "Versioning and migrations" for how callers
+ * handle the empty case.
  */
 export function findMigrationPath(
   capability: CapabilityDef,
