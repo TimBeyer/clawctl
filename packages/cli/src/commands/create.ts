@@ -40,7 +40,7 @@ export async function runCreateFromConfig(driver: VMDriver, configPath: string):
     // /dev/tty unavailable — Ink will use process.stdin
   }
 
-  const useAltScreen = process.stdout.isTTY;
+  const useAltScreen = process.stdout.isTTY && !process.env.NO_ALT_SCREEN;
   if (useAltScreen) {
     process.stdout.write("\x1b[?1049h");
   }
@@ -108,7 +108,7 @@ export async function runCreateWizard(driver: VMDriver): Promise<void> {
   // Enter alternate screen buffer for a clean canvas. This prevents ghost
   // elements from Ink's differential rendering when the output height
   // shrinks between phases. On exit, the original terminal is restored.
-  const useAltScreen = process.stdout.isTTY;
+  const useAltScreen = process.stdout.isTTY && !process.env.NO_ALT_SCREEN;
   if (useAltScreen) {
     process.stdout.write("\x1b[?1049h");
   }
