@@ -9,6 +9,13 @@
   <em>You never touch the VM. Config lives on your host, git-tracked and reproducible.</em>
 </p>
 
+<p align="center">
+  <a href="docs/getting-started.md">Getting Started</a> &middot;
+  <a href="docs/headless-mode.md">Headless Mode</a> &middot;
+  <a href="docs/config-reference.md">Config Reference</a> &middot;
+  <a href="docs/troubleshooting.md">Troubleshooting</a>
+</p>
+
 ---
 
 **clawctl gives each OpenClaw gateway its own isolated Ubuntu VM** via
@@ -18,6 +25,7 @@ scripts — just answer a few questions (or hand it a config file) and the
 gateway is running. Config and data are mounted into a project directory on
 your host, so they're editable, git-trackable, and safe from VM rebuilds.
 
+> [!NOTE]
 > **Terminology**: A clawctl **instance** is a Lima VM running an OpenClaw
 > **gateway**. The gateway hosts one or more **agents** — each with its own
 > workspace, sessions, and tools. clawctl manages the instance lifecycle;
@@ -38,11 +46,7 @@ already present.
 ## Quickstart
 
 ```bash
-# Interactive wizard — answers a few questions, does everything else
 clawctl create
-
-# Headless — config-file-driven, no prompts, great for CI/CD
-clawctl create --config config.json
 ```
 
 <p align="center">
@@ -56,9 +60,6 @@ In about five minutes, the wizard gives you:
 - A running OpenClaw gateway with a dashboard at `http://localhost:18789`
 - An isolated Ubuntu 24.04 VM with Node.js, Tailscale, and the 1Password CLI pre-installed
 - A project directory on your Mac with git-tracked config and persistent data that survives VM rebuilds
-
-You just answer a few questions. clawctl handles prerequisites, VM creation,
-provisioning, and — optionally — credential setup and OpenClaw onboarding.
 
 ## Features
 
