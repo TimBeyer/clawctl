@@ -18,30 +18,13 @@
 
 ---
 
-**clawctl gives each OpenClaw gateway its own isolated Ubuntu VM** via
-[Lima](https://lima-vm.io), provisions it with everything OpenClaw needs, and
-manages the full lifecycle from your Mac. You never shell in or piece together
-scripts — just answer a few questions (or hand it a config file) and the
-gateway is running. Config and data are mounted into a project directory on
-your host, so they're editable, git-trackable, and safe from VM rebuilds.
-
-> [!NOTE]
-> **Terminology**: A clawctl **instance** is a Lima VM running an OpenClaw
-> **gateway**. The gateway hosts one or more **agents** — each with its own
-> workspace, sessions, and tools. clawctl manages the instance lifecycle;
-> OpenClaw manages the agents inside it.
-
 ## Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
 ```
 
-To update an existing installation, run the same command again.
-
-**Requires** macOS on Apple Silicon (M1/M2/M3/M4) with
-[Homebrew](https://brew.sh) installed. Lima is installed automatically if not
-already present.
+Requires macOS on Apple Silicon (M1–M4) with [Homebrew](https://brew.sh). Lima is installed automatically.
 
 ## Quickstart
 
@@ -53,13 +36,13 @@ clawctl create
   <img src="docs/assets/demo.gif" alt="clawctl create wizard">
 </p>
 
-## What you get
-
 In about five minutes, the wizard gives you:
 
 - A running OpenClaw gateway with a dashboard at `http://localhost:18789`
 - An isolated Ubuntu 24.04 VM with Node.js, Tailscale, and the 1Password CLI pre-installed
 - A project directory on your Mac with git-tracked config and persistent data that survives VM rebuilds
+
+For automated setups, pass a JSON config file and skip the prompts — see [Headless Mode](docs/headless-mode.md).
 
 ## Features
 
@@ -74,6 +57,11 @@ In about five minutes, the wizard gives you:
 - **CI/CD ready** — [headless mode](docs/headless-mode.md) for fully automated provisioning
 
 ## Commands
+
+> [!NOTE]
+> **Terminology**: A clawctl **instance** is a Lima VM running an OpenClaw
+> **gateway**. The gateway hosts one or more **agents**. clawctl manages the
+> instance lifecycle; OpenClaw manages the agents inside it.
 
 | Command                                    | Description                                       |
 | ------------------------------------------ | ------------------------------------------------- |
@@ -175,11 +163,6 @@ eval "$(clawctl completions zsh)"
 openclaw subcommand completions (including deep completion like `oc config set
 <TAB>`) are cached from the VM and refreshed automatically. See [Shell
 Completions](docs/shell-completions.md) for details.
-
-Instances are tracked in `~/.config/clawctl/instances.json` and registered
-automatically on create, or manually via `clawctl register`. Run as many
-gateways as your hardware allows — each gets its own isolated VM, project
-directory, and config.
 
 ## Documentation
 
