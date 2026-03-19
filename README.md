@@ -24,11 +24,6 @@ manages the full lifecycle from your Mac. Answer a few questions (or hand it a
 config file) and the gateway is running — config and data mounted into a project
 directory on your host, editable, git-trackable, and safe from VM rebuilds.
 
-> [!NOTE]
-> **Terminology**: A clawctl **instance** is a Lima VM running an OpenClaw
-> **gateway**. The gateway hosts one or more **agents**. clawctl manages the
-> instance lifecycle; OpenClaw manages the agents inside it.
-
 ## Install
 
 ```bash
@@ -93,7 +88,7 @@ clawctl create
 
 ## What makes this different
 
-| | |
+| Feature | |
 |---|---|
 | **Fully isolated** | Each gateway runs in its own Ubuntu VM — nothing installed on your Mac beyond clawctl itself |
 | **Zero VM wrangling** | Interactive wizard or headless config file. No manual provisioning, no pasting shell commands |
@@ -177,15 +172,10 @@ eval "$(clawctl completions bash)"
 eval "$(clawctl completions zsh)"
 ```
 
-<details>
-<summary>How openclaw completions work</summary>
-
 Completions for `clawctl oc <subcommand>` — including deep completion like
 `oc config set <TAB>` — are fetched from the VM and cached locally. The cache
 refreshes automatically. See [Shell Completions](docs/shell-completions.md) for
 details.
-
-</details>
 
 ## Documentation
 
@@ -230,6 +220,7 @@ INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/TimBeyer/c
 
 ---
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash && clawctl create
-```
+> [!NOTE]
+> **Terminology**: A clawctl **instance** is a Lima VM running an OpenClaw
+> **gateway**. The gateway hosts one or more **agents**. clawctl manages the
+> instance lifecycle; OpenClaw manages the agents inside it.
