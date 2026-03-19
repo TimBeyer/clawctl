@@ -149,14 +149,26 @@ sleep 3
 
 tmux send-keys -t "$SESSION" Enter
 wait_for "Provisioning"
-sleep 8
+sleep 20
 
 # --- Done ---
 
-# Kill the session directly — asciinema writes .cast incrementally,
-# so the file is complete up to this point. No Ctrl+C means no
-# "cleaning up VM" message gets recorded.
+# Kill the session. asciinema writes .cast incrementally, so the file
+# is complete up to this point.
 tmux kill-session -t "$SESSION" 2>/dev/null || true
+sleep 1
+
+# Trim everything after cleanup signals appear in the recording.
+# Find the first line containing cleanup text and keep everything before it.
+if [[ -f "$CAST" ]]; then
+    cleanup_line=$(grep -n "SIGTERM\|SIGHUP\|cleaning up\|Provisioning failed\|Deleting VM" "$CAST" | head -1 | cut -d: -f1)
+    if [[ -n "$cleanup_line" ]]; then
+        total=$(wc -l < "$CAST" | tr -d ' ')
+        echo "Trimming from line $cleanup_line (of $total) — removing cleanup output"
+        head -n "$((cleanup_line - 1))" "$CAST" > "${CAST}.tmp"
+        mv "${CAST}.tmp" "$CAST"
+    fi
+fi
 
 echo ""
 echo "Recording saved to $CAST"
