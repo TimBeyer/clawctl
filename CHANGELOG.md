@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.1](https://github.com/TimBeyer/clawctl/compare/v0.17.0...v0.17.1) (2026-03-19)
+
+
+### Bug Fixes
+
+* add loop extension to demo GIF ([fa8a486](https://github.com/TimBeyer/clawctl/commit/fa8a486fabb99635b50ae8cb2c2345799e38695c))
+
 # [0.17.0](https://github.com/TimBeyer/clawctl/compare/v0.16.0...v0.17.0) (2026-03-19)
 
 
