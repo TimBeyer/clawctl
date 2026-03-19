@@ -1,5 +1,22 @@
 # Changelog
 
+# [0.17.0](https://github.com/TimBeyer/clawctl/compare/v0.16.0...v0.17.0) (2026-03-19)
+
+
+### Bug Fixes
+
+* remove redundant text around demo GIF, widen recording ([f251fd0](https://github.com/TimBeyer/clawctl/commit/f251fd002c2767a1b56678da88c3f035fb1ced5d))
+* restore instance context and completions as visible sections ([3fe4c80](https://github.com/TimBeyer/clawctl/commit/3fe4c80b1e73d5b351efe8c2fcb9a7aaa7daea04))
+
+
+### Features
+
+* add demo GIF to original README ([2175480](https://github.com/TimBeyer/clawctl/commit/21754807e3884d0609aba045860217f2aa6dc4f1))
+* add demo GIF to README with automated recording pipeline ([8e994ff](https://github.com/TimBeyer/clawctl/commit/8e994ff965d928f3e1e8e56338c056ed90ebef57))
+* polish README with nav bar, callout, and tighter quickstart ([d7022c4](https://github.com/TimBeyer/clawctl/commit/d7022c4747225d605f1f43b208caf7e43998487a))
+* slim down Commands section in README ([8a4ba0f](https://github.com/TimBeyer/clawctl/commit/8a4ba0f3d52a350f36fb0fec08e14bbe60008bcc))
+* tighten README structure and remove update note ([5ff7eac](https://github.com/TimBeyer/clawctl/commit/5ff7eac10898ddc6457ddfe0832f4fc253ec74d6))
+
 # [0.16.0](https://github.com/TimBeyer/clawctl/compare/v0.15.0...v0.16.0) (2026-03-18)
 
 
