@@ -18,7 +18,7 @@ set -euo pipefail
 
 CAST="docs/assets/demo.cast"
 SESSION="clawctl-demo"
-COLS=120
+COLS=160
 ROWS=35
 
 # --- Helpers ---

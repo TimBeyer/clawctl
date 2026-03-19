@@ -44,10 +44,9 @@ Lima is installed automatically if not already present.
 clawctl create
 ```
 
-The wizard walks you through everything.
 
 <p align="center">
-  <img src="docs/assets/demo.gif" alt="clawctl create wizard" width="800">
+  <img src="docs/assets/demo.gif" alt="clawctl create wizard">
 </p>
 
 In about five minutes you get:
