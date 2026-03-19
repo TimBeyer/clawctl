@@ -9,19 +9,14 @@
   <em>You never touch the VM. Config lives on your host, git-tracked and reproducible.</em>
 </p>
 
+<p align="center">
+  <a href="docs/getting-started.md">Getting Started</a> &middot;
+  <a href="docs/headless-mode.md">Headless Mode</a> &middot;
+  <a href="docs/config-reference.md">Config Reference</a> &middot;
+  <a href="docs/troubleshooting.md">Troubleshooting</a>
+</p>
+
 ---
-
-**clawctl gives each OpenClaw gateway its own isolated Ubuntu VM** via
-[Lima](https://lima-vm.io), provisions it with everything OpenClaw needs, and
-manages the full lifecycle from your Mac. You never shell in or piece together
-scripts — just answer a few questions (or hand it a config file) and the
-gateway is running. Config and data are mounted into a project directory on
-your host, so they're editable, git-trackable, and safe from VM rebuilds.
-
-> **Terminology**: A clawctl **instance** is a Lima VM running an OpenClaw
-> **gateway**. The gateway hosts one or more **agents** — each with its own
-> workspace, sessions, and tools. clawctl manages the instance lifecycle;
-> OpenClaw manages the agents inside it.
 
 ## Install
 
@@ -29,23 +24,17 @@ your host, so they're editable, git-trackable, and safe from VM rebuilds.
 curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash
 ```
 
-To update an existing installation, run the same command again.
-
-**Requires** macOS on Apple Silicon (M1/M2/M3/M4) with
-[Homebrew](https://brew.sh) installed. Lima is installed automatically if not
-already present.
+Requires macOS on Apple Silicon (M1–M4) with [Homebrew](https://brew.sh). Lima is installed automatically.
 
 ## Quickstart
 
 ```bash
-# Interactive wizard — answers a few questions, does everything else
 clawctl create
-
-# Headless — config-file-driven, no prompts, great for CI/CD
-clawctl create --config config.json
 ```
 
-## What you get
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="clawctl create wizard">
+</p>
 
 In about five minutes, the wizard gives you:
 
@@ -53,8 +42,7 @@ In about five minutes, the wizard gives you:
 - An isolated Ubuntu 24.04 VM with Node.js, Tailscale, and the 1Password CLI pre-installed
 - A project directory on your Mac with git-tracked config and persistent data that survives VM rebuilds
 
-You just answer a few questions. clawctl handles prerequisites, VM creation,
-provisioning, and — optionally — credential setup and OpenClaw onboarding.
+For automated setups, pass a JSON config file and skip the prompts — see [Headless Mode](docs/headless-mode.md).
 
 ## Features
 
@@ -69,6 +57,11 @@ provisioning, and — optionally — credential setup and OpenClaw onboarding.
 - **CI/CD ready** — [headless mode](docs/headless-mode.md) for fully automated provisioning
 
 ## Commands
+
+> [!NOTE]
+> **Terminology**: A clawctl **instance** is a Lima VM running an OpenClaw
+> **gateway**. The gateway hosts one or more **agents**. clawctl manages the
+> instance lifecycle; OpenClaw manages the agents inside it.
 
 | Command                                    | Description                                       |
 | ------------------------------------------ | ------------------------------------------------- |
@@ -88,71 +81,14 @@ provisioning, and — optionally — credential setup and OpenClaw onboarding.
 | `clawctl register <name> --project <path>` | Register an existing (pre-registry) instance      |
 | `clawctl completions <shell>`              | Generate shell completion script (bash or zsh)    |
 
-All instance commands (`status`, `start`, `stop`, `restart`, `delete`, `shell`,
-`openclaw`) accept an optional positional name, a `-i`/`--instance` flag, or
-resolve the instance automatically via context. Run `clawctl --help` for
-details.
+Instance commands accept an optional name, a `-i`/`--instance` flag, or
+resolve automatically from context (`CLAWCTL_INSTANCE` env var, `.clawctl`
+file, or global default via `clawctl use`).
 
-### Instance context
-
-You don't have to type the instance name every time. clawctl resolves the
-target instance in this order:
-
-1. `--instance` / `-i` flag — `clawctl status -i my-agent`
-2. `CLAWCTL_INSTANCE` env var — `export CLAWCTL_INSTANCE=my-agent`
-3. `.clawctl` file — walks up from your current directory (like `.nvmrc`)
-4. Global context — `~/.config/clawctl/context.json`
-
-Set context with `clawctl use`:
-
-```bash
-clawctl use my-agent            # write .clawctl in current directory
-clawctl use my-agent --global   # set global default
-clawctl use                     # show current context and its source
-```
-
-### Running openclaw commands from the host
-
-No need to shell in for routine operations — `clawctl openclaw` (or `oc` for
-short) runs any `openclaw` subcommand inside the VM:
-
-```bash
-clawctl oc doctor               # health check
-clawctl oc config get gateway.name
-clawctl oc daemon status
-clawctl oc telegram list
-```
-
-For arbitrary commands, use `clawctl shell --`:
-
-```bash
-clawctl shell -- whoami
-clawctl shell -- systemctl --user status openclaw-gateway
-```
-
-### Day-to-day management
-
-clawctl isn't just an installer — it's how you manage your gateways after setup too.
-
-```bash
-# Set your default instance once
-clawctl use my-agent
-
-# See what's running
-clawctl list
-
-# Quick health check — no need to shell in
-clawctl oc doctor
-
-# Restart one that's acting up
-clawctl restart
-
-# Spin up a second gateway for a different project
-clawctl create
-
-# Tear it down when you're done (keeps your project dir by default)
-clawctl delete my-agent
-```
+> [!TIP]
+> No need to shell in for routine operations — `clawctl oc` runs any
+> `openclaw` subcommand inside the VM: `clawctl oc doctor`,
+> `clawctl oc config get gateway.name`, etc.
 
 ### Shell completions
 
@@ -170,11 +106,6 @@ eval "$(clawctl completions zsh)"
 openclaw subcommand completions (including deep completion like `oc config set
 <TAB>`) are cached from the VM and refreshed automatically. See [Shell
 Completions](docs/shell-completions.md) for details.
-
-Instances are tracked in `~/.config/clawctl/instances.json` and registered
-automatically on create, or manually via `clawctl register`. Run as many
-gateways as your hardware allows — each gets its own isolated VM, project
-directory, and config.
 
 ## Documentation
 
