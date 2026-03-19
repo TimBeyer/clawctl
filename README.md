@@ -81,71 +81,14 @@ For automated setups, pass a JSON config file and skip the prompts — see [Head
 | `clawctl register <name> --project <path>` | Register an existing (pre-registry) instance      |
 | `clawctl completions <shell>`              | Generate shell completion script (bash or zsh)    |
 
-All instance commands (`status`, `start`, `stop`, `restart`, `delete`, `shell`,
-`openclaw`) accept an optional positional name, a `-i`/`--instance` flag, or
-resolve the instance automatically via context. Run `clawctl --help` for
-details.
+Instance commands accept an optional name, a `-i`/`--instance` flag, or
+resolve automatically from context (`CLAWCTL_INSTANCE` env var, `.clawctl`
+file, or global default via `clawctl use`).
 
-### Instance context
-
-You don't have to type the instance name every time. clawctl resolves the
-target instance in this order:
-
-1. `--instance` / `-i` flag — `clawctl status -i my-agent`
-2. `CLAWCTL_INSTANCE` env var — `export CLAWCTL_INSTANCE=my-agent`
-3. `.clawctl` file — walks up from your current directory (like `.nvmrc`)
-4. Global context — `~/.config/clawctl/context.json`
-
-Set context with `clawctl use`:
-
-```bash
-clawctl use my-agent            # write .clawctl in current directory
-clawctl use my-agent --global   # set global default
-clawctl use                     # show current context and its source
-```
-
-### Running openclaw commands from the host
-
-No need to shell in for routine operations — `clawctl openclaw` (or `oc` for
-short) runs any `openclaw` subcommand inside the VM:
-
-```bash
-clawctl oc doctor               # health check
-clawctl oc config get gateway.name
-clawctl oc daemon status
-clawctl oc telegram list
-```
-
-For arbitrary commands, use `clawctl shell --`:
-
-```bash
-clawctl shell -- whoami
-clawctl shell -- systemctl --user status openclaw-gateway
-```
-
-### Day-to-day management
-
-clawctl isn't just an installer — it's how you manage your gateways after setup too.
-
-```bash
-# Set your default instance once
-clawctl use my-agent
-
-# See what's running
-clawctl list
-
-# Quick health check — no need to shell in
-clawctl oc doctor
-
-# Restart one that's acting up
-clawctl restart
-
-# Spin up a second gateway for a different project
-clawctl create
-
-# Tear it down when you're done (keeps your project dir by default)
-clawctl delete my-agent
-```
+> [!TIP]
+> No need to shell in for routine operations — `clawctl oc` runs any
+> `openclaw` subcommand inside the VM: `clawctl oc doctor`,
+> `clawctl oc config get gateway.name`, etc.
 
 ### Shell completions
 
