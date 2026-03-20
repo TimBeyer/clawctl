@@ -1,6 +1,6 @@
 # Expand Demo Recording: CI, Website, E2E
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -27,8 +27,6 @@ macOS runners with Lima. This is intentional — recordings must be authentic.
 
 ## Plan
 
-See `/Users/tim/.claude/plans/mutable-crunching-squid.md` for the full plan.
-
 **Approach**: Five phases, each building on the previous:
 
 1. Recording framework refactor (extract lib.sh, per-demo scripts)
@@ -51,38 +49,65 @@ dispatch + commit-back-to-branch gives visual review in PR diffs.
 
 ### Phase 1: Recording Framework Refactor
 
-- [ ] Create `scripts/demos/lib.sh` with extracted helpers
-- [ ] Create `scripts/demos/record-create.sh` (migrated storyboard)
-- [ ] Create `scripts/demos/record-all.sh` orchestrator
-- [ ] Update `scripts/record-demo.sh` to delegate
-- [ ] Update `docs/demo-recording.md`
+- [x] Create `scripts/demos/lib.sh` with extracted helpers
+- [x] Create `scripts/demos/record-create.sh` (migrated storyboard)
+- [x] Create `scripts/demos/record-all.sh` orchestrator
+- [x] Update `scripts/record-demo.sh` to delegate
+- [x] Update `docs/demo-recording.md`
 
 ### Phase 2: Additional Demo Scripts
 
-- [ ] Create `scripts/demos/record-list.sh`
-- [ ] Create `scripts/demos/record-management.sh`
-- [ ] Create `scripts/demos/record-headless.sh`
+- [x] Create `scripts/demos/record-list.sh`
+- [x] Create `scripts/demos/record-management.sh`
+- [x] Create `scripts/demos/record-headless.sh`
 
 ### Phase 3: CI Pipeline
 
-- [ ] Create `.github/workflows/demo-recording.yml`
+- [x] Create `.github/workflows/demo-recording.yml`
+- [x] Create `.github/workflows/e2e.yml`
 
 ### Phase 4: Website Player Integration
 
-- [ ] Install `asciinema-player` in docs-site
-- [ ] Create `AsciinemaTerminal.tsx` component
-- [ ] Create `DemoSequence.tsx` component
-- [ ] Add asciinema theme CSS
-- [ ] Replace static Terminal sections in App.tsx
-- [ ] Set up `docs-site/public/casts/` with gitignore exception
-- [ ] Update Pages workflow path triggers
+- [x] Install `asciinema-player` in docs-site
+- [x] Create `AsciinemaTerminal.tsx` component
+- [x] Create `DemoSequence.tsx` component
+- [x] Add asciinema theme CSS
+- [x] Replace static Terminal sections in App.tsx
+- [x] Set up `docs-site/public/casts/` with gitignore exception
+- [x] Pages workflow already covers `docs-site/**` path
 
 ### Phase 5: E2E Testing
 
-- [ ] Add dual-mode support to `lib.sh`
-- [ ] Create `scripts/demos/test-all.sh`
-- [ ] Create `.github/workflows/e2e.yml`
+- [x] Add dual-mode support to `lib.sh` (DEMO_MODE, assert_screen, demo_sleep)
+- [x] Create `scripts/demos/test-all.sh`
+- [x] Create `.github/workflows/e2e.yml`
 
 ## Notes
 
+- The asciinema-player package (v3.15.1) doesn't ship TypeScript types.
+  Added a declaration file at `docs-site/src/types/asciinema-player.d.ts`.
+- Website sections gracefully fall back to static Terminal content when
+  `.cast` files aren't present — this means the site works during dev without
+  needing to run the recording pipeline.
+- The eslint config for docs-site doesn't include react-hooks plugin, so
+  we can't use `eslint-disable-next-line react-hooks/exhaustive-deps`.
+
 ## Outcome
+
+All five phases implemented:
+
+- **Recording framework**: `scripts/demos/lib.sh` provides shared helpers
+  (setup/teardown, wait_for, assert_screen, type_slow, demo_sleep). Four
+  demo scripts (create, list, management, headless) with an orchestrator.
+- **CI**: Two new workflows — `demo-recording.yml` (manual trigger, records
+  demos, commits GIF back to PR branch, posts comment) and `e2e.yml`
+  (manual + weekly schedule, runs assertions without recording).
+- **Website**: `AsciinemaTerminal` and `DemoSequence` React components wrap
+  the asciinema player in the site's terminal chrome. FleetDemo,
+  ManagementDemo, ConfigSection, and a new CreateDemo section use live
+  recordings with static fallbacks.
+- **E2E**: Dual-mode scripts (record vs test) with TAP output. The same
+  storyboards serve both recording and testing.
+
+Follow-up work needed: actually record the demos and commit `.cast` files
+to `docs-site/public/casts/` so the website shows live recordings.
