@@ -14,8 +14,6 @@ DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$DEMO_DIR/lib.sh"
 
 SESSION="clawctl-create"
-COLS="${COLS:-160}"
-ROWS="${ROWS:-35}"
 CAST="${CAST:-docs/assets/casts/create.cast}"
 
 # --- Setup ---

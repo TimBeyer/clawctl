@@ -14,8 +14,6 @@ DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$DEMO_DIR/lib.sh"
 
 SESSION="clawctl-headless"
-COLS="${COLS:-100}"
-ROWS="${ROWS:-30}"
 CAST="${CAST:-docs/assets/casts/headless.cast}"
 
 # Path to the headless config used for the demo.

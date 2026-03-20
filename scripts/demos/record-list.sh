@@ -11,8 +11,6 @@ DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$DEMO_DIR/lib.sh"
 
 SESSION="clawctl-list"
-COLS="${COLS:-100}"
-ROWS="${ROWS:-20}"
 CAST="${CAST:-docs/assets/casts/list.cast}"
 
 # --- Setup ---
