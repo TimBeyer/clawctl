@@ -89,8 +89,7 @@ export function AsciinemaTerminal({
       playerRef.current?.dispose();
       playerRef.current = null;
     };
-    // Only re-create when src changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Only re-create when src changes — other props are set at creation time
   }, [src]);
 
   // Auto-play when scrolled into view
@@ -109,9 +108,7 @@ export function AsciinemaTerminal({
           <span className="terminal-dot bg-[#febc2e]" />
           <span className="terminal-dot bg-[#28c840]" />
           {title && (
-            <span className="ml-2 text-xs text-slate-500 font-mono select-none">
-              {title}
-            </span>
+            <span className="ml-2 text-xs text-slate-500 font-mono select-none">{title}</span>
           )}
         </div>
       </div>

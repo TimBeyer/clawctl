@@ -179,12 +179,7 @@ function CreateDemo() {
       </FadeIn>
 
       <FadeIn delay={80}>
-        <AsciinemaTerminal
-          src={castSrc}
-          title="~ — clawctl create"
-          idleTimeLimit={3}
-          speed={1.5}
-        />
+        <AsciinemaTerminal src={castSrc} title="~ — clawctl create" idleTimeLimit={3} speed={1.5} />
       </FadeIn>
     </section>
   );
@@ -306,12 +301,7 @@ function FleetDemo() {
 
       <FadeIn delay={80}>
         {hasCast ? (
-          <AsciinemaTerminal
-            src={castSrc}
-            title="~ — clawctl list"
-            idleTimeLimit={2}
-            speed={1.5}
-          />
+          <AsciinemaTerminal src={castSrc} title="~ — clawctl list" idleTimeLimit={2} speed={1.5} />
         ) : (
           <Terminal title="~ — clawctl list">
             <div className="whitespace-pre text-slate-400">
@@ -449,12 +439,7 @@ function ConfigSection() {
 
             <div className="mt-8">
               {hasCast ? (
-                <AsciinemaTerminal
-                  src={headlessCast}
-                  title="~"
-                  idleTimeLimit={2}
-                  speed={1.5}
-                />
+                <AsciinemaTerminal src={headlessCast} title="~" idleTimeLimit={2} speed={1.5} />
               ) : (
                 <Terminal title="~">
                   <div className="text-slate-300">
@@ -617,9 +602,7 @@ function ManagementDemo() {
         {hasCast ? (
           <div className="max-w-2xl mx-auto">
             <DemoSequence
-              recordings={[
-                { src: managementCast, label: "manage" },
-              ]}
+              recordings={[{ src: managementCast, label: "manage" }]}
               title="~"
               idleTimeLimit={2}
               speed={1.5}

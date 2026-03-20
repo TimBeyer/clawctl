@@ -5,6 +5,7 @@
 ## Scope
 
 Expand the single-demo recording pipeline into a full framework supporting:
+
 - Multiple per-feature demo scripts with a shared library
 - CI pipeline for automated GIF generation with PR review
 - Live asciinema player integration on the docs-site
@@ -29,6 +30,7 @@ macOS runners with Lima. This is intentional — recordings must be authentic.
 See `/Users/tim/.claude/plans/mutable-crunching-squid.md` for the full plan.
 
 **Approach**: Five phases, each building on the previous:
+
 1. Recording framework refactor (extract lib.sh, per-demo scripts)
 2. Additional demo scripts (list, management, headless)
 3. CI pipeline (workflow_dispatch + PR comment)
@@ -48,6 +50,7 @@ dispatch + commit-back-to-branch gives visual review in PR diffs.
 ## Steps
 
 ### Phase 1: Recording Framework Refactor
+
 - [ ] Create `scripts/demos/lib.sh` with extracted helpers
 - [ ] Create `scripts/demos/record-create.sh` (migrated storyboard)
 - [ ] Create `scripts/demos/record-all.sh` orchestrator
@@ -55,14 +58,17 @@ dispatch + commit-back-to-branch gives visual review in PR diffs.
 - [ ] Update `docs/demo-recording.md`
 
 ### Phase 2: Additional Demo Scripts
+
 - [ ] Create `scripts/demos/record-list.sh`
 - [ ] Create `scripts/demos/record-management.sh`
 - [ ] Create `scripts/demos/record-headless.sh`
 
 ### Phase 3: CI Pipeline
+
 - [ ] Create `.github/workflows/demo-recording.yml`
 
 ### Phase 4: Website Player Integration
+
 - [ ] Install `asciinema-player` in docs-site
 - [ ] Create `AsciinemaTerminal.tsx` component
 - [ ] Create `DemoSequence.tsx` component
@@ -72,6 +78,7 @@ dispatch + commit-back-to-branch gives visual review in PR diffs.
 - [ ] Update Pages workflow path triggers
 
 ### Phase 5: E2E Testing
+
 - [ ] Add dual-mode support to `lib.sh`
 - [ ] Create `scripts/demos/test-all.sh`
 - [ ] Create `.github/workflows/e2e.yml`

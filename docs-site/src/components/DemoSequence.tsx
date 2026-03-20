@@ -19,12 +19,7 @@ interface DemoSequenceProps {
   idleTimeLimit?: number;
 }
 
-export function DemoSequence({
-  recordings,
-  title,
-  speed = 1,
-  idleTimeLimit,
-}: DemoSequenceProps) {
+export function DemoSequence({ recordings, title, speed = 1, idleTimeLimit }: DemoSequenceProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleEnded = useCallback(() => {

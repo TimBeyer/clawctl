@@ -21,13 +21,7 @@ declare module "asciinema-player" {
     logger?: Console;
   }
 
-  type EventName =
-    | "play"
-    | "playing"
-    | "pause"
-    | "ended"
-    | "input"
-    | "marker";
+  type EventName = "play" | "playing" | "pause" | "ended" | "input" | "marker";
 
   interface Player {
     el: HTMLElement;
@@ -40,9 +34,5 @@ declare module "asciinema-player" {
     dispose(): void;
   }
 
-  export function create(
-    src: string,
-    elem: HTMLElement,
-    opts?: PlayerOptions,
-  ): Player;
+  export function create(src: string, elem: HTMLElement, opts?: PlayerOptions): Player;
 }

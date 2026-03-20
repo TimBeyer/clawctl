@@ -32,12 +32,12 @@ Output goes to `docs/assets/casts/<name>.cast`.
 
 ## Available demos
 
-| Script                          | Shows                            | Requires              |
-| ------------------------------- | -------------------------------- | --------------------- |
-| `scripts/demos/record-create.sh`     | Interactive create wizard        | Nothing (creates VM)  |
-| `scripts/demos/record-list.sh`       | `clawctl list` output            | Running instance      |
-| `scripts/demos/record-management.sh` | `use`, `status`, `oc doctor`     | Running instance      |
-| `scripts/demos/record-headless.sh`   | `clawctl create --config`        | Nothing (creates VM)  |
+| Script                               | Shows                        | Requires             |
+| ------------------------------------ | ---------------------------- | -------------------- |
+| `scripts/demos/record-create.sh`     | Interactive create wizard    | Nothing (creates VM) |
+| `scripts/demos/record-list.sh`       | `clawctl list` output        | Running instance     |
+| `scripts/demos/record-management.sh` | `use`, `status`, `oc doctor` | Running instance     |
+| `scripts/demos/record-headless.sh`   | `clawctl create --config`    | Nothing (creates VM) |
 
 `record-all.sh` runs them in dependency order: create first (produces the VM
 that list and management use), then headless last.
@@ -86,14 +86,14 @@ of silently desyncing.
 
 ## Files
 
-| Path                            | Purpose                                                   |
-| ------------------------------- | --------------------------------------------------------- |
-| `scripts/demos/lib.sh`         | Shared recording/testing helpers                          |
-| `scripts/demos/record-all.sh`  | Orchestrator — runs all demos in dependency order         |
-| `scripts/demos/record-*.sh`    | Individual demo storyboards                               |
-| `scripts/demos/test-all.sh`    | E2E test runner (runs demos in test mode)                 |
-| `scripts/record-demo.sh`       | Legacy wrapper — delegates to `record-create.sh` at 160 cols |
-| `docs/assets/casts/*.cast`     | Raw recordings (gitignored)                               |
-| `docs/assets/demo.cast`        | Legacy README recording (gitignored)                      |
-| `docs/assets/demo.gif`         | Final GIF embedded in README                              |
-| `docs-site/public/casts/*.cast`| Curated recordings for the website (checked in)           |
+| Path                            | Purpose                                                      |
+| ------------------------------- | ------------------------------------------------------------ |
+| `scripts/demos/lib.sh`          | Shared recording/testing helpers                             |
+| `scripts/demos/record-all.sh`   | Orchestrator — runs all demos in dependency order            |
+| `scripts/demos/record-*.sh`     | Individual demo storyboards                                  |
+| `scripts/demos/test-all.sh`     | E2E test runner (runs demos in test mode)                    |
+| `scripts/record-demo.sh`        | Legacy wrapper — delegates to `record-create.sh` at 160 cols |
+| `docs/assets/casts/*.cast`      | Raw recordings (gitignored)                                  |
+| `docs/assets/demo.cast`         | Legacy README recording (gitignored)                         |
+| `docs/assets/demo.gif`          | Final GIF embedded in README                                 |
+| `docs-site/public/casts/*.cast` | Curated recordings for the website (checked in)              |
