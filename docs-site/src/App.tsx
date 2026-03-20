@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import "./App.css";
+import { AsciinemaTerminal } from "./components/AsciinemaTerminal";
+import { DemoSequence } from "./components/DemoSequence";
+
+// Base path for .cast files served from public/casts/
+const CAST_BASE = import.meta.env.BASE_URL + "casts";
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -147,6 +152,44 @@ function CopyButton({ text }: { text: string }) {
 // Sections
 // ---------------------------------------------------------------------------
 
+function CreateDemo() {
+  const castSrc = `${CAST_BASE}/create.cast`;
+  const [hasCast, setHasCast] = useState(false);
+
+  useEffect(() => {
+    fetch(castSrc, { method: "HEAD" })
+      .then((r) => setHasCast(r.ok))
+      .catch(() => setHasCast(false));
+  }, [castSrc]);
+
+  if (!hasCast) return null;
+
+  return (
+    <section className="relative z-10 max-w-5xl mx-auto px-6 py-20">
+      <FadeIn>
+        <div className="text-center mb-10">
+          <h2 className="font-display font-bold text-3xl md:text-4xl text-white tracking-tight">
+            See it in action
+          </h2>
+          <p className="mt-3 text-slate-400 text-lg max-w-xl mx-auto">
+            The interactive wizard walks you through every setting. One command, fully configured
+            gateway.
+          </p>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={80}>
+        <AsciinemaTerminal
+          src={castSrc}
+          title="~ — clawctl create"
+          idleTimeLimit={3}
+          speed={1.5}
+        />
+      </FadeIn>
+    </section>
+  );
+}
+
 function Divider() {
   return (
     <div className="max-w-xs mx-auto h-px bg-gradient-to-r from-transparent via-accent/20 to-transparent" />
@@ -239,6 +282,15 @@ function Hero() {
 }
 
 function FleetDemo() {
+  const castSrc = `${CAST_BASE}/list.cast`;
+  const [hasCast, setHasCast] = useState(false);
+
+  useEffect(() => {
+    fetch(castSrc, { method: "HEAD" })
+      .then((r) => setHasCast(r.ok))
+      .catch(() => setHasCast(false));
+  }, [castSrc]);
+
   return (
     <section className="relative z-10 max-w-5xl mx-auto px-6 py-20">
       <FadeIn>
@@ -253,32 +305,41 @@ function FleetDemo() {
       </FadeIn>
 
       <FadeIn delay={80}>
-        <Terminal title="~ — clawctl list">
-          <div className="whitespace-pre text-slate-400">
-            <Prompt />
-            <span className="text-slate-200">clawctl list</span>
-          </div>
-          <div className="whitespace-pre mt-3">
-            <div className="text-slate-500">
-              {"NAME           STATUS   PROJECT                       PROVIDER   PORT"}
+        {hasCast ? (
+          <AsciinemaTerminal
+            src={castSrc}
+            title="~ — clawctl list"
+            idleTimeLimit={2}
+            speed={1.5}
+          />
+        ) : (
+          <Terminal title="~ — clawctl list">
+            <div className="whitespace-pre text-slate-400">
+              <Prompt />
+              <span className="text-slate-200">clawctl list</span>
             </div>
-            <div className="text-slate-300">
-              {"research-ai    "}
-              <span className="text-green">Running</span>
-              {"  ~/openclaw-vms/research-ai    anthropic  18789"}
+            <div className="whitespace-pre mt-3">
+              <div className="text-slate-500">
+                {"NAME           STATUS   PROJECT                       PROVIDER   PORT"}
+              </div>
+              <div className="text-slate-300">
+                {"research-ai    "}
+                <span className="text-green">Running</span>
+                {"  ~/openclaw-vms/research-ai    anthropic  18789"}
+              </div>
+              <div className="text-slate-300">
+                {"code-review    "}
+                <span className="text-green">Running</span>
+                {"  ~/openclaw-vms/code-review    openai     18790"}
+              </div>
+              <div className="text-slate-300">
+                {"data-pipeline  "}
+                <span className="text-red">Stopped</span>
+                {"  ~/openclaw-vms/data-pipeline  anthropic  18791"}
+              </div>
             </div>
-            <div className="text-slate-300">
-              {"code-review    "}
-              <span className="text-green">Running</span>
-              {"  ~/openclaw-vms/code-review    openai     18790"}
-            </div>
-            <div className="text-slate-300">
-              {"data-pipeline  "}
-              <span className="text-red">Stopped</span>
-              {"  ~/openclaw-vms/data-pipeline  anthropic  18791"}
-            </div>
-          </div>
-        </Terminal>
+          </Terminal>
+        )}
       </FadeIn>
     </section>
   );
@@ -328,6 +389,15 @@ function Features() {
 }
 
 function ConfigSection() {
+  const headlessCast = `${CAST_BASE}/headless.cast`;
+  const [hasCast, setHasCast] = useState(false);
+
+  useEffect(() => {
+    fetch(headlessCast, { method: "HEAD" })
+      .then((r) => setHasCast(r.ok))
+      .catch(() => setHasCast(false));
+  }, [headlessCast]);
+
   const configJson = `{
   "name": "hal",
   "project": "~/openclaw-vms/hal",
@@ -378,12 +448,21 @@ function ConfigSection() {
             </div>
 
             <div className="mt-8">
-              <Terminal title="~">
-                <div className="text-slate-300">
-                  <Prompt />
-                  <span className="text-slate-200">clawctl create --config hal.json</span>
-                </div>
-              </Terminal>
+              {hasCast ? (
+                <AsciinemaTerminal
+                  src={headlessCast}
+                  title="~"
+                  idleTimeLimit={2}
+                  speed={1.5}
+                />
+              ) : (
+                <Terminal title="~">
+                  <div className="text-slate-300">
+                    <Prompt />
+                    <span className="text-slate-200">clawctl create --config hal.json</span>
+                  </div>
+                </Terminal>
+              )}
             </div>
           </div>
         </FadeIn>
@@ -512,6 +591,15 @@ function highlightJsonLine(line: string): ReactNode {
 }
 
 function ManagementDemo() {
+  const managementCast = `${CAST_BASE}/management.cast`;
+  const [hasCast, setHasCast] = useState(false);
+
+  useEffect(() => {
+    fetch(managementCast, { method: "HEAD" })
+      .then((r) => setHasCast(r.ok))
+      .catch(() => setHasCast(false));
+  }, [managementCast]);
+
   return (
     <section className="relative z-10 max-w-5xl mx-auto px-6 py-20">
       <FadeIn>
@@ -526,30 +614,43 @@ function ManagementDemo() {
       </FadeIn>
 
       <FadeIn delay={80}>
-        <div className="max-w-2xl mx-auto">
-          <Terminal title="~">
-            <div
-              className="grid text-slate-300 gap-y-1"
-              style={{ gridTemplateColumns: "auto 1fr" }}
-            >
-              {[
-                ["clawctl use research-ai", "set default instance"],
-                ["clawctl oc doctor", "health check"],
-                ["clawctl restart", "fix what's stuck"],
-                ["clawctl create", "spin up another"],
-                ["clawctl delete staging", "clean up"],
-              ].map(([cmd, comment]) => (
-                <div key={cmd} className="grid grid-cols-subgrid col-span-2">
-                  <span className="whitespace-nowrap">
-                    <Prompt />
-                    <span className="text-slate-200">{cmd}</span>
-                  </span>
-                  <span className="text-slate-600 whitespace-nowrap pl-8"># {comment}</span>
-                </div>
-              ))}
-            </div>
-          </Terminal>
-        </div>
+        {hasCast ? (
+          <div className="max-w-2xl mx-auto">
+            <DemoSequence
+              recordings={[
+                { src: managementCast, label: "manage" },
+              ]}
+              title="~"
+              idleTimeLimit={2}
+              speed={1.5}
+            />
+          </div>
+        ) : (
+          <div className="max-w-2xl mx-auto">
+            <Terminal title="~">
+              <div
+                className="grid text-slate-300 gap-y-1"
+                style={{ gridTemplateColumns: "auto 1fr" }}
+              >
+                {[
+                  ["clawctl use research-ai", "set default instance"],
+                  ["clawctl oc doctor", "health check"],
+                  ["clawctl restart", "fix what's stuck"],
+                  ["clawctl create", "spin up another"],
+                  ["clawctl delete staging", "clean up"],
+                ].map(([cmd, comment]) => (
+                  <div key={cmd} className="grid grid-cols-subgrid col-span-2">
+                    <span className="whitespace-nowrap">
+                      <Prompt />
+                      <span className="text-slate-200">{cmd}</span>
+                    </span>
+                    <span className="text-slate-600 whitespace-nowrap pl-8"># {comment}</span>
+                  </div>
+                ))}
+              </div>
+            </Terminal>
+          </div>
+        )}
       </FadeIn>
     </section>
   );
@@ -633,6 +734,7 @@ export default function App() {
       <Nav />
       <Hero />
 
+      <CreateDemo />
       <Divider />
 
       <div className="bg-glow-mid">
