@@ -574,39 +574,35 @@ function ManagementDemo() {
 
       <FadeIn delay={80}>
         {hasCast ? (
-          <div className="max-w-2xl mx-auto">
-            <DemoSequence
-              recordings={[{ src: managementCast, label: "manage" }]}
-              title="~"
-              idleTimeLimit={2}
-              speed={1.5}
-            />
-          </div>
+          <DemoSequence
+            recordings={[{ src: managementCast, label: "manage" }]}
+            title="~"
+            idleTimeLimit={2}
+            speed={1.5}
+          />
         ) : (
-          <div className="max-w-2xl mx-auto">
-            <Terminal title="~">
-              <div
-                className="grid text-slate-300 gap-y-1"
-                style={{ gridTemplateColumns: "auto 1fr" }}
-              >
-                {[
-                  ["clawctl use research-ai", "set default instance"],
-                  ["clawctl oc doctor", "health check"],
-                  ["clawctl restart", "fix what's stuck"],
-                  ["clawctl create", "spin up another"],
-                  ["clawctl delete staging", "clean up"],
-                ].map(([cmd, comment]) => (
-                  <div key={cmd} className="grid grid-cols-subgrid col-span-2">
-                    <span className="whitespace-nowrap">
-                      <Prompt />
-                      <span className="text-slate-200">{cmd}</span>
-                    </span>
-                    <span className="text-slate-600 whitespace-nowrap pl-8"># {comment}</span>
-                  </div>
-                ))}
-              </div>
-            </Terminal>
-          </div>
+          <Terminal title="~">
+            <div
+              className="grid text-slate-300 gap-y-1"
+              style={{ gridTemplateColumns: "auto 1fr" }}
+            >
+              {[
+                ["clawctl use research-ai", "set default instance"],
+                ["clawctl oc doctor", "health check"],
+                ["clawctl restart", "fix what's stuck"],
+                ["clawctl create", "spin up another"],
+                ["clawctl delete staging", "clean up"],
+              ].map(([cmd, comment]) => (
+                <div key={cmd} className="grid grid-cols-subgrid col-span-2">
+                  <span className="whitespace-nowrap">
+                    <Prompt />
+                    <span className="text-slate-200">{cmd}</span>
+                  </span>
+                  <span className="text-slate-600 whitespace-nowrap pl-8"># {comment}</span>
+                </div>
+              ))}
+            </div>
+          </Terminal>
         )}
       </FadeIn>
     </section>
