@@ -74,8 +74,22 @@ for requested in "${DEMOS[@]}"; do
     fi
 done
 
+# If list or management demos are requested alongside create, the create
+# script must let provisioning finish so the VM exists afterward.
+NEEDS_VM=false
 for demo in "${ORDERED_DEMOS[@]}"; do
-    run_demo "$demo"
+    if [[ "$demo" == "list" || "$demo" == "management" ]]; then
+        NEEDS_VM=true
+        break
+    fi
+done
+
+for demo in "${ORDERED_DEMOS[@]}"; do
+    if [[ "$demo" == "create" && "$NEEDS_VM" == true ]]; then
+        WAIT_FOR_COMPLETION=1 run_demo "$demo"
+    else
+        run_demo "$demo"
+    fi
 done
 
 # Summary

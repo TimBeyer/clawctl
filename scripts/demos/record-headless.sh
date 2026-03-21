@@ -37,7 +37,7 @@ demo_sleep 15
 
 # --- Done ---
 
-teardown_session
+kill_session
 
 echo ""
 echo "Recording saved to $CAST"

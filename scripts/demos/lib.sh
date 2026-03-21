@@ -6,7 +6,8 @@
 #   DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #   source "$DEMO_DIR/lib.sh"
 #
-# Then call setup_session / teardown_session around your storyboard.
+# Then call setup_session, drive the UI, and end with wait_for_exit
+# (let the command finish) or kill_session (cut the recording short).
 
 set -euo pipefail
 
@@ -52,14 +53,47 @@ setup_session() {
     fi
 }
 
-teardown_session() {
+# Wait for the command inside the tmux session to finish on its own.
+# In record mode, asciinema exits when the wrapped command finishes.
+# The .cast file is complete at that point — no trimming needed.
+wait_for_exit() {
+    local max="${1:-600}"
+    echo "Waiting for command to finish..."
+    for (( _we=0; _we<max; _we++ )); do
+        if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+            break
+        fi
+        # The command ran inside asciinema via -c. When it exits, asciinema
+        # exits too, and the shell prompt returns. Detect that by checking
+        # if the pane is idle (shows a prompt, not program output).
+        # We use a simple heuristic: if the .cast file exists and hasn't
+        # been modified for 5 seconds, the recording is done.
+        if [[ "$DEMO_MODE" == "record" && -n "$CAST" && -f "$CAST" ]]; then
+            local age
+            age=$(( $(date +%s) - $(stat -f %m "$CAST") ))
+            if (( age >= 5 )); then
+                break
+            fi
+        fi
+        sleep 1
+    done
+    # Clean up the tmux session (the command has already exited)
+    tmux kill-session -t "$SESSION" 2>/dev/null || true
+
+    _print_test_summary
+}
+
+# Kill the session immediately, cutting the recording short.
+# Use this when you only want a short clip (e.g. README GIF).
+# Sends SIGHUP to the running command, so expect cleanup output.
+kill_session() {
     tmux kill-session -t "$SESSION" 2>/dev/null || true
     sleep 1
 
-    # Trim cleanup output from recording
+    # Trim cleanup output caused by the signal
     if [[ "$DEMO_MODE" == "record" && -n "$CAST" && -f "$CAST" ]]; then
         local cleanup_line
-        cleanup_line=$(grep -n "SIGTERM\|SIGHUP\|cleaning up\|Provisioning failed\|Deleting VM" "$CAST" | head -1 | cut -d: -f1)
+        cleanup_line=$(grep -n "SIGTERM\|SIGHUP\|cleaning up\|Provisioning failed\|Deleting VM" "$CAST" | head -1 | cut -d: -f1 || true)
         if [[ -n "$cleanup_line" ]]; then
             local total
             total=$(wc -l < "$CAST" | tr -d ' ')
@@ -69,7 +103,10 @@ teardown_session() {
         fi
     fi
 
-    # Print test summary in test mode
+    _print_test_summary
+}
+
+_print_test_summary() {
     if [[ "$DEMO_MODE" == "test" ]]; then
         echo ""
         if (( _TEST_FAILURES > 0 )); then
@@ -91,7 +128,7 @@ wait_for() {
     local i=0
     while ! tmux capture-pane -t "$SESSION" -p | grep -qF "$pattern"; do
         sleep 0.5
-        ((i++))
+        ((i++)) || true
         if (( i >= max )); then
             echo "Timeout waiting for: $pattern" >&2
             if [[ "$DEMO_MODE" == "test" ]]; then
@@ -159,14 +196,14 @@ assert_screen() {
     local desc="${2:-$pattern}"
     local timeout="${3:-30}"
 
-    (( _TEST_NUM++ ))
+    (( _TEST_NUM++ )) || true
 
     if wait_for "$pattern" "$timeout"; then
         if [[ "$DEMO_MODE" == "test" ]]; then
             echo "ok $_TEST_NUM - $desc"
         fi
     else
-        (( _TEST_FAILURES++ ))
+        (( _TEST_FAILURES++ )) || true
         if [[ "$DEMO_MODE" == "test" ]]; then
             echo "not ok $_TEST_NUM - $desc"
         else

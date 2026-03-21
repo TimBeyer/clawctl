@@ -17,14 +17,10 @@ CAST="${CAST:-docs/assets/casts/list.cast}"
 
 setup_session "clawctl list"
 
-# --- Wait for output ---
+# --- Wait for output and exit ---
 
 assert_screen "NAME" "List header row shown"
-demo_sleep 3
-
-# --- Done ---
-
-teardown_session
+wait_for_exit 30
 
 echo ""
 echo "Recording saved to $CAST"

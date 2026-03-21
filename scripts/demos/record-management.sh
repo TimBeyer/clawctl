@@ -46,16 +46,17 @@ demo_sleep 3
 
 # --- Scene 3: Run doctor ---
 
-type_slow "clawctl oc doctor"
+type_slow "clawctl oc doctor --non-interactive"
 demo_sleep 0.5
 enter
-# Doctor output varies — wait for completion marker
-assert_screen "checks passed" "Doctor checks completed"
+# Doctor output varies — wait for completion marker.
+# oc doctor can take a while (runs inside the VM), so give it more time.
+assert_screen "Doctor complete" "Doctor checks completed" 120
 demo_sleep 3
 
 # --- Done ---
 
-teardown_session
+kill_session
 
 echo ""
 echo "Recording saved to $CAST"

@@ -5,13 +5,26 @@
 # Usage (from repo root):
 #   ./scripts/demos/record-create.sh
 #
-# Produces: docs/assets/casts/create.cast
+# Set WAIT_FOR_COMPLETION=1 to let provisioning finish (required when
+# other demos need the running instance afterward). Without it, the
+# recording ends after ~20 seconds of provisioning — enough for the
+# README GIF.
 #
 # NOTE: This runs `clawctl create` for real. After recording you may
 # need to clean up: limactl delete hal
 
 DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$DEMO_DIR/../.." && pwd)"
 source "$DEMO_DIR/lib.sh"
+
+# Load API key from .env.local if present
+if [[ -f "$REPO_ROOT/.env.local" ]]; then
+    # shellcheck disable=SC1091
+    source "$REPO_ROOT/.env.local"
+fi
+
+DEMO_API_KEY="${DEMO_API_KEY:-sk-ant-api03-xYzDeMoKeY}"
+DEMO_PROVIDER="${DEMO_PROVIDER:-zai}"
 
 SESSION="clawctl-create"
 CAST="${CAST:-docs/assets/casts/create.cast}"
@@ -46,10 +59,21 @@ down
 
 # Open provider type select
 enter
-assert_screen "anthropic" "Provider type select shows anthropic"
+assert_screen "$DEMO_PROVIDER" "Provider type select shows $DEMO_PROVIDER"
 demo_sleep 1
 
-# Select anthropic
+# Navigate to the target provider in the list.
+# Provider order: anthropic(0), openai(1), gemini(2), zai(3), mistral(4), ...
+case "$DEMO_PROVIDER" in
+    anthropic) ;;
+    openai)    down ;;
+    gemini)    down; down ;;
+    zai)       down; down; down ;;
+    mistral)   down; down; down; down ;;
+    *)         echo "Unknown DEMO_PROVIDER: $DEMO_PROVIDER — add navigation to record-create.sh" >&2; exit 1 ;;
+esac
+
+# Select provider
 enter
 demo_sleep 0.5
 
@@ -58,7 +82,7 @@ demo_sleep 0.5
 down
 enter
 demo_sleep 0.3
-type_slow "sk-ant-api03-xYzDeMoKeY"
+type_slow "$DEMO_API_KEY"
 demo_sleep 0.8
 enter
 demo_sleep 0.5
@@ -108,11 +132,18 @@ demo_sleep 3
 
 enter
 assert_screen "Provisioning" "Provisioning started"
-demo_sleep 20
 
-# --- Done ---
-
-teardown_session
+if [[ "${WAIT_FOR_COMPLETION:-}" == "1" ]]; then
+    # Let the command run to completion. clawctl create exits on its own
+    # after provisioning finishes. asciinema exits when the wrapped command
+    # does. We just wait for it all to finish.
+    wait_for_exit 600
+else
+    # For the README GIF: just show the first ~20 seconds of progress,
+    # then cut. This kills the process (triggering VM cleanup).
+    demo_sleep 20
+    kill_session
+fi
 
 echo ""
 echo "Recording saved to $CAST"
