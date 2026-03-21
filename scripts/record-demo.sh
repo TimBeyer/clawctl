@@ -21,7 +21,5 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Override output to the legacy path for backward compatibility.
 # The README references docs/assets/demo.cast → demo.gif.
 export CAST="docs/assets/demo.cast"
-export COLS=160
-export ROWS=35
 
 exec "$SCRIPT_DIR/demos/record-create.sh"

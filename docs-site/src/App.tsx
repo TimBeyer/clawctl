@@ -277,15 +277,6 @@ function Hero() {
 }
 
 function FleetDemo() {
-  const castSrc = `${CAST_BASE}/list.cast`;
-  const [hasCast, setHasCast] = useState(false);
-
-  useEffect(() => {
-    fetch(castSrc, { method: "HEAD" })
-      .then((r) => setHasCast(r.ok))
-      .catch(() => setHasCast(false));
-  }, [castSrc]);
-
   return (
     <section className="relative z-10 max-w-5xl mx-auto px-6 py-20">
       <FadeIn>
@@ -300,36 +291,32 @@ function FleetDemo() {
       </FadeIn>
 
       <FadeIn delay={80}>
-        {hasCast ? (
-          <AsciinemaTerminal src={castSrc} title="~ — clawctl list" idleTimeLimit={2} speed={1.5} />
-        ) : (
-          <Terminal title="~ — clawctl list">
-            <div className="whitespace-pre text-slate-400">
-              <Prompt />
-              <span className="text-slate-200">clawctl list</span>
+        <Terminal title="~ — clawctl list">
+          <div className="whitespace-pre text-slate-400">
+            <Prompt />
+            <span className="text-slate-200">clawctl list</span>
+          </div>
+          <div className="whitespace-pre mt-3">
+            <div className="text-slate-500">
+              {"NAME           STATUS   PROJECT                       PROVIDER   PORT"}
             </div>
-            <div className="whitespace-pre mt-3">
-              <div className="text-slate-500">
-                {"NAME           STATUS   PROJECT                       PROVIDER   PORT"}
-              </div>
-              <div className="text-slate-300">
-                {"research-ai    "}
-                <span className="text-green">Running</span>
-                {"  ~/openclaw-vms/research-ai    anthropic  18789"}
-              </div>
-              <div className="text-slate-300">
-                {"code-review    "}
-                <span className="text-green">Running</span>
-                {"  ~/openclaw-vms/code-review    openai     18790"}
-              </div>
-              <div className="text-slate-300">
-                {"data-pipeline  "}
-                <span className="text-red">Stopped</span>
-                {"  ~/openclaw-vms/data-pipeline  anthropic  18791"}
-              </div>
+            <div className="text-slate-300">
+              {"research-ai    "}
+              <span className="text-green">Running</span>
+              {"  ~/openclaw-vms/research-ai    anthropic  18789"}
             </div>
-          </Terminal>
-        )}
+            <div className="text-slate-300">
+              {"code-review    "}
+              <span className="text-green">Running</span>
+              {"  ~/openclaw-vms/code-review    openai     18790"}
+            </div>
+            <div className="text-slate-300">
+              {"data-pipeline  "}
+              <span className="text-red">Stopped</span>
+              {"  ~/openclaw-vms/data-pipeline  anthropic  18791"}
+            </div>
+          </div>
+        </Terminal>
       </FadeIn>
     </section>
   );
@@ -379,15 +366,6 @@ function Features() {
 }
 
 function ConfigSection() {
-  const headlessCast = `${CAST_BASE}/headless.cast`;
-  const [hasCast, setHasCast] = useState(false);
-
-  useEffect(() => {
-    fetch(headlessCast, { method: "HEAD" })
-      .then((r) => setHasCast(r.ok))
-      .catch(() => setHasCast(false));
-  }, [headlessCast]);
-
   const configJson = `{
   "name": "hal",
   "project": "~/openclaw-vms/hal",
@@ -438,16 +416,12 @@ function ConfigSection() {
             </div>
 
             <div className="mt-8">
-              {hasCast ? (
-                <AsciinemaTerminal src={headlessCast} title="~" idleTimeLimit={2} speed={1.5} />
-              ) : (
-                <Terminal title="~">
-                  <div className="text-slate-300">
-                    <Prompt />
-                    <span className="text-slate-200">clawctl create --config hal.json</span>
-                  </div>
-                </Terminal>
-              )}
+              <Terminal title="~">
+                <div className="text-slate-300">
+                  <Prompt />
+                  <span className="text-slate-200">clawctl create --config hal.json</span>
+                </div>
+              </Terminal>
             </div>
           </div>
         </FadeIn>

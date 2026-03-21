@@ -16,7 +16,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 
 SESSION="${SESSION:-clawctl-demo}"
-COLS="${COLS:-100}"
+COLS="${COLS:-160}"
 ROWS="${ROWS:-35}"
 CAST="${CAST:-}"
 

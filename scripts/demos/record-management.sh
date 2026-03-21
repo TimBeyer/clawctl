@@ -18,13 +18,13 @@ CAST="${CAST:-docs/assets/casts/management.cast}"
 # --- Setup ---
 # We record a plain shell session and type commands into it.
 
-setup_session "bash --norc --noprofile"
+setup_session "zsh -f"
 
 # Wait for shell prompt
 demo_sleep 1
 
 # Set a clean prompt for the recording
-send_key -l 'export PS1="$ "'
+send_key -l 'PS1="$ "'
 enter
 demo_sleep 0.5
 

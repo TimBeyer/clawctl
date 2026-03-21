@@ -206,8 +206,8 @@ body {
   font-family: var(--font-mono) !important;
 }
 
-/* Hide the default player header — we use our own terminal chrome */
-.asciinema-terminal .ap-wrapper .ap-header {
+/* Hide the default player title bar — we use our own terminal chrome */
+.asciinema-terminal .ap-wrapper .title-bar {
   display: none;
 }
 

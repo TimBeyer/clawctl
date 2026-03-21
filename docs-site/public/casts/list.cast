@@ -1,3 +1,0 @@
-{"version":3,"term":{"cols":100,"rows":35,"type":"tmux-256color","version":"tmux 3.6a"},"timestamp":1774122687,"command":"clawctl list","env":{"SHELL":"/bin/zsh"}}
-[0.782, "o", "NAME      STATUS   PROJECT                  PROVIDER  PORT \r\nopenclaw  Running  ~/openclaw-vms/my-agent  -         18789\r\nhal       Running  ~/openclaw-vms/hal       zai       18789\r\n"]
-[0.002, "x", "0"]

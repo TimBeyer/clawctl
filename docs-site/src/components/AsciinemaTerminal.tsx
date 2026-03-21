@@ -64,8 +64,14 @@ export function AsciinemaTerminal({
     const el = containerRef.current;
     if (!el) return;
 
+    let disposed = false;
+
     // Dynamic import since asciinema-player is ESM with side effects
     import("asciinema-player").then((AsciinemaPlayer) => {
+      // Guard against StrictMode double-mount: if cleanup already ran
+      // before this async import resolved, don't create the player.
+      if (disposed) return;
+
       const player = AsciinemaPlayer.create(src, el, {
         autoPlay: false, // We manage autoplay via IntersectionObserver
         loop,
@@ -86,6 +92,7 @@ export function AsciinemaTerminal({
     });
 
     return () => {
+      disposed = true;
       playerRef.current?.dispose();
       playerRef.current = null;
     };
