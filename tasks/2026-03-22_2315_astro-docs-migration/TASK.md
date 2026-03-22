@@ -18,14 +18,14 @@ The current docs-site is a React SPA — the HTML source is an empty `<div id="r
 
 ### Component Classification
 
-| Component | Strategy |
-|-----------|----------|
-| Nav, Hero, FleetDemo, Features, ConfigSection, FinalCTA, Footer, Divider, Terminal, JsonHighlight | **Astro component** (static HTML, zero JS) |
-| FadeIn | **Web component** (~15 lines vanilla JS, no React) |
-| CopyButton | **React island** (`client:visible`) |
-| AsciinemaTerminal | **React island** (`client:visible`) |
-| DemoSequence | **React island** (`client:visible`) |
-| CreateDemo / ManagementDemo | **Astro component** with build-time `.cast` detection via `fs.existsSync` |
+| Component                                                                                         | Strategy                                                                  |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Nav, Hero, FleetDemo, Features, ConfigSection, FinalCTA, Footer, Divider, Terminal, JsonHighlight | **Astro component** (static HTML, zero JS)                                |
+| FadeIn                                                                                            | **Web component** (~15 lines vanilla JS, no React)                        |
+| CopyButton                                                                                        | **React island** (`client:visible`)                                       |
+| AsciinemaTerminal                                                                                 | **React island** (`client:visible`)                                       |
+| DemoSequence                                                                                      | **React island** (`client:visible`)                                       |
+| CreateDemo / ManagementDemo                                                                       | **Astro component** with build-time `.cast` detection via `fs.existsSync` |
 
 ### Key Decisions
 
