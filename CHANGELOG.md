@@ -1,5 +1,17 @@
 # Changelog
 
+# [0.19.0](https://github.com/TimBeyer/clawctl/compare/v0.18.0...v0.19.0) (2026-03-22)
+
+
+### Bug Fixes
+
+* exclude .astro/ generated files from ESLint ([e8f469a](https://github.com/TimBeyer/clawctl/commit/e8f469a359fdb8f0bac1952bb21d0c09852aae4f))
+
+
+### Features
+
+* migrate docs-site from React+Vite SPA to Astro ([288f630](https://github.com/TimBeyer/clawctl/commit/288f63023cac2f05f3f41ce04c6cd857926f4ab5))
+
 # [0.18.0](https://github.com/TimBeyer/clawctl/compare/v0.17.1...v0.18.0) (2026-03-22)
 
 
