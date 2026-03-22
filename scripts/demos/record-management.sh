@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+#
+# record-management.sh — Record day-to-day management commands.
+#
+# Shows: clawctl use, clawctl status, clawctl oc doctor
+#
+# Requires: at least one existing clawctl instance.
+#
+# Usage (from repo root):
+#   ./scripts/demos/record-management.sh
+
+DEMO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$DEMO_DIR/lib.sh"
+
+SESSION="clawctl-mgmt"
+CAST="${CAST:-docs/assets/casts/management.cast}"
+
+# --- Setup ---
+# We record a plain shell session and type commands into it.
+
+setup_session "zsh -f"
+
+# Wait for shell prompt
+demo_sleep 1
+
+# Set a clean prompt for the recording
+send_key -l 'PS1="$ "'
+enter
+demo_sleep 0.5
+
+# --- Scene 1: Set default instance ---
+
+type_slow "clawctl use hal"
+demo_sleep 0.5
+enter
+assert_screen "hal" "Instance set to hal"
+demo_sleep 2
+
+# --- Scene 2: Check status ---
+
+type_slow "clawctl status"
+demo_sleep 0.5
+enter
+assert_screen "Running" "Status shows running"
+demo_sleep 3
+
+# --- Scene 3: Run doctor ---
+
+type_slow "clawctl oc doctor --non-interactive"
+demo_sleep 0.5
+enter
+# Doctor output varies — wait for completion marker.
+# oc doctor can take a while (runs inside the VM), so give it more time.
+assert_screen "Doctor complete" "Doctor checks completed" 120
+demo_sleep 3
+
+# --- Done ---
+
+kill_session
+
+echo ""
+echo "Recording saved to $CAST"

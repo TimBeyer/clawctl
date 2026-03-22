@@ -1,0 +1,44 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      demos:
+        description: "Which demos to test (space-separated, or leave blank for all)"
+        required: false
+        default: ""
+        type: string
+  schedule:
+    # Weekly Monday 6:00 UTC — catch regressions from dependency updates
+    - cron: "0 6 * * 1"
+
+concurrency:
+  group: e2e-tests
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+
+      - name: Install test dependencies
+        run: brew install tmux lima
+
+      - name: Build clawctl
+        run: bun run build:release
+
+      - name: Run E2E tests
+        run: |
+          ARGS="${{ inputs.demos }}"
+          if [[ -n "$ARGS" ]]; then
+            ./scripts/demos/test-all.sh $ARGS
+          else
+            ./scripts/demos/test-all.sh
+          fi

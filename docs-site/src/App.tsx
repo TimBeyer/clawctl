@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import "./App.css";
+import { AsciinemaTerminal } from "./components/AsciinemaTerminal";
+import { DemoSequence } from "./components/DemoSequence";
+
+// Base path for .cast files served from public/casts/
+const CAST_BASE = import.meta.env.BASE_URL + "casts";
 
 // ---------------------------------------------------------------------------
 // Hooks
@@ -146,6 +151,39 @@ function CopyButton({ text }: { text: string }) {
 // ---------------------------------------------------------------------------
 // Sections
 // ---------------------------------------------------------------------------
+
+function CreateDemo() {
+  const castSrc = `${CAST_BASE}/create.cast`;
+  const [hasCast, setHasCast] = useState(false);
+
+  useEffect(() => {
+    fetch(castSrc, { method: "HEAD" })
+      .then((r) => setHasCast(r.ok))
+      .catch(() => setHasCast(false));
+  }, [castSrc]);
+
+  if (!hasCast) return null;
+
+  return (
+    <section className="relative z-10 max-w-5xl mx-auto px-6 py-20">
+      <FadeIn>
+        <div className="text-center mb-10">
+          <h2 className="font-display font-bold text-3xl md:text-4xl text-white tracking-tight">
+            See it in action
+          </h2>
+          <p className="mt-3 text-slate-400 text-lg max-w-xl mx-auto">
+            The interactive wizard walks you through every setting. One command, fully configured
+            gateway.
+          </p>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={80}>
+        <AsciinemaTerminal src={castSrc} title="~ — clawctl create" idleTimeLimit={3} speed={1.5} />
+      </FadeIn>
+    </section>
+  );
+}
 
 function Divider() {
   return (
@@ -512,6 +550,15 @@ function highlightJsonLine(line: string): ReactNode {
 }
 
 function ManagementDemo() {
+  const managementCast = `${CAST_BASE}/management.cast`;
+  const [hasCast, setHasCast] = useState(false);
+
+  useEffect(() => {
+    fetch(managementCast, { method: "HEAD" })
+      .then((r) => setHasCast(r.ok))
+      .catch(() => setHasCast(false));
+  }, [managementCast]);
+
   return (
     <section className="relative z-10 max-w-5xl mx-auto px-6 py-20">
       <FadeIn>
@@ -526,7 +573,14 @@ function ManagementDemo() {
       </FadeIn>
 
       <FadeIn delay={80}>
-        <div className="max-w-2xl mx-auto">
+        {hasCast ? (
+          <DemoSequence
+            recordings={[{ src: managementCast, label: "manage" }]}
+            title="~"
+            idleTimeLimit={2}
+            speed={1.5}
+          />
+        ) : (
           <Terminal title="~">
             <div
               className="grid text-slate-300 gap-y-1"
@@ -549,7 +603,7 @@ function ManagementDemo() {
               ))}
             </div>
           </Terminal>
-        </div>
+        )}
       </FadeIn>
     </section>
   );
@@ -633,6 +687,7 @@ export default function App() {
       <Nav />
       <Hero />
 
+      <CreateDemo />
       <Divider />
 
       <div className="bg-glow-mid">

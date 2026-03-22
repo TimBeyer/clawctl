@@ -191,3 +191,38 @@ body {
   background: var(--color-border);
   border-radius: 3px;
 }
+
+/* asciinema player — match site theme */
+.asciinema-terminal .asciinema-terminal-body {
+  padding: 0;
+}
+
+.asciinema-terminal .ap-wrapper {
+  border-radius: 0;
+}
+
+.asciinema-terminal .ap-player {
+  background: var(--color-surface) !important;
+  font-family: var(--font-mono) !important;
+}
+
+/* Hide the default player title bar — we use our own terminal chrome */
+.asciinema-terminal .ap-wrapper .title-bar {
+  display: none;
+}
+
+/* Control bar styling */
+.asciinema-terminal .ap-control-bar {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.4), transparent) !important;
+}
+
+/* Progress bar accent color */
+.asciinema-terminal .ap-progressbar .ap-gutter-fill {
+  background: var(--color-accent) !important;
+}
+
+/* Segment indicator */
+.demo-sequence button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
