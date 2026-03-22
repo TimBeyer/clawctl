@@ -1,5 +1,21 @@
 # Changelog
 
+# [0.18.0](https://github.com/TimBeyer/clawctl/compare/v0.17.1...v0.18.0) (2026-03-22)
+
+
+### Bug Fixes
+
+* fix recording scripts and add website cast files ([5dc370d](https://github.com/TimBeyer/clawctl/commit/5dc370dfb4f7cfd819275e59f3055e3c4fcbe09a))
+* recording and website polish ([2517772](https://github.com/TimBeyer/clawctl/commit/25177725f8c73ea867e41323a4861a465398a9d9))
+* use consistent terminal size across all demo recordings ([03cc4b8](https://github.com/TimBeyer/clawctl/commit/03cc4b8e38b68ba17d7afd19aea97ff0f3e6606a))
+
+
+### Features
+
+* add CI workflows for demo recording and E2E testing ([93d1b8f](https://github.com/TimBeyer/clawctl/commit/93d1b8f3b42d78ea422002f3ab8f8d8becb953b6))
+* integrate asciinema player into docs-site ([192b270](https://github.com/TimBeyer/clawctl/commit/192b2705a8b71d53eb9f05a377f5e0adc0aa604c))
+* refactor demo recording into multi-demo framework ([03447b3](https://github.com/TimBeyer/clawctl/commit/03447b3763563cb3598f9480ae103c86e4b90bf1))
+
 ## [0.17.1](https://github.com/TimBeyer/clawctl/compare/v0.17.0...v0.17.1) (2026-03-19)
 
 
