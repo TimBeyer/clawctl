@@ -1,6 +1,6 @@
 # Migrate docs-site from React+Vite SPA to Astro
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -38,18 +38,24 @@ The current docs-site is a React SPA — the HTML source is an empty `<div id="r
 ## Steps
 
 - [x] Create task directory and TASK.md
-- [ ] Scaffold Astro project (replace package.json, create astro.config.mjs, delete Vite files)
-- [ ] Create Base.astro layout with `<head>` (fonts, meta, OG tags, canonical)
-- [ ] Create index.astro page shell with background layers
-- [ ] Convert static sections to Astro components
-- [ ] Implement FadeIn as web component, wrap sections
-- [ ] Set up React islands (CopyButton, AsciinemaTerminal, DemoSequence) with `client:visible`
-- [ ] Build CreateDemo.astro and ManagementDemo.astro with build-time cast detection
-- [ ] Move asciinema-player CSS to global.css
-- [ ] Add robots.txt, verify sitemap generation
-- [ ] Delete old Vite artifacts
-- [ ] Build and verify
+- [x] Scaffold Astro project (replace package.json, create astro.config.mjs, delete Vite files)
+- [x] Create Base.astro layout with `<head>` (fonts, meta, OG tags, canonical)
+- [x] Create index.astro page shell with background layers
+- [x] Convert static sections to Astro components
+- [x] Implement FadeIn as web component, wrap sections
+- [x] Set up React islands (CopyButton, AsciinemaTerminal, DemoSequence) with `client:visible`
+- [x] Build CreateDemo.astro and ManagementDemo.astro with build-time cast detection
+- [x] Move asciinema-player CSS to global.css
+- [x] Add robots.txt, verify sitemap generation
+- [x] Delete old Vite artifacts
+- [x] Build and verify
 
 ## Notes
 
+- JsonHighlight needed to pre-render HTML in frontmatter via `set:html` — nested `.map()` with inline functions hit Astro's template parser limits.
+- `import.meta.env.BASE_URL` in Astro is `/clawctl` (no trailing slash), needed explicit `/` before `casts/` paths.
+- `.astro/` directory (generated types) added to `.gitignore`.
+
 ## Outcome
+
+All content now renders as static HTML at build time. `dist/index.html` contains every heading, paragraph, and terminal block in the source. React islands hydrate only for interactive elements (copy buttons, asciinema player). Sitemap and robots.txt generated. GitHub Actions workflow unchanged.
