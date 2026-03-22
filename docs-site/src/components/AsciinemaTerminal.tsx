@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import "asciinema-player/dist/bundle/asciinema-player.css";
 
 // asciinema-player doesn't ship types — use the JS API directly
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

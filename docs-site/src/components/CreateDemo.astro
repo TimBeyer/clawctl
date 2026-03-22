@@ -1,0 +1,38 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import FadeIn from "./FadeIn.astro";
+import { AsciinemaTerminal } from "./AsciinemaTerminal.tsx";
+
+const castPath = path.join(process.cwd(), "public", "casts", "create.cast");
+const hasCast = fs.existsSync(castPath);
+const castSrc = `${import.meta.env.BASE_URL}/casts/create.cast`;
+---
+
+{
+  hasCast && (
+    <section class="relative z-10 max-w-5xl mx-auto px-6 py-20">
+      <FadeIn>
+        <div class="text-center mb-10">
+          <h2 class="font-display font-bold text-3xl md:text-4xl text-white tracking-tight">
+            See it in action
+          </h2>
+          <p class="mt-3 text-slate-400 text-lg max-w-xl mx-auto">
+            The interactive wizard walks you through every setting. One command, fully configured
+            gateway.
+          </p>
+        </div>
+      </FadeIn>
+
+      <FadeIn delay={80}>
+        <AsciinemaTerminal
+          src={castSrc}
+          title="~ — clawctl create"
+          idleTimeLimit={3}
+          speed={1.5}
+          client:visible
+        />
+      </FadeIn>
+    </section>
+  )
+}

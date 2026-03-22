@@ -1,0 +1,54 @@
+---
+import FadeIn from "./FadeIn.astro";
+import Terminal from "./Terminal.astro";
+---
+
+<section class="relative z-10 max-w-4xl mx-auto px-6 pt-20 md:pt-28 pb-20 text-center">
+  <FadeIn>
+    <h1
+      class="font-display font-extrabold text-[clamp(2.5rem,7vw,5rem)] leading-[1.05] tracking-tight text-white"
+    >
+      AI agents,<br />
+      <span class="text-accent">safely contained.</span>
+    </h1>
+  </FadeIn>
+
+  <FadeIn delay={80}>
+    <p class="mt-6 text-lg md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed">
+      clawctl runs each{" "}
+      <a
+        href="https://docs.openclaw.ai/"
+        class="text-slate-300 underline decoration-slate-600 underline-offset-2 hover:decoration-accent/50 transition-colors"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        OpenClaw
+      </a>{" "}
+      gateway in its own isolated Ubuntu VM. Set up in minutes. Manage a fleet from your terminal.
+    </p>
+  </FadeIn>
+
+  <FadeIn delay={160}>
+    <div class="mt-12 max-w-4xl mx-auto text-left">
+      <Terminal
+        title="~"
+        copyText="curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash"
+      >
+        <div class="text-slate-300">
+          <span class="text-accent select-none">$ </span>
+          <span class="text-slate-200"
+            >curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash</span
+          >
+        </div>
+        <div class="text-slate-300 mt-1">
+          <span class="text-accent select-none">$ </span>
+          <span class="text-slate-200">clawctl create</span>
+          <span
+            class="cursor-blink inline-block w-[7px] h-[15px] bg-accent/80 align-text-bottom ml-px translate-y-[1px]"
+          ></span>
+        </div>
+      </Terminal>
+    </div>
+    <p class="mt-5 text-sm text-slate-500">Requires macOS on Apple Silicon.</p>
+  </FadeIn>
+</section>
