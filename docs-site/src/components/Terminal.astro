@@ -1,0 +1,25 @@
+---
+import CopyButton from "./CopyButton.tsx";
+
+interface Props {
+  title?: string;
+  copyText?: string;
+}
+
+const { title, copyText } = Astro.props;
+---
+
+<div class="terminal">
+  <div class="terminal-bar flex items-center justify-between">
+    <div class="flex items-center gap-[6px]">
+      <span class="terminal-dot bg-[#ff5f57]"></span>
+      <span class="terminal-dot bg-[#febc2e]"></span>
+      <span class="terminal-dot bg-[#28c840]"></span>
+      {title && <span class="ml-2 text-xs text-slate-500 font-mono select-none">{title}</span>}
+    </div>
+    {copyText && <CopyButton text={copyText} client:visible />}
+  </div>
+  <div class="terminal-body">
+    <slot />
+  </div>
+</div>

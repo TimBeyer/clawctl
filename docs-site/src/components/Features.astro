@@ -1,0 +1,44 @@
+---
+import FadeIn from "./FadeIn.astro";
+
+const features = [
+  {
+    label: "clawctl create",
+    title: "Sandboxed by default",
+    description:
+      "Every gateway runs in its own Ubuntu VM via Lima. Nothing touches your Mac. Config and data live in a git-tracked project directory on your host — delete the VM, recreate it, pick up right where you left off.",
+  },
+  {
+    label: "clawctl list",
+    title: "Fleet-ready from day one",
+    description:
+      "Spin up as many gateways as your hardware allows. Each gets its own isolated VM, project directory, and config. Instance context resolution means you set the name once and stop repeating yourself.",
+  },
+  {
+    label: "--config config.json",
+    title: "Config-as-code",
+    description:
+      "Headless mode provisions from JSON configs — CI/CD, team onboarding, reproducible rebuilds. Reference 1Password secrets with op:// URIs. Zero plaintext credentials in your repo.",
+  },
+];
+---
+
+<section class="relative z-10 max-w-5xl mx-auto px-6 py-20">
+  <div class="grid md:grid-cols-3 gap-5">
+    {
+      features.map((f, i) => (
+        <FadeIn delay={i * 80}>
+          <div class="feature-card h-full">
+            <span class="inline-block font-mono text-xs text-accent/60 bg-accent-muted px-2.5 py-1 rounded mb-5 select-none">
+              {f.label}
+            </span>
+            <h3 class="font-display font-bold text-xl text-white mb-3 tracking-tight">
+              {f.title}
+            </h3>
+            <p class="text-slate-400 text-[15px] leading-relaxed">{f.description}</p>
+          </div>
+        </FadeIn>
+      ))
+    }
+  </div>
+</section>

@@ -1,0 +1,60 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import FadeIn from "./FadeIn.astro";
+import Terminal from "./Terminal.astro";
+import { DemoSequence } from "./DemoSequence.tsx";
+
+const castPath = path.join(process.cwd(), "public", "casts", "management.cast");
+const hasCast = fs.existsSync(castPath);
+const castSrc = `${import.meta.env.BASE_URL}/casts/management.cast`;
+
+const fallbackCommands = [
+  ["clawctl use research-ai", "set default instance"],
+  ["clawctl oc doctor", "health check"],
+  ["clawctl restart", "fix what's stuck"],
+  ["clawctl create", "spin up another"],
+  ["clawctl delete staging", "clean up"],
+];
+---
+
+<section class="relative z-10 max-w-5xl mx-auto px-6 py-20">
+  <FadeIn>
+    <div class="text-center mb-10">
+      <h2 class="font-display font-bold text-3xl md:text-4xl text-white tracking-tight">
+        Not just an installer
+      </h2>
+      <p class="mt-3 text-slate-400 text-lg max-w-xl mx-auto">
+        Day-to-day management from your host. No need to shell in.
+      </p>
+    </div>
+  </FadeIn>
+
+  <FadeIn delay={80}>
+    {
+      hasCast ? (
+        <DemoSequence
+          recordings={[{ src: castSrc, label: "manage" }]}
+          title="~"
+          idleTimeLimit={2}
+          speed={1.5}
+          client:visible
+        />
+      ) : (
+        <Terminal title="~">
+          <div class="grid text-slate-300 gap-y-1" style="grid-template-columns: auto 1fr">
+            {fallbackCommands.map(([cmd, comment]) => (
+              <div class="grid grid-cols-subgrid col-span-2">
+                <span class="whitespace-nowrap">
+                  <span class="text-accent select-none">$ </span>
+                  <span class="text-slate-200">{cmd}</span>
+                </span>
+                <span class="text-slate-600 whitespace-nowrap pl-8"># {comment}</span>
+              </div>
+            ))}
+          </div>
+        </Terminal>
+      )
+    }
+  </FadeIn>
+</section>

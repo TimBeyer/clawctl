@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://timbeyer.github.io/clawctl/sitemap-index.xml

@@ -1,0 +1,31 @@
+---
+interface Props {
+  delay?: number;
+  class?: string;
+}
+
+const { delay = 0, class: className = "" } = Astro.props;
+---
+
+<fade-in style={delay ? `transition-delay: ${delay}ms` : undefined} class={className}>
+  <slot />
+</fade-in>
+
+<script>
+  class FadeInElement extends HTMLElement {
+    connectedCallback() {
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            this.setAttribute("visible", "");
+            obs.disconnect();
+          }
+        },
+        { threshold: 0.12 },
+      );
+      obs.observe(this);
+    }
+  }
+
+  customElements.define("fade-in", FadeInElement);
+</script>

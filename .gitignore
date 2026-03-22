@@ -7,3 +7,4 @@ dist/
 .env.secrets
 *.cast
 !docs-site/public/casts/*.cast
+.astro/

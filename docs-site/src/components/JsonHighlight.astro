@@ -1,0 +1,97 @@
+---
+interface Props {
+  json: string;
+}
+
+const { json } = Astro.props;
+
+const colorMap: Record<string, string> = {
+  key: "text-accent",
+  string: "text-green",
+  number: "text-cyan",
+  boolean: "text-cyan",
+  punctuation: "text-slate-500",
+  colon: "text-slate-500",
+};
+
+function highlightLine(line: string): string {
+  let result = "";
+  let remaining = line;
+
+  // Match leading whitespace
+  const leadingMatch = remaining.match(/^(\s*)/);
+  const indent = leadingMatch ? leadingMatch[1] : "";
+  if (indent) {
+    result += indent;
+    remaining = remaining.slice(indent.length);
+  }
+
+  while (remaining.length > 0) {
+    // Key-value pair: "key": value
+    const kvMatch = remaining.match(/^("(?:[^"\\]|\\.)*")\s*:\s*(.*)/s);
+    if (kvMatch) {
+      result += `<span class="${colorMap.key}">${escape(kvMatch[1])}</span>`;
+      result += `<span class="${colorMap.colon}">: </span>`;
+      remaining = kvMatch[2];
+      continue;
+    }
+
+    // String value
+    const strMatch = remaining.match(/^("(?:[^"\\]|\\.)*")(.*)/s);
+    if (strMatch) {
+      result += `<span class="${colorMap.string}">${escape(strMatch[1])}</span>`;
+      remaining = strMatch[2];
+      continue;
+    }
+
+    // Number
+    const numMatch = remaining.match(/^(\d+)(.*)/s);
+    if (numMatch) {
+      result += `<span class="${colorMap.number}">${numMatch[1]}</span>`;
+      remaining = numMatch[2];
+      continue;
+    }
+
+    // Boolean
+    const boolMatch = remaining.match(/^(true|false)(.*)/s);
+    if (boolMatch) {
+      result += `<span class="${colorMap.boolean}">${boolMatch[1]}</span>`;
+      remaining = boolMatch[2];
+      continue;
+    }
+
+    // Brackets, commas, colons — punctuation
+    const punctMatch = remaining.match(/^([{}\[\],:])(.*)/s);
+    if (punctMatch) {
+      result += `<span class="${colorMap.punctuation}">${escape(punctMatch[1])}</span>`;
+      remaining = punctMatch[2];
+      continue;
+    }
+
+    // Whitespace
+    const wsMatch = remaining.match(/^(\s+)(.*)/s);
+    if (wsMatch) {
+      result += wsMatch[1];
+      remaining = wsMatch[2];
+      continue;
+    }
+
+    // Fallback
+    result += escape(remaining[0]);
+    remaining = remaining.slice(1);
+  }
+
+  return result;
+}
+
+function escape(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+const html = json
+  .split("\n")
+  .map((line) => `<span class="block">${highlightLine(line)}\n</span>`)
+  .join("");
+---
+
+<Fragment set:html={html} />

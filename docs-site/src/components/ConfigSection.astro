@@ -1,0 +1,72 @@
+---
+import FadeIn from "./FadeIn.astro";
+import Terminal from "./Terminal.astro";
+import JsonHighlight from "./JsonHighlight.astro";
+
+const configJson = `{
+  "name": "hal",
+  "project": "~/openclaw-vms/hal",
+  "resources": { "cpus": 4, "memory": "8GiB" },
+  "provider": {
+    "type": "anthropic",
+    "model": "anthropic/claude-opus-4-6"
+  },
+  "bootstrap": {
+    "agent": {
+      "name": "Hal",
+      "context": "Calm, precise, just a little too helpful."
+    }
+  }
+}`;
+---
+
+<section class="relative z-10 max-w-5xl mx-auto px-6 py-20">
+  <div class="grid md:grid-cols-2 gap-10 items-start">
+    <FadeIn>
+      <div class="md:sticky md:top-20">
+        <h2 class="font-display font-bold text-3xl md:text-4xl text-white tracking-tight">
+          Headless provisioning
+        </h2>
+        <p class="mt-4 text-slate-400 text-lg leading-relaxed">
+          One JSON file. Full gateway. No prompts. VM resources, networking, provider, agent persona,
+          channels — everything in one config you can check into git.
+        </p>
+        <div class="mt-6 space-y-3 text-[15px]">
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-0.5 shrink-0 font-mono text-sm">//</span>
+            <span class="text-slate-400">
+              Share configs across your team for identical environments
+            </span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-0.5 shrink-0 font-mono text-sm">//</span>
+            <span class="text-slate-400">Run in CI/CD for fully automated provisioning</span>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="text-accent mt-0.5 shrink-0 font-mono text-sm">//</span>
+            <span class="text-slate-400">
+              Same config rebuilds an identical gateway every time
+            </span>
+          </div>
+        </div>
+
+        <div class="mt-8">
+          <Terminal title="~">
+            <div class="text-slate-300">
+              <span class="text-accent select-none">$ </span>
+              <span class="text-slate-200">clawctl create --config hal.json</span>
+            </div>
+          </Terminal>
+        </div>
+      </div>
+    </FadeIn>
+
+    <FadeIn delay={100}>
+      <Terminal title="hal.json">
+        <pre class="whitespace-pre text-[12px] md:text-[13px] leading-relaxed">
+          <JsonHighlight json={configJson} />
+        </pre>
+      </Terminal>
+    </FadeIn>
+  </div>
+</section>

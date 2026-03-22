@@ -1,0 +1,36 @@
+---
+import FadeIn from "./FadeIn.astro";
+import Terminal from "./Terminal.astro";
+---
+
+<section class="relative z-10 max-w-4xl mx-auto px-6 pt-20 pb-28 text-center">
+  <FadeIn>
+    <h2 class="font-display font-bold text-3xl md:text-4xl text-white tracking-tight">
+      Ready to go?
+    </h2>
+    <p class="mt-3 text-slate-400 text-lg">
+      Your gateway will be running in its own isolated VM in minutes.
+    </p>
+
+    <div class="mt-10 max-w-4xl mx-auto text-left">
+      <Terminal
+        title="~"
+        copyText="curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash"
+      >
+        <div class="text-slate-300">
+          <span class="text-accent select-none">$ </span>
+          <span class="text-slate-200"
+            >curl -fsSL https://raw.githubusercontent.com/TimBeyer/clawctl/main/install.sh | bash</span
+          >
+        </div>
+        <div class="text-slate-300 mt-1">
+          <span class="text-accent select-none">$ </span>
+          <span class="text-slate-200">clawctl create</span>
+          <span
+            class="cursor-blink inline-block w-[7px] h-[15px] bg-accent/80 align-text-bottom ml-px translate-y-[1px]"
+          ></span>
+        </div>
+      </Terminal>
+    </div>
+  </FadeIn>
+</section>
