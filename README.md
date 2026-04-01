@@ -77,6 +77,9 @@ For automated setups, pass a JSON config file and skip the prompts — see [Head
 | `clawctl shell [name]`                     | Interactive shell into the VM                     |
 | `clawctl shell [name] -- <cmd...>`         | Run a command in the VM                           |
 | `clawctl openclaw <subcommand...>`         | Run an `openclaw` command in the VM (alias: `oc`) |
+| `clawctl mount list [name]`                | List all mounts for an instance                   |
+| `clawctl mount add <host> <guest>`         | Add a host directory mount (`--writable` for rw)  |
+| `clawctl mount remove <guest-path>`        | Remove a user-added mount                         |
 | `clawctl use [name] [--global]`            | Set or show the current instance context          |
 | `clawctl register <name> --project <path>` | Register an existing (pre-registry) instance      |
 | `clawctl completions <shell>`              | Generate shell completion script (bash or zsh)    |

@@ -16,6 +16,7 @@ const ALL_COMMANDS = [
   "openclaw",
   "oc",
   "use",
+  "mount",
 ];
 
 // -- Bash completion ----------------------------------------------------------
