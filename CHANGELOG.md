@@ -1,5 +1,20 @@
 # Changelog
 
+# [0.20.0](https://github.com/TimBeyer/clawctl/compare/v0.19.1...v0.20.0) (2026-04-01)
+
+
+### Bug Fixes
+
+* correct broken symlinks in agent skills references ([055581b](https://github.com/TimBeyer/clawctl/commit/055581b2e28c122878d0a4be6a04904d11bcca9f))
+* drop [name] positional from mount add/remove ([f316b5b](https://github.com/TimBeyer/clawctl/commit/f316b5b88a796df8cd253c05a2ad5c723319d2f8))
+* show help on missing args for mount subcommands ([a6f1082](https://github.com/TimBeyer/clawctl/commit/a6f1082774e96da66e8664f2c8cfa0e79cf5c763))
+
+
+### Features
+
+* add clawctl mount command (list/add/remove) ([ededf7c](https://github.com/TimBeyer/clawctl/commit/ededf7c8b708b690e676e3042147ed54e037b61c))
+* add readMounts/writeMounts to VMDriver interface ([01f5a46](https://github.com/TimBeyer/clawctl/commit/01f5a46e5cb7a65fdf6d89345f44cb47021c1741))
+
 ## [0.19.1](https://github.com/TimBeyer/clawctl/compare/v0.19.0...v0.19.1) (2026-04-01)
 
 # [0.19.0](https://github.com/TimBeyer/clawctl/compare/v0.18.0...v0.19.0) (2026-03-22)
