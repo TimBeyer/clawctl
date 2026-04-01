@@ -1,1 +1,1 @@
-../../../docs/capabilities.md
+../../../../docs/capabilities.md

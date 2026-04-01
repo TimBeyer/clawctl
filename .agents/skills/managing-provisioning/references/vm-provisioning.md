@@ -1,1 +1,1 @@
-../../../docs/vm-provisioning.md
+../../../../docs/vm-provisioning.md
