@@ -1,1 +1,1 @@
-../../../docs/vm-cli.md
+../../../../docs/vm-cli.md

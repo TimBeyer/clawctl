@@ -44,7 +44,7 @@ export async function deployClaw(
 /**
  * Run a claw provision subcommand and parse its JSON output.
  */
-async function runClawProvision(
+export async function runClawProvision(
   driver: VMDriver,
   vmName: string,
   subcommand: string,

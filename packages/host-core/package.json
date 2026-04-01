@@ -11,6 +11,7 @@
     "@clawctl/types": "workspace:*",
     "@clawctl/templates": "workspace:*",
     "execa": "^9.0.0",
-    "semver": "^7.7.4"
+    "semver": "^7.7.4",
+    "yaml": "^2.8.2"
   }
 }
