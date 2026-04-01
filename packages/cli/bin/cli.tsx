@@ -189,7 +189,7 @@ mountCmd
   });
 
 mountCmd
-  .command("add [name]")
+  .command("add")
   .description("Add a host directory mount to the VM")
   .argument("<host-path>", "Host directory to mount")
   .argument("<guest-path>", "Mount point inside the VM")
@@ -199,31 +199,24 @@ mountCmd
   .showHelpAfterError(true)
   .action(
     async (
-      name: string | undefined,
       hostPath: string,
       guestPath: string,
       opts: { instance?: string; writable?: boolean; noRestart?: boolean },
     ) => {
-      await runMountAdd(driver, { instance: opts.instance ?? name, ...opts }, hostPath, guestPath);
+      await runMountAdd(driver, opts, hostPath, guestPath);
     },
   );
 
 mountCmd
-  .command("remove [name]")
+  .command("remove")
   .description("Remove a mount from the VM")
   .argument("<guest-path>", "Mount point to remove")
   .option("-i, --instance <name>", "Instance to target")
   .option("--no-restart", "Update config but don't restart the VM")
   .showHelpAfterError(true)
-  .action(
-    async (
-      name: string | undefined,
-      guestPath: string,
-      opts: { instance?: string; noRestart?: boolean },
-    ) => {
-      await runMountRemove(driver, { instance: opts.instance ?? name, ...opts }, guestPath);
-    },
-  );
+  .action(async (guestPath: string, opts: { instance?: string; noRestart?: boolean }) => {
+    await runMountRemove(driver, opts, guestPath);
+  });
 
 const daemonCmd = program.command("daemon").description("Manage the background daemon");
 
