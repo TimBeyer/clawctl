@@ -7,14 +7,12 @@ so they don't get lost.
 
 - [x] **Remove home directory mount as default** _(done: e770d69)_
 
-- [ ] **Auto-commit mechanism for inner openclaw changes**
-      The agent inside the VM writes to `data/` (configs, workspace files,
-      etc.) but can't commit — git runs on the host. We need a way for the
-      inner openclaw to request a commit. Rough idea: the agent writes a
-      file like `data/.git-request` containing the commit message; a `fs`
-      watcher on the host picks it up, stages `data/`, commits with that
-      message, and removes the request file. Could be a long-running
-      background process or integrated into the CLI's manage mode.
+- [x] **Auto-commit mechanism for inner openclaw changes** _(done: v0.9.0)_
+      Implemented as the checkpoint system: `claw checkpoint --message "reason"`
+      writes a signal file to `data/.checkpoint-request`; the host daemon's
+      `checkpoint-watch` task detects it, runs `git add data/ && git commit`,
+      and removes the file. The checkpoint capability also installs a skill
+      into the workspace so the agent knows how to use it.
 
 - [x] **Headless / preconfigured provisioning (skip the wizard)** _(done: 14b93d1)_
 
@@ -39,20 +37,17 @@ so they don't get lost.
     wizard or via config. Playwright + Chromium is the highest value
     add — web access is a core capability gap right now.
 
-- [ ] **Automate manual post-setup steps**
-      Things currently done by hand after onboarding that should be part of
-      the provisioning flow. Based on real usage:
-  - **Docker permissions** — add the openclaw user to the docker group
+- [ ] **Automate manual post-setup steps** _(partially done)_
+      Some items are now handled by the bootstrap flow; others remain.
+  - [x] **Sandbox disabled** — wizard option, bootstrap sets
+    `agents.defaults.sandbox.mode off` when configured
+  - [x] **Workspace on shared mount** — bootstrap sets
+    `agents.defaults.workspace /mnt/project/data/workspace`
+  - [ ] **Docker permissions** — add the openclaw user to the docker group
     so the agent can run containers without sudo
-  - **Sandbox disabled** — for trusted single-user setups, disable the
-    openclaw sandbox. Needs a config set during post-onboard setup.
-    Should probably be a wizard option ("trusted environment?") since
-    it's a security trade-off.
-  - **Workspace on shared mount** — already done (we set
-    `agents.defaults.workspace` to `/mnt/project/data/workspace`)
-  - **Headless Chromium** — install and configure so the agent can
+  - [ ] **Headless Chromium** — install and configure so the agent can
     browse. Overlaps with the pre-installed tooling item above.
-  - **Heartbeat security reviews** — configure periodic security
+  - [ ] **Heartbeat security reviews** — configure periodic security
     review tasks. Needs investigation into how openclaw schedules
     these (cron? built-in scheduler?).
 
@@ -68,13 +63,25 @@ so they don't get lost.
     These reuse the same provisioning logic from the wizard steps but
     can target an existing instance.
 
+- [ ] **Manage mount points after VM creation**
+      Currently mounts are only configurable at create time via `config.mounts`.
+      After that, the only way to add or remove a mount is editing
+      `~/.lima/<vm>/lima.yaml` directly and restarting. clawctl should own this:
+  - `clawctl mount add <vm> <host-path> --mount-point <guest-path> [--writable]`
+  - `clawctl mount remove <vm> <guest-path>`
+  - `clawctl mount list <vm>`
+  Under the hood: edit the Lima yaml and restart the VM. Lima doesn't
+  support hot-adding mounts, so a restart is required — the command should
+  warn and confirm. Also update `clawctl.json` so the mount survives a
+  future rebuild.
+
 - [x] **`clawctl restart` with health verification** _(done: v0.4.0)_
 
-- [ ] **In-place upgrades**
-      When openclaw ships a new version, update the VM without rebuilding.
-      Re-run the idempotent provisioning scripts, restart the daemon. State
-      survives because it lives in `data/`. A simple
-      `clawctl upgrade <name>` command.
+- [x] **In-place upgrades** _(done: v0.16.0)_
+      Implemented as `clawctl update`: checks for new releases, downloads
+      and self-replaces the host binary, then pushes the new `claw` binary
+      to all running VMs and runs `claw migrate` for capability migrations.
+      Stopped VMs get a `pendingClawUpdate` flag and are updated on next start.
 
 - [ ] **Skill portability — make clawctl aware of the skills convention**
       Openclaw already has a natural convention: each skill lives in
@@ -101,38 +108,28 @@ so they don't get lost.
 
   Longer term: skill sharing between instances, maybe a registry.
 
-- [ ] **VM-side CLI (`claw`) — agent tooling inside the VM**
-      Split the tooling into two CLIs: `clawctl` (host, VM lifecycle) and
-      `claw` (VM-side, agent tooling). Separate packages in a monorepo,
-      sharing code but independently built.
+- [x] **VM-side CLI (`claw`) — agent tooling inside the VM** _(done: v0.8.0)_
+      Implemented as `@clawctl/vm-cli`. Commands: `claw provision <phase>`,
+      `claw doctor`, `claw checkpoint`, `claw migrate`. Built with
+      `bun build --compile` for linux-arm64, deployed into VM at
+      `/usr/local/bin/claw`. All commands return structured JSON. Host calls
+      claw via `limactl shell` instead of raw bash strings.
+  - [ ] **`claw create skill`** — scaffold a new skill directory (not yet implemented)
 
-  `claw` owns everything that happens _inside_ the VM:
-  - `claw bootstrap` — post-onboarding setup (daemon install, config set,
-    workspace init). Replaces the imperative shell commands in `bin/cli.tsx`.
-  - `claw doctor` — health checks beyond `openclaw doctor` (mount
-    verification, env vars, PATH, service status).
-  - `claw create skill` — scaffold a new skill directory with SKILL.md,
-    scripts/, package.json in the right structure.
-  - `claw update` — self-update the VM-side CLI (pulled from host mount
-    or downloaded).
-  - Future: any agent-facing commands (skill management, config, etc.)
+- [ ] **Adopt native OpenClaw installations into a clawctl VM**
+      Many users have OpenClaw running natively on their machine. `clawctl adopt`
+      would create a VM that takes over an existing native installation:
+  - Detect the native OpenClaw data dirs (state, config, workspace)
+  - Create a new VM with mounts pointing at the existing data
+  - Provision the VM (idempotent — packages already installed natively
+    get skipped)
+  - Stop the native daemon, start the VM-based one
+  - Optionally move data into the clawctl project directory layout
 
-  **How it gets there:** Built at provisioning time (`bun build --compile`),
-  copied into the VM during provisioning. `clawctl upgrade` rebuilds and
-  pushes the new binary.
-
-  **Host→VM interface:** `clawctl` calls `claw` commands inside the VM
-  instead of raw `bash -lc` strings. `claw` returns structured output
-  (JSON or exit codes) so the host can parse reliably. This replaces the
-  current pattern of regex-parsing shell output.
-
-  **What this subsumes:** The host-side CLI proxy (`clawctl openclaw` / `oc`)
-  already exists. With `claw` on the VM side, it would become
-  `clawctl oc <command>` → `limactl shell ... claw <command>`. The proxy
-  logic is just dispatch, `claw` does the real work.
-
-  **Naming rationale:** `clawctl` = control plane (host), `claw` = the
-  tool itself (VM). Short and natural for interactive use inside the VM.
+  This is the general-purpose version of the one-off migration done for
+  the original Klaus VM (which was adopted from a pre-clawctl Lima setup).
+  The native case is harder because data paths vary and the native daemon
+  must be stopped cleanly.
 
 ---
 
