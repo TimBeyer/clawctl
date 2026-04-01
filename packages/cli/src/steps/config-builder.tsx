@@ -151,14 +151,14 @@ function isSection(id: string): boolean {
   );
 }
 
-/** Check if a focus ID is a select-type field in a dynamic section. */
-function isDynamicSelectField(focusId: string): boolean {
+/** Look up the field type for a dynamic section field focus ID. */
+function dynamicFieldType(focusId: string): string | undefined {
   const section = findSection(focusId);
-  if (!section) return false;
+  if (!section) return undefined;
   const path = fieldPathOf(section, focusId);
-  if (!path) return false;
+  if (!path) return undefined;
   const field = section.configDef.fields.find((f) => (f.path as string) === path);
-  return field?.type === "select";
+  return field?.type;
 }
 
 const MEMORY_OPTIONS = ["4GiB", "8GiB", "16GiB", "32GiB"];
@@ -262,9 +262,10 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
       const sectionConfig: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(vals)) {
         if (!v) continue;
-        // Convert comma-separated text fields to arrays (e.g., allowFrom)
         const field = section.configDef.fields.find((f) => (f.path as string) === k);
-        if (field?.type === "text" && v.includes(",")) {
+        if (field?.type === "toggle") {
+          sectionConfig[k] = v === "true";
+        } else if (field?.type === "text" && v.includes(",")) {
           sectionConfig[k] = v.split(",").map((s) => s.trim()).filter(Boolean);
         } else {
           sectionConfig[k] = v;
@@ -438,8 +439,14 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
           setSelectingMemory(true);
         } else if (currentFocus === "resources.disk") {
           setSelectingDisk(true);
-        } else if (isDynamicSelectField(currentFocus)) {
+        } else if (dynamicFieldType(currentFocus) === "select") {
           setSelectingDynamicField(currentFocus);
+        } else if (dynamicFieldType(currentFocus) === "toggle") {
+          // Toggle boolean value
+          const section = findSection(currentFocus)!;
+          const path = fieldPathOf(section, currentFocus)!;
+          const current = dynamicValues[section.key]?.[path];
+          setDynamicValue(section.key, path, current === "true" ? "false" : "true");
         } else {
           setEditing(true);
         }

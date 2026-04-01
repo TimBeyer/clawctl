@@ -12,6 +12,7 @@
   },
   "channels": {
     "telegram": {
+      "enabled": true,
       "botToken": "op://Sam/Telegram Token/credential"
     }
   }

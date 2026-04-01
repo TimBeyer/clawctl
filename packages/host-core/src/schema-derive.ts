@@ -76,6 +76,10 @@ function deriveFieldSchema(field: CapabilityConfigField): z.ZodTypeAny {
       schema = field.required ? z.string().min(1) : z.string();
       break;
     }
+    case "toggle": {
+      schema = z.boolean();
+      break;
+    }
     case "select": {
       const values = (field.options ?? []).map((o: { label: string; value: string }) => o.value);
       if (values.length >= 2) {

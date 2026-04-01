@@ -48,6 +48,7 @@
 
   "channels": {
     "telegram": {
+      "enabled": true,
       "botToken": "123456:ABC-...",
       "allowFrom": ["123456789"],
       "groups": {

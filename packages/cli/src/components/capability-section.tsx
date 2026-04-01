@@ -86,6 +86,18 @@ export function CapabilitySection({
           );
         }
 
+        if (field.type === "toggle") {
+          const checked = values[path] === "true";
+          return (
+            <Box key={path}>
+              <Text bold={isFocused} color={isFocused ? "cyan" : undefined}>
+                {isFocused ? "\u25b8 " : "  "}
+                {checked ? "[x]" : "[ ]"} {field.label}
+              </Text>
+            </Box>
+          );
+        }
+
         if ((field.type === "text" || field.type === "password") && isEditing) {
           return (
             <Box key={path}>

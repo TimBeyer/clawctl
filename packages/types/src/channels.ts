@@ -39,6 +39,16 @@ export interface ChannelDef {
 }
 
 // ---------------------------------------------------------------------------
+// Shared enabled toggle — first field in every channel
+// ---------------------------------------------------------------------------
+
+const enabledField: CapabilityConfigField = {
+  path: "enabled",
+  label: "Enabled",
+  type: "toggle",
+};
+
+// ---------------------------------------------------------------------------
 // Channel definitions
 // ---------------------------------------------------------------------------
 
@@ -57,6 +67,7 @@ const telegramChannel: ChannelDef = {
       ],
     },
     fields: [
+      enabledField,
       {
         path: "botToken",
         label: "Bot Token",
@@ -83,7 +94,8 @@ const telegramChannel: ChannelDef = {
         },
       },
     ],
-    summary: (values) => (values.botToken ? "configured" : ""),
+    summary: (values) =>
+      values.enabled === "true" ? (values.botToken ? "configured" : "enabled") : "",
   },
   postCommands: (config) => {
     const cmds: string[] = [];
@@ -129,6 +141,7 @@ const discordChannel: ChannelDef = {
       ],
     },
     fields: [
+      enabledField,
       {
         path: "token",
         label: "Bot Token",
@@ -145,7 +158,8 @@ const discordChannel: ChannelDef = {
         },
       },
     ],
-    summary: (values) => (values.token ? "configured" : ""),
+    summary: (values) =>
+      values.enabled === "true" ? (values.token ? "configured" : "enabled") : "",
   },
 };
 
@@ -164,6 +178,7 @@ const slackChannel: ChannelDef = {
       ],
     },
     fields: [
+      enabledField,
       {
         path: "botToken",
         label: "Bot Token",
@@ -195,7 +210,8 @@ const slackChannel: ChannelDef = {
         },
       },
     ],
-    summary: (values) => (values.botToken ? "configured" : ""),
+    summary: (values) =>
+      values.enabled === "true" ? (values.botToken ? "configured" : "enabled") : "",
   },
 };
 
@@ -213,8 +229,8 @@ const whatsappChannel: ChannelDef = {
         "After provisioning, pair via: clawctl oc -i <name> channels login --channel whatsapp",
       ],
     },
-    fields: [],
-    summary: () => "QR pairing",
+    fields: [enabledField],
+    summary: (values) => (values.enabled === "true" ? "QR pairing" : ""),
   },
 };
 

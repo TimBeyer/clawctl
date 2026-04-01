@@ -111,6 +111,7 @@ export async function bootstrapOpenclaw(
   // d) Channel setup (plaintext — must run before secret migration)
   if (config.channels) {
     for (const [channelName, channelConfig] of Object.entries(config.channels)) {
+      if (channelConfig.enabled === false) continue;
       onLine?.(`Configuring ${channelName}...`);
       const cmds = buildChannelCommands(channelName, channelConfig);
       for (const cmd of cmds) {
@@ -270,9 +271,10 @@ function configToCommands(prefix: string, obj: Record<string, unknown>): string[
 function buildChannelCommands(channelName: string, channelConfig: Record<string, unknown>): string[] {
   const def: ChannelDef | undefined = CHANNEL_REGISTRY[channelName];
   const pluginName = def?.pluginName ?? channelName;
+  const enabled = channelConfig.enabled !== false;
   const cmds: string[] = [
-    `openclaw config set channels.${channelName}.enabled true`,
-    `openclaw config set plugins.entries.${pluginName}.enabled true`,
+    `openclaw config set channels.${channelName}.enabled ${enabled}`,
+    `openclaw config set plugins.entries.${pluginName}.enabled ${enabled}`,
   ];
 
   // Set each config field — skip fields handled by postCommands for known channels
@@ -293,8 +295,9 @@ function buildChannelCommands(channelName: string, channelConfig: Record<string,
     }
   }
 
-  // Apply config fields
+  // Apply config fields (skip enabled — already handled above)
   for (const [key, value] of Object.entries(channelConfig)) {
+    if (key === "enabled") continue;
     if (postHandledKeys.has(key)) continue;
     if (value === null || value === undefined) continue;
     const path = `channels.${channelName}.${key}`;
