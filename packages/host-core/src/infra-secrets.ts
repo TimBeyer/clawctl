@@ -65,7 +65,10 @@ export async function patchMainConfig(
   driver: VMDriver,
   vmName: string,
   resolvedMap: ResolvedSecretRef[],
-  config: { telegram?: { botToken?: string } },
+  config: {
+    telegram?: { botToken?: string };
+    channels?: Record<string, Record<string, unknown>>;
+  },
   onLine?: OnLine,
 ): Promise<void> {
   onLine?.("Patching main config with file provider...");
@@ -82,14 +85,28 @@ export async function patchMainConfig(
     mode: "json",
   };
 
-  // Replace telegram botToken with SecretRef if it was an op:// ref
-  const telegramRef = resolvedMap.find((r) => r.path[0] === "telegram" && r.path[1] === "botToken");
-  if (telegramRef && mainConfig.channels) {
-    const channels = mainConfig.channels as Record<string, unknown>;
-    if (channels.telegram) {
-      const telegram = channels.telegram as Record<string, unknown>;
-      telegram.botToken = makeSecretRef(telegramRef.path);
+  // Replace channel secrets with SecretRefs if they were op:// refs.
+  // Matches both deprecated "telegram.botToken" and new "channels.telegram.botToken" paths.
+  for (const ref of resolvedMap) {
+    let channelName: string | undefined;
+    let fieldName: string | undefined;
+
+    if (ref.path[0] === "channels" && ref.path.length >= 3) {
+      // New path: channels.<name>.<field>
+      channelName = ref.path[1];
+      fieldName = ref.path[2];
+    } else if (ref.path[0] === "telegram" && ref.path.length >= 2) {
+      // Deprecated path: telegram.<field>
+      channelName = "telegram";
+      fieldName = ref.path[1];
     }
+
+    if (!channelName || !fieldName) continue;
+    if (!mainConfig.channels) continue;
+    const channels = mainConfig.channels as Record<string, unknown>;
+    const channel = channels[channelName];
+    if (!channel || typeof channel !== "object") continue;
+    (channel as Record<string, unknown>)[fieldName] = makeSecretRef(ref.path);
   }
 
   await writeVMJson(driver, vmName, CONFIG_PATH, mainConfig);
