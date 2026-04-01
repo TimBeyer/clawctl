@@ -241,35 +241,10 @@ The eventual goal is to keep Ink active during onboarding by embedding the subpr
 
 ## CLI Command Conventions
 
-### Instance resolution
-
-Every command that targets an instance uses `requireInstance(opts)` from
-host-core. It resolves the instance in this order:
-
-1. Explicit `-i <name>` / `--instance <name>` flag
-2. Local `.clawctl` context file (set by `clawctl use`)
-3. Global context (`~/.config/clawctl/context.json`)
-4. Error if none found
-
-### Positional `[name]` argument
-
-Commands that **only** target an instance (no other positional args)
-offer `[name]` as a convenience positional:
-
-```
-clawctl status [name]       # OK — no other positionals
-clawctl start [name]        # OK
-clawctl mount list [name]   # OK
-```
-
-Commands that have **other required positional arguments** must NOT use
-`[name]` — Commander consumes the first positional as the optional name,
-swallowing the real argument. Use `-i` or context resolution instead:
-
-```
-clawctl mount add <host-path> <guest-path>     # No [name] — would eat <host-path>
-clawctl mount remove <guest-path>              # No [name] — would eat <guest-path>
-```
+See `.agents/skills/adding-cli-commands/` for the full checklist of
+files to update when adding a command, and
+`.agents/skills/adding-cli-commands/references/cli-conventions.md` for
+instance resolution, positional argument rules, and subcommand patterns.
 
 ## Error Handling
 
