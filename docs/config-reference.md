@@ -200,10 +200,21 @@ channel-specific config. Applied during bootstrap via `openclaw config set`.
 Known channels with wizard support: **telegram**, **discord**, **slack**, **whatsapp**.
 Unknown channel names are accepted — they pass through to OpenClaw directly.
 
+### `enabled` field
+
+Every channel supports an `enabled` boolean:
+
+| `enabled` value | Behavior |
+| --------------- | -------- |
+| `true`          | Channel is configured during bootstrap. |
+| omitted         | Treated as `true` — presence of the channel key means "enable it." |
+| `false`         | Channel is skipped during bootstrap. Config is preserved (useful for temporarily disabling a channel without deleting its credentials). |
+
 ### `channels.telegram`
 
 | Field                        | Type     | Description                                      |
 | ---------------------------- | -------- | ------------------------------------------------ |
+| `enabled`                    | boolean  | Enable this channel (default: `true`).           |
 | `botToken`                   | string   | Bot token from BotFather (required).             |
 | `allowFrom`                  | string[] | Telegram user IDs allowed to DM the bot.         |
 | `groups`                     | object   | Group IDs and their settings.                    |
@@ -211,20 +222,26 @@ Unknown channel names are accepted — they pass through to OpenClaw directly.
 
 ### `channels.discord`
 
-| Field   | Type   | Description                          |
-| ------- | ------ | ------------------------------------ |
-| `token` | string | Discord bot token (required).        |
+| Field     | Type    | Description                              |
+| --------- | ------- | ---------------------------------------- |
+| `enabled` | boolean | Enable this channel (default: `true`).   |
+| `token`   | string  | Discord bot token (required).            |
 
 ### `channels.slack`
 
-| Field      | Type   | Description                                        |
-| ---------- | ------ | -------------------------------------------------- |
-| `botToken` | string | Slack Bot Token `xoxb-...` (required).             |
-| `appToken` | string | Slack App Token `xapp-...` for Socket Mode (required). |
+| Field      | Type    | Description                                            |
+| ---------- | ------- | ------------------------------------------------------ |
+| `enabled`  | boolean | Enable this channel (default: `true`).                 |
+| `botToken` | string  | Slack Bot Token `xoxb-...` (required).                 |
+| `appToken` | string  | Slack App Token `xapp-...` for Socket Mode (required). |
 
 ### `channels.whatsapp`
 
-No required fields. Uses QR code pairing after provisioning:
+| Field     | Type    | Description                            |
+| --------- | ------- | -------------------------------------- |
+| `enabled` | boolean | Enable this channel (default: `true`). |
+
+No credentials needed — uses QR code pairing after provisioning:
 `clawctl oc -i <name> channels login --channel whatsapp`
 
 Additional channel-specific fields beyond the essentials listed above are
