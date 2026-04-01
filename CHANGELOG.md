@@ -1,5 +1,13 @@
 # Changelog
 
+# [0.21.0](https://github.com/TimBeyer/clawctl/compare/v0.20.0...v0.21.0) (2026-04-01)
+
+
+### Features
+
+* add adding-cli-commands skill ([c58456d](https://github.com/TimBeyer/clawctl/commit/c58456d8f41f6103b2a3367d21db9c868235ba2a))
+* add mount command to README and shell completions ([9f6bbfc](https://github.com/TimBeyer/clawctl/commit/9f6bbfc3c4dbe936e2f37af709e8f9c2cb322f67))
+
 # [0.20.0](https://github.com/TimBeyer/clawctl/compare/v0.19.1...v0.20.0) (2026-04-01)
 
 
