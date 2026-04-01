@@ -96,7 +96,23 @@ export interface InstanceConfig {
         };
       };
 
-  /** Telegram channel (optional). */
+  /**
+   * Communication channels (Telegram, Discord, Slack, WhatsApp, etc.).
+   * Each key is a channel name; the value is channel-specific config.
+   */
+  channels?: Record<string, Record<string, unknown>>;
+
+  /**
+   * Arbitrary OpenClaw config passthrough.
+   * Each key is a dotpath (e.g., "session.dmScope"), applied via
+   * `openclaw config set` during bootstrap. No host-side validation.
+   */
+  openclaw?: Record<string, unknown>;
+
+  /**
+   * Telegram channel (optional).
+   * @deprecated Use `channels.telegram` instead.
+   */
   telegram?: {
     /** Bot token from BotFather. */
     botToken: string;
