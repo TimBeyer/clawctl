@@ -63,6 +63,7 @@ Extend `VMDriver` with `readMounts()` and `writeMounts()` methods. Implement for
 ## Outcome
 
 Delivered `clawctl mount list/add/remove` with:
+
 - `VMDriver` interface extended with `readMounts()`/`writeMounts()`
 - Lima implementation that parses/writes `~/.lima/<vm>/lima.yaml`
 - Automatic restart on mount changes (with `--no-restart` escape hatch)
