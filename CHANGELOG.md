@@ -1,5 +1,7 @@
 # Changelog
 
+## [0.19.1](https://github.com/TimBeyer/clawctl/compare/v0.19.0...v0.19.1) (2026-04-01)
+
 # [0.19.0](https://github.com/TimBeyer/clawctl/compare/v0.18.0...v0.19.0) (2026-03-22)
 
 
