@@ -173,7 +173,12 @@ program
     await runUse(name, opts);
   });
 
-const mountCmd = program.command("mount").description("Manage VM mount points");
+const mountCmd = program
+  .command("mount")
+  .description("Manage VM mount points")
+  .action(() => {
+    mountCmd.help();
+  });
 
 mountCmd
   .command("list [name]")
@@ -191,6 +196,7 @@ mountCmd
   .option("-i, --instance <name>", "Instance to target")
   .option("--writable", "Mount as read-write (default: read-only)")
   .option("--no-restart", "Update config but don't restart the VM")
+  .showHelpAfterError(true)
   .action(
     async (
       name: string | undefined,
@@ -208,6 +214,7 @@ mountCmd
   .argument("<guest-path>", "Mount point to remove")
   .option("-i, --instance <name>", "Instance to target")
   .option("--no-restart", "Update config but don't restart the VM")
+  .showHelpAfterError(true)
   .action(
     async (
       name: string | undefined,
