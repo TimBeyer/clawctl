@@ -40,16 +40,16 @@ so they don't get lost.
 - [ ] **Automate manual post-setup steps** _(partially done)_
       Some items are now handled by the bootstrap flow; others remain.
   - [x] **Sandbox disabled** — wizard option, bootstrap sets
-    `agents.defaults.sandbox.mode off` when configured
+        `agents.defaults.sandbox.mode off` when configured
   - [x] **Workspace on shared mount** — bootstrap sets
-    `agents.defaults.workspace /mnt/project/data/workspace`
+        `agents.defaults.workspace /mnt/project/data/workspace`
   - [ ] **Docker permissions** — add the openclaw user to the docker group
-    so the agent can run containers without sudo
+        so the agent can run containers without sudo
   - [ ] **Headless Chromium** — install and configure so the agent can
-    browse. Overlaps with the pre-installed tooling item above.
+        browse. Overlaps with the pre-installed tooling item above.
   - [ ] **Heartbeat security reviews** — configure periodic security
-    review tasks. Needs investigation into how openclaw schedules
-    these (cron? built-in scheduler?).
+        review tasks. Needs investigation into how openclaw schedules
+        these (cron? built-in scheduler?).
 
 - [ ] **Post-provision setup commands for optional services**
       Allow configuring 1Password, Tailscale, etc. on an already-running VM.
@@ -70,10 +70,10 @@ so they don't get lost.
   - `clawctl mount add <vm> <host-path> --mount-point <guest-path> [--writable]`
   - `clawctl mount remove <vm> <guest-path>`
   - `clawctl mount list <vm>`
-  Under the hood: edit the Lima yaml and restart the VM. Lima doesn't
-  support hot-adding mounts, so a restart is required — the command should
-  warn and confirm. Also update `clawctl.json` so the mount survives a
-  future rebuild.
+    Under the hood: edit the Lima yaml and restart the VM. Lima doesn't
+    support hot-adding mounts, so a restart is required — the command should
+    warn and confirm. Also update `clawctl.json` so the mount survives a
+    future rebuild.
 
 - [x] **`clawctl restart` with health verification** _(done: v0.4.0)_
 

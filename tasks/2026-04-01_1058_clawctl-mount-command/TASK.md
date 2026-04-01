@@ -7,6 +7,7 @@
 Add a `clawctl mount` command with `list`, `add`, and `remove` subcommands to manage host→guest mounts on existing instances. Currently mounts can only be set at VM creation time.
 
 Does NOT cover:
+
 - Hot-adding mounts without restart (Lima limitation)
 - Changing built-in mounts (project, data)
 
@@ -31,14 +32,14 @@ Extend `VMDriver` with `readMounts()` and `writeMounts()` methods. Implement for
 
 ### Files to create/modify
 
-| File | Action |
-|------|--------|
+| File                                      | Action                                        |
+| ----------------------------------------- | --------------------------------------------- |
 | `packages/host-core/src/drivers/types.ts` | Add `readMounts`, `writeMounts` to `VMDriver` |
-| `packages/host-core/src/drivers/lima.ts` | Implement mount methods |
-| `packages/host-core/package.json` | Add `yaml` dependency |
-| `packages/cli/src/commands/mount.ts` | **Create** — mount list/add/remove |
-| `packages/cli/src/commands/index.ts` | Add mount exports |
-| `packages/cli/bin/cli.tsx` | Wire mount subcommands |
+| `packages/host-core/src/drivers/lima.ts`  | Implement mount methods                       |
+| `packages/host-core/package.json`         | Add `yaml` dependency                         |
+| `packages/cli/src/commands/mount.ts`      | **Create** — mount list/add/remove            |
+| `packages/cli/src/commands/index.ts`      | Add mount exports                             |
+| `packages/cli/bin/cli.tsx`                | Wire mount subcommands                        |
 
 ## Steps
 
