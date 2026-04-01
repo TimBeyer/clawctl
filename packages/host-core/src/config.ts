@@ -1,7 +1,7 @@
 import { readFile } from "fs/promises";
-import { resolveEnvRefs, validateConfig } from "@clawctl/types";
-import type { InstanceConfig, VMConfig, CapabilityDef } from "@clawctl/types";
-import { buildCapabilitiesSchema, getSecretPaths } from "./schema-derive.js";
+import { resolveEnvRefs, validateConfig, CHANNEL_REGISTRY } from "@clawctl/types";
+import type { InstanceConfig, VMConfig, CapabilityDef, ChannelDef } from "@clawctl/types";
+import { buildCapabilitiesSchema, buildChannelsSchema, getSecretPaths } from "./schema-derive.js";
 
 // Re-export validateConfig from types for convenience
 export { validateConfig } from "@clawctl/types";
@@ -43,9 +43,25 @@ export function sanitizeConfig(
     delete (clone.network as Record<string, unknown>).gatewayToken;
   }
 
-  // telegram.botToken
+  // telegram.botToken (deprecated top-level key)
   if (clone.telegram && typeof clone.telegram === "object") {
     delete (clone.telegram as Record<string, unknown>).botToken;
+  }
+
+  // Channel secrets (from ChannelDef fields marked secret: true)
+  if (clone.channels && typeof clone.channels === "object") {
+    const channels = clone.channels as Record<string, unknown>;
+    for (const [channelName, channelConfig] of Object.entries(channels)) {
+      if (!channelConfig || typeof channelConfig !== "object") continue;
+      const def = CHANNEL_REGISTRY[channelName];
+      if (!def) continue;
+      const secretPaths = def.configDef.fields
+        .filter((f) => f.secret)
+        .map((f) => f.path as string);
+      for (const path of secretPaths) {
+        delete (channelConfig as Record<string, unknown>)[path];
+      }
+    }
   }
 
   // Capability secrets (from configDef fields marked secret: true)
@@ -110,6 +126,22 @@ export async function loadConfig(
     parsed = resolveEnvRefs(parsed as Record<string, unknown>);
   }
 
+  // Migrate deprecated top-level telegram → channels.telegram
+  if (typeof parsed === "object" && parsed !== null) {
+    const obj = parsed as Record<string, unknown>;
+    if (obj.telegram && !obj.channels?.hasOwnProperty?.("telegram")) {
+      const channels = (obj.channels ?? {}) as Record<string, unknown>;
+      channels.telegram = obj.telegram;
+      obj.channels = channels;
+      delete obj.telegram;
+      console.warn(
+        'Warning: top-level "telegram" config is deprecated. Use "channels.telegram" instead.',
+      );
+    }
+  }
+
   const capabilitySchema = capabilities ? buildCapabilitiesSchema(capabilities) : undefined;
-  return validateConfig(parsed, { capabilitySchema });
+  const channelDefs = Object.values(CHANNEL_REGISTRY);
+  const channelSchema = channelDefs.length > 0 ? buildChannelsSchema(channelDefs) : undefined;
+  return validateConfig(parsed, { capabilitySchema, channelSchema });
 }
