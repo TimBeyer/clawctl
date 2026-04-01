@@ -26,6 +26,9 @@ import {
   runDaemonLogs,
   runDaemonRun,
   runUpdate,
+  runMountList,
+  runMountAdd,
+  runMountRemove,
 } from "../src/commands/index.js";
 import { ensureDaemon } from "@clawctl/daemon";
 import { checkAndPromptUpdate } from "../src/update-hook.js";
@@ -169,6 +172,51 @@ program
   .action(async (name: string | undefined, opts: { global?: boolean }) => {
     await runUse(name, opts);
   });
+
+const mountCmd = program.command("mount").description("Manage VM mount points");
+
+mountCmd
+  .command("list [name]")
+  .description("List all mounts for an instance")
+  .option("-i, --instance <name>", "Instance to target")
+  .action(async (name: string | undefined, opts: { instance?: string }) => {
+    await runMountList(driver, { instance: opts.instance ?? name });
+  });
+
+mountCmd
+  .command("add [name]")
+  .description("Add a host directory mount to the VM")
+  .argument("<host-path>", "Host directory to mount")
+  .argument("<guest-path>", "Mount point inside the VM")
+  .option("-i, --instance <name>", "Instance to target")
+  .option("--writable", "Mount as read-write (default: read-only)")
+  .option("--no-restart", "Update config but don't restart the VM")
+  .action(
+    async (
+      name: string | undefined,
+      hostPath: string,
+      guestPath: string,
+      opts: { instance?: string; writable?: boolean; noRestart?: boolean },
+    ) => {
+      await runMountAdd(driver, { instance: opts.instance ?? name, ...opts }, hostPath, guestPath);
+    },
+  );
+
+mountCmd
+  .command("remove [name]")
+  .description("Remove a mount from the VM")
+  .argument("<guest-path>", "Mount point to remove")
+  .option("-i, --instance <name>", "Instance to target")
+  .option("--no-restart", "Update config but don't restart the VM")
+  .action(
+    async (
+      name: string | undefined,
+      guestPath: string,
+      opts: { instance?: string; noRestart?: boolean },
+    ) => {
+      await runMountRemove(driver, { instance: opts.instance ?? name, ...opts }, guestPath);
+    },
+  );
 
 const daemonCmd = program.command("daemon").description("Manage the background daemon");
 

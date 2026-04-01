@@ -19,3 +19,4 @@ export {
   runDaemonRun,
 } from "./daemon.js";
 export { runUpdate } from "./update.js";
+export { runMountList, runMountAdd, runMountRemove } from "./mount.js";
