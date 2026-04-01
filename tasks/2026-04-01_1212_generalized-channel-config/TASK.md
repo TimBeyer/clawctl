@@ -1,6 +1,6 @@
 # Generalized Channel Configuration + OpenClaw Passthrough
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -49,20 +49,36 @@ Implementation phases:
 
 ## Steps
 
-- [ ] Create `packages/types/src/channels.ts` — ChannelDef type + registry
-- [ ] Create `packages/types/src/schemas/channels.ts` — Zod schemas
-- [ ] Update `packages/types/src/types.ts` — add channels/openclaw to InstanceConfig
-- [ ] Update `packages/types/src/schemas/index.ts` — wire into master schema
-- [ ] Update `packages/types/src/index.ts` — exports
-- [ ] Update `packages/host-core/src/schema-derive.ts` — buildChannelsSchema()
-- [ ] Update `packages/host-core/src/config.ts` — telegram migration + sanitization
-- [ ] Update `packages/host-core/src/bootstrap.ts` — generic channel loop + passthrough
-- [ ] Update `packages/host-core/src/infra-secrets.ts` — generalize for channels
-- [ ] Update `packages/cli/src/steps/config-builder.tsx` — dynamic channel sections
-- [ ] Update `packages/cli/src/components/config-review.tsx` — dynamic channel review
-- [ ] Update examples and docs
-- [ ] Add tests
+- [x] Create `packages/types/src/channels.ts` — ChannelDef type + registry
+- [x] Create `packages/types/src/schemas/channels.ts` — Zod schemas
+- [x] Update `packages/types/src/types.ts` — add channels/openclaw to InstanceConfig
+- [x] Update `packages/types/src/schemas/index.ts` — wire into master schema
+- [x] Update `packages/types/src/index.ts` — exports
+- [x] Update `packages/host-core/src/schema-derive.ts` — buildChannelsSchema()
+- [x] Update `packages/host-core/src/config.ts` — generalized sanitization
+- [x] Update `packages/host-core/src/bootstrap.ts` — generic channel loop + passthrough
+- [x] Update `packages/host-core/src/infra-secrets.ts` — generalize for channels
+- [x] Update `packages/cli/src/steps/config-builder.tsx` — DynamicSection abstraction + channel sections
+- [x] Update `packages/cli/src/components/config-review.tsx` — dynamic channel review
+- [x] Remove backward compat (top-level telegram, telegramSchema)
+- [x] Update examples and docs
+- [x] Update tests
 
 ## Notes
 
+- Dropped all backward compatibility for top-level `telegram` key per user feedback — not a widely used library yet, clean code preferred.
+- Introduced `DynamicSection` abstraction in the wizard that unifies capabilities and channels. This eliminated the scattered `startsWith("cap:")` / `split(":")` string parsing in favor of typed lookups via `findSection()` and `fieldPathOf()`.
+- Net code reduction: -112 lines despite adding 4 new channels. The `CapabilitySection` component needed zero changes — it already rendered any `configDef`.
+
 ## Outcome
+
+Delivered:
+- `ChannelDef` system with Telegram, Discord, Slack, WhatsApp
+- `channels` config key replacing top-level `telegram`
+- `openclaw` passthrough for arbitrary OpenClaw settings
+- Generic bootstrap loop applying any channel's config
+- Unified wizard DynamicSection for capabilities + channels
+- Secret sanitization generalized for all channels
+- Updated tests, examples, and docs
+
+Adding new channels requires only a ~15-line ChannelDef entry in `packages/types/src/channels.ts`. The `openclaw` passthrough lets users configure anything OpenClaw supports immediately, even without a ChannelDef.
