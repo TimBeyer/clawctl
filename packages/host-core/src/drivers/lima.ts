@@ -1,12 +1,13 @@
-import { writeFile, unlink } from "fs/promises";
+import { readFile, writeFile, unlink } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 import { execa } from "execa";
+import YAML from "yaml";
 import { exec, execWithLogs } from "../exec.js";
 import { installFormula, isFormulaInstalled } from "../homebrew.js";
 import { parseLimaVersion } from "../parse.js";
 import { generateLimaYaml } from "@clawctl/templates";
-import type { VMConfig } from "@clawctl/types";
+import type { VMConfig, MountSpec } from "@clawctl/types";
 import type { VMDriver, VMCreateOptions, ExecResult, OnLine } from "./types.js";
 
 export class LimaDriver implements VMDriver {
@@ -176,5 +177,43 @@ export class LimaDriver implements VMDriver {
 
   shellCommand(name: string): string {
     return `limactl shell ${name}`;
+  }
+
+  /** Get the Lima instance directory from `limactl list --json`. */
+  private async instanceDir(name: string): Promise<string> {
+    const result = await exec("limactl", ["list", "--json"]);
+    if (result.exitCode !== 0) {
+      throw new Error(`Failed to list Lima instances: ${result.stderr}`);
+    }
+    for (const line of result.stdout.trim().split("\n")) {
+      const vm = JSON.parse(line);
+      if (vm.name === name) return vm.dir as string;
+    }
+    throw new Error(`Lima instance "${name}" not found`);
+  }
+
+  async readMounts(name: string): Promise<MountSpec[]> {
+    const dir = await this.instanceDir(name);
+    const raw = await readFile(join(dir, "lima.yaml"), "utf-8");
+    const doc = YAML.parse(raw);
+    if (!Array.isArray(doc.mounts)) return [];
+    return doc.mounts.map((m: Record<string, unknown>) => ({
+      location: m.location as string,
+      mountPoint: m.mountPoint as string,
+      writable: (m.writable as boolean) ?? false,
+    }));
+  }
+
+  async writeMounts(name: string, mounts: MountSpec[]): Promise<void> {
+    const dir = await this.instanceDir(name);
+    const yamlPath = join(dir, "lima.yaml");
+    const raw = await readFile(yamlPath, "utf-8");
+    const doc = YAML.parse(raw);
+    doc.mounts = mounts.map((m) => ({
+      location: m.location,
+      mountPoint: m.mountPoint,
+      writable: m.writable ?? false,
+    }));
+    await writeFile(yamlPath, YAML.stringify(doc));
   }
 }

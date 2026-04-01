@@ -32,7 +32,7 @@ export {
 export type { SecretRef, ResolvedSecretRef } from "./secrets.js";
 
 // Provision
-export { provisionVM, deployClaw } from "./provision.js";
+export { provisionVM, deployClaw, runClawProvision } from "./provision.js";
 export type { ProvisionCallbacks } from "./provision.js";
 
 // Claw binary (embedded asset in compiled mode, direct path in dev mode)

@@ -39,6 +39,12 @@ export interface VMDriver {
   ): Promise<ExecResult>;
   copy(name: string, localPath: string, remotePath: string): Promise<void>;
 
+  // Mounts
+  /** Read current mounts from the VM backend config. */
+  readMounts(name: string): Promise<MountSpec[]>;
+  /** Write updated mounts to the VM backend config. VM must be stopped. */
+  writeMounts(name: string, mounts: MountSpec[]): Promise<void>;
+
   // Host prerequisites
   isInstalled(): Promise<boolean>;
   install(onLine?: OnLine): Promise<string>; // returns version
