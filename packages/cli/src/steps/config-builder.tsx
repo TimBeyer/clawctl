@@ -258,6 +258,8 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
     for (const section of DYNAMIC_SECTIONS) {
       const vals = dynamicValues[section.key];
       if (!vals || !Object.values(vals).some((v) => v)) continue;
+      // Channels require enabled — skip if toggled off or never toggled
+      if (section.kind === "channel" && vals.enabled !== "true") continue;
 
       const sectionConfig: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(vals)) {
