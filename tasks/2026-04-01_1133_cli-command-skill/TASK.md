@@ -1,6 +1,6 @@
 # CLI command skill + fix missing mount completions/README
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -18,7 +18,7 @@ Create `.agents/skills/adding-cli-commands/` with a SKILL.md that contains the f
 
 ## Steps
 
-- [ ] Create the skill with checklist and conventions
-- [ ] Add `mount` to README commands table
-- [ ] Add `mount` to bash/zsh completions and test
-- [ ] Lint, format, test, commit
+- [x] Create the skill with checklist and conventions
+- [x] Add `mount` to README commands table
+- [x] Add `mount` to bash/zsh completions and test
+- [x] Lint, format, test, commit
