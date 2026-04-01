@@ -1,6 +1,6 @@
 # `clawctl mount` — Manage VM mount points after creation
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -44,11 +44,11 @@ Extend `VMDriver` with `readMounts()` and `writeMounts()` methods. Implement for
 ## Steps
 
 - [x] Delete one-off adopt script
-- [ ] Add `readMounts`/`writeMounts` to `VMDriver` interface, implement for Lima
-- [ ] Create `mount.ts` command (list/add/remove with restart flow + clawctl.json sync)
-- [ ] Wire into CLI (commander definitions + exports)
-- [ ] Lint, format, test
-- [ ] Commit
+- [x] Add `readMounts`/`writeMounts` to `VMDriver` interface, implement for Lima
+- [x] Create `mount.ts` command (list/add/remove with restart flow + clawctl.json sync)
+- [x] Wire into CLI (commander definitions + exports)
+- [x] Lint, format, test
+- [x] Commit
 
 ## Notes
 
@@ -57,3 +57,15 @@ Extend `VMDriver` with `readMounts()` and `writeMounts()` methods. Implement for
 - `clawctl.json` only stores user-added extra mounts, not the built-in ones
 - The `yaml` package is already used in `@clawctl/templates`; added to `@clawctl/host-core` too
 - The `runClawProvision` export added to host-core during the adoption work is kept — useful for future commands
+- Commander's optional `[name]` positional conflicts with required positional args — dropped `[name]` from `mount add` and `mount remove`, documented the convention in `docs/architecture.md`
+- Fixed broken symlinks in all 4 agent skills (needed 4 levels of `../` not 3)
+
+## Outcome
+
+Delivered `clawctl mount list/add/remove` with:
+- `VMDriver` interface extended with `readMounts()`/`writeMounts()`
+- Lima implementation that parses/writes `~/.lima/<vm>/lima.yaml`
+- Automatic restart on mount changes (with `--no-restart` escape hatch)
+- `clawctl.json` sync so mounts survive VM rebuilds
+- Built-in mount protection, duplicate detection, help on missing args
+- CLI convention documented, broken skill symlinks fixed along the way
