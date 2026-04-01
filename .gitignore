@@ -8,3 +8,7 @@ dist/
 *.cast
 !docs-site/public/casts/*.cast
 .astro/
+docs-site/tsconfig.node.tsbuildinfo
+docs-site/tsconfig.app.tsbuildinfo
+.env.local
+.clawctl
