@@ -566,6 +566,11 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
 
           {/* Sections */}
           <Box flexDirection="column" marginLeft={2}>
+            {/* ── Infrastructure ── */}
+            <Box marginBottom={0}>
+              <Text dimColor>{"\u2500\u2500"} Infrastructure {"\u2500\u2500"}</Text>
+            </Box>
+
             {/* Resources */}
             <FormSection
               label="Resources"
@@ -743,10 +748,24 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
               )}
             </FormSection>
 
-            {/* Dynamic sections (capabilities + channels) */}
-            {DYNAMIC_SECTIONS.map((section) => (
+            {/* Dynamic capability sections (under Infrastructure) */}
+            {DYNAMIC_SECTIONS.filter((s) => s.kind === "capability").map((section) => (
               <CapabilitySection key={section.key} {...dynamicSectionProps(section)} />
             ))}
+
+            {/* ── Channels ── */}
+            <Box marginTop={1}>
+              <Text dimColor>{"\u2500\u2500"} Channels {"\u2500\u2500"}</Text>
+            </Box>
+
+            {DYNAMIC_SECTIONS.filter((s) => s.kind === "channel").map((section) => (
+              <CapabilitySection key={section.key} {...dynamicSectionProps(section)} />
+            ))}
+
+            {/* ── Identity ── */}
+            <Box marginTop={1}>
+              <Text dimColor>{"\u2500\u2500"} Identity {"\u2500\u2500"}</Text>
+            </Box>
 
             {/* Bootstrap / Agent Identity */}
             <FormSection
