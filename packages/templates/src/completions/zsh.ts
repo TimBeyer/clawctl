@@ -80,6 +80,7 @@ export function generateZshCompletion(binName: string): string {
         'openclaw:Run an openclaw command in the VM'
         'oc:Run an openclaw command in the VM (alias)'
         'use:Set or show the current instance context'
+        'mount:Manage VM mount points'
       )
 
       local state
@@ -145,6 +146,42 @@ export function generateZshCompletion(binName: string): string {
                 '1:instance name:_${fnName}_instances' ${BS}
                 '--global[Set global context instead of local .clawctl file]' ${BS}
                 '--help[Show help]'
+              ;;
+            mount)
+              local -a mount_commands
+              mount_commands=(
+                'list:List all mounts for an instance'
+                'add:Add a host directory mount to the VM'
+                'remove:Remove a mount from the VM'
+              )
+              if (( CURRENT == 2 )); then
+                _describe 'mount command' mount_commands
+              else
+                case \${words[2]} in
+                  list)
+                    _arguments ${BS}
+                      '1:instance name:_${fnName}_instances' ${BS}
+                      '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${fnName}_instances' ${BS}
+                      '--help[Show help]'
+                    ;;
+                  add)
+                    _arguments ${BS}
+                      '1:host path:_directories' ${BS}
+                      '2:guest path:' ${BS}
+                      '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${fnName}_instances' ${BS}
+                      '--writable[Mount as read-write]' ${BS}
+                      '--no-restart[Update config but do not restart the VM]' ${BS}
+                      '--help[Show help]'
+                    ;;
+                  remove)
+                    _arguments ${BS}
+                      '1:guest path:' ${BS}
+                      '(-i --instance)'{-i,--instance}'[Instance to target]:instance name:_${fnName}_instances' ${BS}
+                      '--no-restart[Update config but do not restart the VM]' ${BS}
+                      '--help[Show help]'
+                    ;;
+                esac
+              fi
               ;;
             completions)
               _arguments '1:shell:(bash zsh)' '--help[Show help]'

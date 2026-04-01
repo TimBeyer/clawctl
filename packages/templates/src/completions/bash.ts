@@ -85,7 +85,7 @@ export function generateBashCompletion(binName: string): string {
         fi
       done
 
-      local commands="create list status start stop restart delete shell register openclaw oc use"
+      local commands="create list status start stop restart delete shell register openclaw oc use mount"
 
       # Complete command name at position 1
       if [[ \$COMP_CWORD -eq 1 ]]; then
@@ -163,6 +163,35 @@ export function generateBashCompletion(binName: string): string {
               COMPREPLY=( $(compgen -W "--global --help" -- "$cur") )
               ;;
           esac
+          ;;
+        mount)
+          if [[ \$COMP_CWORD -eq 2 ]]; then
+            COMPREPLY=( $(compgen -W "list add remove --help" -- "$cur") )
+          else
+            local sub="\${COMP_WORDS[2]}"
+            case "$sub" in
+              list)
+                case "$prev" in
+                  -i|--instance)
+                    COMPREPLY=( $(compgen -W "$(_${fnName}_instances)" -- "$cur") )
+                    ;;
+                  *)
+                    if [[ "$cur" == -* ]]; then
+                      COMPREPLY=( $(compgen -W "-i --instance --help" -- "$cur") )
+                    else
+                      COMPREPLY=( $(compgen -W "$(_${fnName}_instances)" -- "$cur") )
+                    fi
+                    ;;
+                esac
+                ;;
+              add)
+                COMPREPLY=( $(compgen -W "-i --instance --writable --no-restart --help" -- "$cur") )
+                ;;
+              remove)
+                COMPREPLY=( $(compgen -W "-i --instance --no-restart --help" -- "$cur") )
+                ;;
+            esac
+          fi
           ;;
         completions)
           COMPREPLY=( $(compgen -W "bash zsh update-oc --help" -- "$cur") )
