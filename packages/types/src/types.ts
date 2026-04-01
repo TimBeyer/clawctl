@@ -108,17 +108,4 @@ export interface InstanceConfig {
    * `openclaw config set` during bootstrap. No host-side validation.
    */
   openclaw?: Record<string, unknown>;
-
-  /**
-   * Telegram channel (optional).
-   * @deprecated Use `channels.telegram` instead.
-   */
-  telegram?: {
-    /** Bot token from BotFather. */
-    botToken: string;
-    /** Telegram user IDs allowed to DM the bot. */
-    allowFrom?: string[];
-    /** Group IDs and their settings. */
-    groups?: Record<string, { requireMention?: boolean }>;
-  };
 }

@@ -46,11 +46,13 @@
     }
   },
 
-  "telegram": {
-    "botToken": "123456:ABC-...",
-    "allowFrom": ["123456789"],
-    "groups": {
-      "-100123456789": { "requireMention": true }
+  "channels": {
+    "telegram": {
+      "botToken": "123456:ABC-...",
+      "allowFrom": ["123456789"],
+      "groups": {
+        "-100123456789": { "requireMention": true }
+      }
     }
   }
 }

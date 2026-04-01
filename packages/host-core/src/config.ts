@@ -43,11 +43,6 @@ export function sanitizeConfig(
     delete (clone.network as Record<string, unknown>).gatewayToken;
   }
 
-  // telegram.botToken (deprecated top-level key)
-  if (clone.telegram && typeof clone.telegram === "object") {
-    delete (clone.telegram as Record<string, unknown>).botToken;
-  }
-
   // Channel secrets (from ChannelDef fields marked secret: true)
   if (clone.channels && typeof clone.channels === "object") {
     const channels = clone.channels as Record<string, unknown>;
@@ -124,20 +119,6 @@ export async function loadConfig(
   // Resolve env:// references from host environment before validation
   if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
     parsed = resolveEnvRefs(parsed as Record<string, unknown>);
-  }
-
-  // Migrate deprecated top-level telegram → channels.telegram
-  if (typeof parsed === "object" && parsed !== null) {
-    const obj = parsed as Record<string, unknown>;
-    if (obj.telegram && !obj.channels?.hasOwnProperty?.("telegram")) {
-      const channels = (obj.channels ?? {}) as Record<string, unknown>;
-      channels.telegram = obj.telegram;
-      obj.channels = channels;
-      delete obj.telegram;
-      console.warn(
-        'Warning: top-level "telegram" config is deprecated. Use "channels.telegram" instead.',
-      );
-    }
   }
 
   const capabilitySchema = capabilities ? buildCapabilitiesSchema(capabilities) : undefined;

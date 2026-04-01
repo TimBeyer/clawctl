@@ -31,12 +31,12 @@ describe("findSecretRefs", () => {
   test("finds multiple references at different depths", () => {
     const refs = findSecretRefs({
       provider: { apiKey: "op://V/I/f" },
-      telegram: { botToken: "op://V/Bot/token" },
+      channels: { telegram: { botToken: "op://V/Bot/token" } },
       capabilities: { "one-password": { serviceAccountToken: "env://OP_TOKEN" } },
     });
     expect(refs).toHaveLength(3);
     expect(refs.map((r) => r.scheme)).toEqual(
-      ["provider", "telegram", "services"].length ? ["op", "op", "env"] : [],
+      ["provider", "channels", "services"].length ? ["op", "op", "env"] : [],
     );
   });
 
@@ -128,10 +128,11 @@ describe("resolveEnvRefs", () => {
   test("resolves multiple env:// references", () => {
     const result = resolveEnvRefs({
       provider: { apiKey: "env://TEST_API_KEY" },
-      telegram: { botToken: "env://TEST_BOT_TOKEN" },
+      channels: { telegram: { botToken: "env://TEST_BOT_TOKEN" } },
     });
     expect((result.provider as Record<string, string>).apiKey).toBe("resolved-api-key");
-    expect((result.telegram as Record<string, string>).botToken).toBe("resolved-bot-token");
+    const channels = result.channels as Record<string, Record<string, string>>;
+    expect(channels.telegram.botToken).toBe("resolved-bot-token");
   });
 
   test("leaves non-ref values unchanged", () => {

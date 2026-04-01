@@ -13,26 +13,83 @@ import {
   providerSchema,
   ALL_PROVIDER_TYPES,
   DEFAULT_PROJECT_BASE,
+  CHANNEL_REGISTRY,
+  CHANNEL_ORDER,
 } from "@clawctl/types";
-import type { InstanceConfig } from "@clawctl/types";
+import type { InstanceConfig, CapabilityConfigDef } from "@clawctl/types";
 import { ALL_CAPABILITIES } from "@clawctl/capabilities";
 
 type Phase = "form" | "review";
 
 // ---------------------------------------------------------------------------
-// Focus list: hardcoded core sections + dynamic capability sections
+// Dynamic sections: unified abstraction for capabilities and channels
 // ---------------------------------------------------------------------------
 
-/** Core sections that are hardcoded in the wizard. */
-type CoreSectionId = "resources" | "provider" | "network" | "bootstrap" | "telegram";
+/**
+ * A wizard section driven by a configDef — shared by capabilities and channels.
+ *
+ * All focus-list, sidebar, select-field, and rendering logic operates on
+ * DynamicSection uniformly. No string prefix slicing needed in consumer code.
+ */
+interface DynamicSection {
+  kind: "capability" | "channel";
+  /** Unique key used in focus IDs, e.g. "cap:tailscale" or "ch:telegram". */
+  key: string;
+  /** Name used in the config object, e.g. "tailscale" or "telegram". */
+  name: string;
+  configDef: CapabilityConfigDef;
+}
 
-const CORE_SECTIONS: CoreSectionId[] = [
-  "resources",
-  "provider",
-  "network",
-  "bootstrap",
-  "telegram",
+const CONFIGURABLE_CAPABILITIES = ALL_CAPABILITIES.filter((c) => !c.core && c.configDef);
+
+const DYNAMIC_SECTIONS: DynamicSection[] = [
+  ...CONFIGURABLE_CAPABILITIES.map(
+    (c): DynamicSection => ({
+      kind: "capability",
+      key: `cap:${c.name}`,
+      name: c.name,
+      configDef: c.configDef!,
+    }),
+  ),
+  ...CHANNEL_ORDER.map((name) => CHANNEL_REGISTRY[name])
+    .filter(Boolean)
+    .map(
+      (ch): DynamicSection => ({
+        kind: "channel",
+        key: `ch:${ch.name}`,
+        name: ch.name,
+        configDef: ch.configDef,
+      }),
+    ),
 ];
+
+/** Look up the DynamicSection that owns a focus ID (header or field). */
+function findSection(focusId: string): DynamicSection | undefined {
+  // Exact match → section header
+  const exact = DYNAMIC_SECTIONS.find((s) => s.key === focusId);
+  if (exact) return exact;
+  // Prefix match → field within section
+  return DYNAMIC_SECTIONS.find((s) => focusId.startsWith(s.key + ":"));
+}
+
+/** Extract the field path from a section field focus ID, or null for headers. */
+function fieldPathOf(section: DynamicSection, focusId: string): string | null {
+  const prefix = section.key + ":";
+  return focusId.startsWith(prefix) ? focusId.slice(prefix.length) : null;
+}
+
+/** Child focus IDs for a dynamic section. */
+function dynamicChildren(section: DynamicSection): string[] {
+  return section.configDef.fields.map((f) => `${section.key}:${f.path as string}`);
+}
+
+// ---------------------------------------------------------------------------
+// Core sections (hardcoded layout, not driven by configDef)
+// ---------------------------------------------------------------------------
+
+type CoreSectionId = "resources" | "provider" | "network" | "bootstrap";
+
+const CORE_SECTIONS: CoreSectionId[] = ["resources", "provider", "network", "bootstrap"];
 
 const CORE_SECTION_CHILDREN: Record<CoreSectionId, string[]> = {
   resources: ["resources.cpus", "resources.memory", "resources.disk"],
@@ -50,49 +107,58 @@ const CORE_SECTION_CHILDREN: Record<CoreSectionId, string[]> = {
     "bootstrap.userName",
     "bootstrap.userContext",
   ],
-  telegram: ["telegram.botToken", "telegram.allowFrom"],
 };
 
-/** Non-core capabilities that have a configDef (rendered dynamically). */
-const CONFIGURABLE_CAPABILITIES = ALL_CAPABILITIES.filter((c) => !c.core && c.configDef);
+// ---------------------------------------------------------------------------
+// Focus list
+// ---------------------------------------------------------------------------
 
-/**
- * All section IDs in visual render order.
- * Capability sections appear after network, before bootstrap/telegram.
- */
+/** All section IDs in visual render order. */
 function allSectionIds(): string[] {
   return [
     "resources",
     "provider",
     "network",
-    ...CONFIGURABLE_CAPABILITIES.map((c) => `cap:${c.name}`),
+    ...DYNAMIC_SECTIONS.map((s) => s.key),
     "bootstrap",
-    "telegram",
   ];
 }
 
-/** Children focus IDs for a section (core or capability). */
 function sectionChildren(sectionId: string): string[] {
   if (sectionId in CORE_SECTION_CHILDREN) {
     return CORE_SECTION_CHILDREN[sectionId as CoreSectionId];
   }
-  // Dynamic capability section: cap:<name> → cap:<name>:<fieldPath>
-  const capName = sectionId.replace("cap:", "");
-  const cap = CONFIGURABLE_CAPABILITIES.find((c) => c.name === capName);
-  if (!cap?.configDef) return [];
-  return cap.configDef.fields.map((f) => `cap:${capName}:${f.path as string}`);
+  const section = DYNAMIC_SECTIONS.find((s) => s.key === sectionId);
+  return section ? dynamicChildren(section) : [];
 }
 
 function buildFocusList(expanded: Set<string>): string[] {
   const list: string[] = ["name", "project"];
-  for (const section of allSectionIds()) {
-    list.push(section);
-    if (expanded.has(section)) {
-      list.push(...sectionChildren(section));
+  for (const sectionId of allSectionIds()) {
+    list.push(sectionId);
+    if (expanded.has(sectionId)) {
+      list.push(...sectionChildren(sectionId));
     }
   }
   list.push("action");
   return list;
+}
+
+function isSection(id: string): boolean {
+  return (
+    (CORE_SECTIONS as string[]).includes(id) ||
+    DYNAMIC_SECTIONS.some((s) => s.key === id)
+  );
+}
+
+/** Check if a focus ID is a select-type field in a dynamic section. */
+function isDynamicSelectField(focusId: string): boolean {
+  const section = findSection(focusId);
+  if (!section) return false;
+  const path = fieldPathOf(section, focusId);
+  if (!path) return false;
+  const field = section.configDef.fields.find((f) => (f.path as string) === path);
+  return field?.type === "select";
 }
 
 const MEMORY_OPTIONS = ["4GiB", "8GiB", "16GiB", "32GiB"];
@@ -120,7 +186,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   const [providerBaseUrl, setProviderBaseUrl] = useState("");
   const [providerModelId, setProviderModelId] = useState("");
 
-  // Network (gateway port only — tailscale moved to capability)
+  // Network
   const [gatewayPort, setGatewayPort] = useState("18789");
 
   // Bootstrap
@@ -129,12 +195,8 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   const [userName, setUserName] = useState("");
   const [userContext, setUserContext] = useState("");
 
-  // Telegram
-  const [botToken, setBotToken] = useState("");
-  const [allowFrom, setAllowFrom] = useState("");
-
-  // Capability config values: { "tailscale": { "authKey": "...", "mode": "serve" }, ... }
-  const [capValues, setCapValues] = useState<Record<string, Record<string, string>>>({});
+  // Dynamic section values: keyed by section.key → { fieldPath: value }
+  const [dynamicValues, setDynamicValues] = useState<Record<string, Record<string, string>>>({});
 
   // Navigation
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -143,17 +205,15 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   const [selectingProviderType, setSelectingProviderType] = useState(false);
   const [selectingMemory, setSelectingMemory] = useState(false);
   const [selectingDisk, setSelectingDisk] = useState(false);
-  // For capability select fields: "cap:tailscale:mode" or null
-  const [selectingCapField, setSelectingCapField] = useState<string | null>(null);
+  const [selectingDynamicField, setSelectingDynamicField] = useState<string | null>(null);
 
   const focusList = useMemo(() => buildFocusList(expanded), [expanded]);
   const currentFocus = focusList[focusIdx] ?? "name";
 
-  // Helper to update a single capability field value
-  const setCapValue = (capName: string, fieldPath: string, value: string) => {
-    setCapValues((prev) => ({
+  const setDynamicValue = (sectionKey: string, fieldPath: string, value: string) => {
+    setDynamicValues((prev) => ({
       ...prev,
-      [capName]: { ...(prev[capName] ?? {}), [fieldPath]: value },
+      [sectionKey]: { ...(prev[sectionKey] ?? {}), [fieldPath]: value },
     }));
   };
 
@@ -194,33 +254,30 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
       };
     }
 
-    if (botToken) {
-      config.telegram = {
-        botToken,
-        ...(allowFrom
-          ? {
-              allowFrom: allowFrom
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            }
-          : {}),
-      };
-    }
+    // Dynamic section values → capabilities or channels
+    for (const section of DYNAMIC_SECTIONS) {
+      const vals = dynamicValues[section.key];
+      if (!vals || !Object.values(vals).some((v) => v)) continue;
 
-    // Capability config from dynamic sections
-    for (const cap of CONFIGURABLE_CAPABILITIES) {
-      const vals = capValues[cap.name];
-      if (!vals) continue;
-      const hasAnyValue = Object.values(vals).some((v) => v);
-      if (!hasAnyValue) continue;
-      if (!config.capabilities) config.capabilities = {};
-      // Build config object from field values, filtering empty strings
-      const capConfig: Record<string, unknown> = {};
+      const sectionConfig: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(vals)) {
-        if (v) capConfig[k] = v;
+        if (!v) continue;
+        // Convert comma-separated text fields to arrays (e.g., allowFrom)
+        const field = section.configDef.fields.find((f) => (f.path as string) === k);
+        if (field?.type === "text" && v.includes(",")) {
+          sectionConfig[k] = v.split(",").map((s) => s.trim()).filter(Boolean);
+        } else {
+          sectionConfig[k] = v;
+        }
       }
-      config.capabilities[cap.name] = capConfig;
+
+      if (section.kind === "capability") {
+        config.capabilities ??= {};
+        config.capabilities[section.name] = sectionConfig;
+      } else {
+        config.channels ??= {};
+        config.channels[section.name] = sectionConfig;
+      }
     }
 
     return config;
@@ -235,7 +292,6 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
     if (!config.name) errors.push("Instance name is required");
     if (!config.project) errors.push("Project directory is required");
 
-    // Validate provider section if partially filled
     if (config.provider) {
       const provResult = providerSchema.safeParse(config.provider);
       if (!provResult.success) {
@@ -245,7 +301,6 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
       }
     }
 
-    // Full schema validation
     if (config.name && config.project) {
       const result = instanceConfigSchema.safeParse(config);
       if (!result.success) {
@@ -266,41 +321,33 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
     return { errors, warnings };
   };
 
-  // Sidebar content: check hardcoded help first, then capability configDef help
+  // Sidebar: hardcoded help, then dynamic section/field help
   const getSidebarContent = (): SidebarContent => {
     if (phase === "review") return SIDEBAR_HELP["review"];
-
-    // Direct match in hardcoded help
     if (SIDEBAR_HELP[currentFocus]) return SIDEBAR_HELP[currentFocus];
 
-    // Capability field help: cap:<name>:<path>
-    if (currentFocus.startsWith("cap:")) {
-      const parts = currentFocus.split(":");
-      if (parts.length === 3) {
-        const [, capName, fieldPath] = parts;
-        const cap = CONFIGURABLE_CAPABILITIES.find((c) => c.name === capName);
-        const field = cap?.configDef?.fields.find((f) => (f.path as string) === fieldPath);
+    const section = findSection(currentFocus);
+    if (section) {
+      const path = fieldPathOf(section, currentFocus);
+      if (path) {
+        const field = section.configDef.fields.find((f) => (f.path as string) === path);
         if (field?.help) return field.help;
-      }
-      // Capability section help: cap:<name>
-      if (parts.length === 2) {
-        const cap = CONFIGURABLE_CAPABILITIES.find((c) => c.name === parts[1]);
-        if (cap?.configDef?.sectionHelp) return cap.configDef.sectionHelp;
+      } else if (section.configDef.sectionHelp) {
+        return section.configDef.sectionHelp;
       }
     }
 
-    // Fall back to section-level help
     const sectionKey = currentFocus.split(".")[0];
     return SIDEBAR_HELP[sectionKey] ?? SIDEBAR_HELP["name"];
   };
 
   const sidebarContent = getSidebarContent();
 
-  // Section status helpers (core sections only)
+  // Core section status/summary
   const coreSectionStatus = (id: CoreSectionId): "unconfigured" | "configured" | "error" => {
     switch (id) {
       case "resources":
-        return "configured"; // always has defaults
+        return "configured";
       case "provider":
         return providerType ? "configured" : "unconfigured";
       case "network": {
@@ -309,8 +356,6 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
       }
       case "bootstrap":
         return agentName ? "configured" : "unconfigured";
-      case "telegram":
-        return botToken ? "configured" : "unconfigured";
     }
   };
 
@@ -324,59 +369,32 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
         return gatewayPort !== "18789" ? `port ${gatewayPort}` : "defaults";
       case "bootstrap":
         return agentName || "";
-      case "telegram":
-        return botToken ? "configured" : "";
     }
   };
 
   const toggleSection = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   };
 
   const isSelectMode =
-    selectingProviderType || selectingMemory || selectingDisk || selectingCapField !== null;
+    selectingProviderType || selectingMemory || selectingDisk || selectingDynamicField !== null;
 
-  /** Check if a focus ID is a section header (core or capability). */
-  const isSection = (id: string): boolean => {
-    return (
-      (CORE_SECTIONS as string[]).includes(id) ||
-      (id.startsWith("cap:") && id.split(":").length === 2)
-    );
-  };
-
-  /** Check if a capability select field is active for a given focus ID. */
-  const isCapSelectField = (focusId: string): boolean => {
-    if (!focusId.startsWith("cap:")) return false;
-    const parts = focusId.split(":");
-    if (parts.length !== 3) return false;
-    const [, capName, fieldPath] = parts;
-    const cap = CONFIGURABLE_CAPABILITIES.find((c) => c.name === capName);
-    const field = cap?.configDef?.fields.find((f) => (f.path as string) === fieldPath);
-    return field?.type === "select";
-  };
-
-  /** Find the parent section for a focus ID. */
   const findParentSection = (focusId: string): string | null => {
     for (const sectionId of allSectionIds()) {
-      if (sectionChildren(sectionId).includes(focusId)) {
-        return sectionId;
-      }
+      if (sectionChildren(sectionId).includes(focusId)) return sectionId;
     }
     return null;
   };
 
-  // Handle input
+  // Input handling
   useInput(
     (input, key) => {
-      if (isSelectMode) return; // SelectInput handles its own input
+      if (isSelectMode) return;
 
       if (phase === "review") {
         if (key.escape) {
@@ -385,9 +403,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
         }
         if (key.return) {
           const { errors } = validate();
-          if (errors.length === 0) {
-            onComplete(buildConfig());
-          }
+          if (errors.length === 0) onComplete(buildConfig());
           return;
         }
         if (input.toLowerCase() === "s" && onSaveOnly) {
@@ -397,11 +413,9 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
         return;
       }
 
-      // Form mode
       if (editing) {
         if (key.return || key.escape) {
           setEditing(false);
-          // Auto-fill project if empty
           if (currentFocus === "name" && !project && name) {
             setProject(`${DEFAULT_PROJECT_BASE}/${name.trim()}`);
           }
@@ -424,13 +438,12 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
           setSelectingMemory(true);
         } else if (currentFocus === "resources.disk") {
           setSelectingDisk(true);
-        } else if (isCapSelectField(currentFocus)) {
-          setSelectingCapField(currentFocus);
+        } else if (isDynamicSelectField(currentFocus)) {
+          setSelectingDynamicField(currentFocus);
         } else {
           setEditing(true);
         }
       } else if (key.escape) {
-        // Collapse parent section
         const parent = findParentSection(currentFocus);
         if (parent) {
           toggleSection(parent);
@@ -445,7 +458,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
     { isActive: !isSelectMode },
   );
 
-  // Render the review screen
+  // Review screen
   if (phase === "review") {
     const { errors, warnings } = validate();
     return (
@@ -464,7 +477,6 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
     );
   }
 
-  // Determine field status
   const fieldStatus = (id: string) => {
     if (currentFocus === id && editing) return "editing" as const;
     if (currentFocus === id) return "focused" as const;
@@ -472,6 +484,25 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
   };
 
   const providerTypeItems = ALL_PROVIDER_TYPES.map((t) => ({ label: t, value: t }));
+
+  // Resolve focused field within a dynamic section for CapabilitySection props
+  const dynamicSectionProps = (section: DynamicSection) => {
+    const vals = dynamicValues[section.key] ?? {};
+    const focusedField = fieldPathOf(section, currentFocus);
+    const selectingField =
+      selectingDynamicField != null ? fieldPathOf(section, selectingDynamicField) : null;
+    return {
+      configDef: section.configDef,
+      values: vals,
+      onChange: (path: string, value: string) => setDynamicValue(section.key, path, value),
+      focused: currentFocus === section.key,
+      expanded: expanded.has(section.key),
+      focusedField,
+      editing,
+      selectingField,
+      onSelectDone: () => setSelectingDynamicField(null),
+    };
+  };
 
   return (
     <Box flexGrow={1}>
@@ -687,7 +718,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
               )}
             </FormSection>
 
-            {/* Network (gateway port only) */}
+            {/* Network */}
             <FormSection
               label="Network"
               status={coreSectionStatus("network")}
@@ -712,34 +743,10 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
               )}
             </FormSection>
 
-            {/* Dynamic capability sections */}
-            {CONFIGURABLE_CAPABILITIES.map((cap) => {
-              const sectionId = `cap:${cap.name}`;
-              const capVals = capValues[cap.name] ?? {};
-              // Determine which field within this capability is focused
-              let focusedField: string | null = null;
-              if (currentFocus.startsWith(`cap:${cap.name}:`)) {
-                focusedField = currentFocus.split(":").slice(2).join(":");
-              }
-              return (
-                <CapabilitySection
-                  key={cap.name}
-                  configDef={cap.configDef!}
-                  values={capVals}
-                  onChange={(path, value) => setCapValue(cap.name, path, value)}
-                  focused={currentFocus === sectionId}
-                  expanded={expanded.has(sectionId)}
-                  focusedField={focusedField}
-                  editing={editing}
-                  selectingField={
-                    selectingCapField?.startsWith(`cap:${cap.name}:`)
-                      ? selectingCapField.split(":").slice(2).join(":")
-                      : null
-                  }
-                  onSelectDone={() => setSelectingCapField(null)}
-                />
-              );
-            })}
+            {/* Dynamic sections (capabilities + channels) */}
+            {DYNAMIC_SECTIONS.map((section) => (
+              <CapabilitySection key={section.key} {...dynamicSectionProps(section)} />
+            ))}
 
             {/* Bootstrap / Agent Identity */}
             <FormSection
@@ -818,51 +825,6 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
                 />
               )}
             </FormSection>
-
-            {/* Telegram */}
-            <FormSection
-              label="Telegram"
-              status={coreSectionStatus("telegram")}
-              summary={coreSectionSummary("telegram")}
-              focused={currentFocus === "telegram"}
-              expanded={expanded.has("telegram")}
-            >
-              {currentFocus === "telegram.botToken" && editing ? (
-                <Box>
-                  <Box width={14}>
-                    <Text bold>Bot Token</Text>
-                  </Box>
-                  <TextInput value={botToken} onChange={setBotToken} mask="*" />
-                </Box>
-              ) : (
-                <FormField
-                  label="Bot Token"
-                  value={botToken}
-                  status={fieldStatus("telegram.botToken")}
-                  masked
-                  placeholder="from @BotFather"
-                />
-              )}
-              {currentFocus === "telegram.allowFrom" && editing ? (
-                <Box>
-                  <Box width={14}>
-                    <Text bold>Allow From</Text>
-                  </Box>
-                  <TextInput
-                    value={allowFrom}
-                    onChange={setAllowFrom}
-                    placeholder="user-id-1, user-id-2"
-                  />
-                </Box>
-              ) : (
-                <FormField
-                  label="Allow From"
-                  value={allowFrom}
-                  status={fieldStatus("telegram.allowFrom")}
-                  placeholder="user-id-1, user-id-2"
-                />
-              )}
-            </FormSection>
           </Box>
 
           <Text> </Text>
@@ -879,7 +841,7 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
           </Box>
         </Box>
 
-        {/* Keybinding hints (pinned bottom) */}
+        {/* Keybinding hints */}
         <Box marginLeft={2}>
           <Text dimColor>
             [{"\u2191\u2193"}] navigate {"\u00b7"} [Enter] {editing ? "confirm" : "edit/expand"}{" "}
@@ -888,7 +850,6 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
         </Box>
       </Box>
 
-      {/* Sidebar */}
       <Box marginLeft={2}>
         <Sidebar title={sidebarContent.title} lines={sidebarContent.lines} />
       </Box>

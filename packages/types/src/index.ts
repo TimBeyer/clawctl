@@ -36,7 +36,6 @@ export {
   mountsSchema,
   providerSchema,
   bootstrapSchema,
-  telegramSchema,
   channelsSchema,
   openclawSchema,
 } from "./schemas/index.js";

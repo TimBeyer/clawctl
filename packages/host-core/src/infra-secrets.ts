@@ -2,7 +2,7 @@
  * Post-onboard config patching: replace plaintext secrets with file provider SecretRefs.
  *
  * Two operations on known JSON paths:
- * 1. Patch main config — add file provider, replace telegram botToken with SecretRef
+ * 1. Patch main config — add file provider, replace channel secrets with SecretRefs
  * 2. Patch auth-profiles.json — replace token with tokenRef
  */
 import type { VMDriver, OnLine } from "./drivers/types.js";
@@ -66,7 +66,6 @@ export async function patchMainConfig(
   vmName: string,
   resolvedMap: ResolvedSecretRef[],
   config: {
-    telegram?: { botToken?: string };
     channels?: Record<string, Record<string, unknown>>;
   },
   onLine?: OnLine,
@@ -86,22 +85,11 @@ export async function patchMainConfig(
   };
 
   // Replace channel secrets with SecretRefs if they were op:// refs.
-  // Matches both deprecated "telegram.botToken" and new "channels.telegram.botToken" paths.
   for (const ref of resolvedMap) {
-    let channelName: string | undefined;
-    let fieldName: string | undefined;
+    if (ref.path[0] !== "channels" || ref.path.length < 3) continue;
+    const channelName = ref.path[1];
+    const fieldName = ref.path[2];
 
-    if (ref.path[0] === "channels" && ref.path.length >= 3) {
-      // New path: channels.<name>.<field>
-      channelName = ref.path[1];
-      fieldName = ref.path[2];
-    } else if (ref.path[0] === "telegram" && ref.path.length >= 2) {
-      // Deprecated path: telegram.<field>
-      channelName = "telegram";
-      fieldName = ref.path[1];
-    }
-
-    if (!channelName || !fieldName) continue;
     if (!mainConfig.channels) continue;
     const channels = mainConfig.channels as Record<string, unknown>;
     const channel = channels[channelName];

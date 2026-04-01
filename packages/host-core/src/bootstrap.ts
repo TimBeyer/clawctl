@@ -318,9 +318,6 @@ function buildChannelCommands(channelName: string, channelConfig: Record<string,
  */
 function collectChannelSecrets(config: InstanceConfig): string[] {
   const secrets: string[] = [];
-  // Deprecated top-level telegram
-  if (config.telegram?.botToken) secrets.push(config.telegram.botToken);
-  // New channels key
   if (config.channels) {
     for (const [channelName, channelConfig] of Object.entries(config.channels)) {
       const def = CHANNEL_REGISTRY[channelName];
