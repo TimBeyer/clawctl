@@ -124,7 +124,9 @@ const telegramChannel: ChannelDef = {
             `openclaw config set channels.telegram.groupAllowFrom '${JSON.stringify(groupIds)}'`,
           );
         }
-        for (const [id, settings] of Object.entries(groups as Record<string, Record<string, unknown>>)) {
+        for (const [id, settings] of Object.entries(
+          groups as Record<string, Record<string, unknown>>,
+        )) {
           if (settings.requireMention !== undefined) {
             cmds.push(
               `openclaw config set channels.telegram.groups.${id}.requireMention ${settings.requireMention}`,

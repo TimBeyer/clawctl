@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 import { resolveEnvRefs, validateConfig, CHANNEL_REGISTRY } from "@clawctl/types";
-import type { InstanceConfig, VMConfig, CapabilityDef, ChannelDef } from "@clawctl/types";
+import type { InstanceConfig, VMConfig, CapabilityDef } from "@clawctl/types";
 import { buildCapabilitiesSchema, buildChannelsSchema, getSecretPaths } from "./schema-derive.js";
 
 // Re-export validateConfig from types for convenience
@@ -50,9 +50,7 @@ export function sanitizeConfig(
       if (!channelConfig || typeof channelConfig !== "object") continue;
       const def = CHANNEL_REGISTRY[channelName];
       if (!def) continue;
-      const secretPaths = def.configDef.fields
-        .filter((f) => f.secret)
-        .map((f) => f.path as string);
+      const secretPaths = def.configDef.fields.filter((f) => f.secret).map((f) => f.path as string);
       for (const path of secretPaths) {
         delete (channelConfig as Record<string, unknown>)[path];
       }

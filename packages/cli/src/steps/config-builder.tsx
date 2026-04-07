@@ -115,13 +115,7 @@ const CORE_SECTION_CHILDREN: Record<CoreSectionId, string[]> = {
 
 /** All section IDs in visual render order. */
 function allSectionIds(): string[] {
-  return [
-    "resources",
-    "provider",
-    "network",
-    ...DYNAMIC_SECTIONS.map((s) => s.key),
-    "bootstrap",
-  ];
+  return ["resources", "provider", "network", ...DYNAMIC_SECTIONS.map((s) => s.key), "bootstrap"];
 }
 
 function sectionChildren(sectionId: string): string[] {
@@ -145,10 +139,7 @@ function buildFocusList(expanded: Set<string>): string[] {
 }
 
 function isSection(id: string): boolean {
-  return (
-    (CORE_SECTIONS as string[]).includes(id) ||
-    DYNAMIC_SECTIONS.some((s) => s.key === id)
-  );
+  return (CORE_SECTIONS as string[]).includes(id) || DYNAMIC_SECTIONS.some((s) => s.key === id);
 }
 
 /** Look up the field type for a dynamic section field focus ID. */
@@ -268,7 +259,10 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
         if (field?.type === "toggle") {
           sectionConfig[k] = v === "true";
         } else if (field?.type === "text" && v.includes(",")) {
-          sectionConfig[k] = v.split(",").map((s) => s.trim()).filter(Boolean);
+          sectionConfig[k] = v
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
         } else {
           sectionConfig[k] = v;
         }
@@ -577,7 +571,9 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
           <Box flexDirection="column" marginLeft={2}>
             {/* ── Infrastructure ── */}
             <Box marginBottom={0}>
-              <Text dimColor>{"\u2500\u2500"} Infrastructure {"\u2500\u2500"}</Text>
+              <Text dimColor>
+                {"\u2500\u2500"} Infrastructure {"\u2500\u2500"}
+              </Text>
             </Box>
 
             {/* Resources */}
@@ -764,7 +760,9 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
 
             {/* ── Channels ── */}
             <Box marginTop={1}>
-              <Text dimColor>{"\u2500\u2500"} Channels {"\u2500\u2500"}</Text>
+              <Text dimColor>
+                {"\u2500\u2500"} Channels {"\u2500\u2500"}
+              </Text>
             </Box>
 
             {DYNAMIC_SECTIONS.filter((s) => s.kind === "channel").map((section) => (
@@ -773,7 +771,9 @@ export function ConfigBuilder({ onComplete, onSaveOnly }: ConfigBuilderProps) {
 
             {/* ── Identity ── */}
             <Box marginTop={1}>
-              <Text dimColor>{"\u2500\u2500"} Identity {"\u2500\u2500"}</Text>
+              <Text dimColor>
+                {"\u2500\u2500"} Identity {"\u2500\u2500"}
+              </Text>
             </Box>
 
             {/* Bootstrap / Agent Identity */}

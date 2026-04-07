@@ -64,7 +64,10 @@ describe("validateConfig", () => {
     expect(config.provider?.apiKey).toBe("sk-ant-xyz");
     expect(config.provider?.model).toBe("anthropic/claude-opus-4-6");
     expect(config.channels?.telegram?.botToken).toBe("123:ABC");
-    expect((config.channels?.telegram?.groups as Record<string, Record<string, unknown>>)?.["-100"]?.requireMention).toBe(true);
+    expect(
+      (config.channels?.telegram?.groups as Record<string, Record<string, unknown>>)?.["-100"]
+        ?.requireMention,
+    ).toBe(true);
   });
 
   test("throws on missing name", () => {

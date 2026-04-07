@@ -204,10 +204,10 @@ Unknown channel names are accepted — they pass through to OpenClaw directly.
 
 Every channel supports an `enabled` boolean:
 
-| `enabled` value | Behavior |
-| --------------- | -------- |
-| `true`          | Channel is configured during bootstrap. |
-| omitted         | Treated as `true` — presence of the channel key means "enable it." |
+| `enabled` value | Behavior                                                                                                                                |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `true`          | Channel is configured during bootstrap.                                                                                                 |
+| omitted         | Treated as `true` — presence of the channel key means "enable it."                                                                      |
 | `false`         | Channel is skipped during bootstrap. Config is preserved (useful for temporarily disabling a channel without deleting its credentials). |
 
 ### `channels.telegram`
@@ -222,10 +222,10 @@ Every channel supports an `enabled` boolean:
 
 ### `channels.discord`
 
-| Field     | Type    | Description                              |
-| --------- | ------- | ---------------------------------------- |
-| `enabled` | boolean | Enable this channel (default: `true`).   |
-| `token`   | string  | Discord bot token (required).            |
+| Field     | Type    | Description                            |
+| --------- | ------- | -------------------------------------- |
+| `enabled` | boolean | Enable this channel (default: `true`). |
+| `token`   | string  | Discord bot token (required).          |
 
 ### `channels.slack`
 

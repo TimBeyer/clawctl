@@ -268,7 +268,10 @@ function configToCommands(prefix: string, obj: Record<string, unknown>): string[
  * 2. Set each config field from the channel config object
  * 3. Run channel-specific postCommands (e.g., Telegram's dmPolicy after allowFrom)
  */
-function buildChannelCommands(channelName: string, channelConfig: Record<string, unknown>): string[] {
+function buildChannelCommands(
+  channelName: string,
+  channelConfig: Record<string, unknown>,
+): string[] {
   const def: ChannelDef | undefined = CHANNEL_REGISTRY[channelName];
   const pluginName = def?.pluginName ?? channelName;
   const enabled = channelConfig.enabled !== false;

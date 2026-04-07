@@ -7,6 +7,7 @@
 Introduce a data-driven `ChannelDef` system and an `openclaw` passthrough config key so users can configure any OpenClaw channel (and arbitrary OpenClaw settings) from their clawctl JSON config file.
 
 **Covers:**
+
 - `ChannelDef` type and registry (Telegram, Discord, Slack, WhatsApp)
 - `channels` config key replacing top-level `telegram`
 - `openclaw` passthrough config key for arbitrary OpenClaw settings
@@ -16,6 +17,7 @@ Introduce a data-driven `ChannelDef` system and an `openclaw` passthrough config
 - Backward compatibility for existing `telegram` configs
 
 **Does not cover:**
+
 - ChannelDefs for all 26+ OpenClaw channels (only the four most popular)
 - Schema scraping dev script for auto-generating ChannelDefs
 - Host-side validation of optional channel fields or passthrough values
@@ -25,6 +27,7 @@ Introduce a data-driven `ChannelDef` system and an `openclaw` passthrough config
 clawctl hardcodes Telegram as the only communication channel. OpenClaw supports 26+ channels, each with distinct config. Users wanting non-Telegram channels must SSH into the VM manually — defeating clawctl's purpose.
 
 The approach uses three tiers:
+
 1. **Curated sections** (existing): provider, resources, network, etc.
 2. **ChannelDef system** (new): data-driven definitions declaring essential fields per channel (~15 lines each), driving validation, wizard, bootstrap, and sanitization
 3. **`openclaw` passthrough** (new): arbitrary dotpath-to-value mappings applied via `openclaw config set`
@@ -34,6 +37,7 @@ This hybrid avoids maintaining 500+ field definitions while still providing prop
 ## Plan
 
 The ChannelDef approach was chosen over:
+
 - **Full typed schemas per channel**: 10-40+ fields each across 26 channels = unmaintainable
 - **Pure passthrough**: Can't handle secrets (sanitization, redaction, op:// refs)
 - **Runtime schema introspection**: Requires a running VM; can't validate before provisioning
@@ -41,6 +45,7 @@ The ChannelDef approach was chosen over:
 ChannelDefs reuse existing infrastructure: `CapabilityConfigField` type, `CapabilitySection` component, `deriveConfigSchema()`, `getSecretPaths()`.
 
 Implementation phases:
+
 1. Types & ChannelDef infrastructure (new files in types/)
 2. Config loading & validation (schema-derive, config.ts)
 3. Bootstrap generalization (bootstrap.ts, infra-secrets.ts)
@@ -73,6 +78,7 @@ Implementation phases:
 ## Outcome
 
 Delivered:
+
 - `ChannelDef` system with Telegram, Discord, Slack, WhatsApp
 - `channels` config key replacing top-level `telegram`
 - `openclaw` passthrough for arbitrary OpenClaw settings

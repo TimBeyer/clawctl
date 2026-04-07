@@ -217,8 +217,7 @@ export function buildChannelsSchema(channels: ChannelDef[]): z.ZodTypeAny {
     if (ch.configDef.fields.length > 0) {
       const objSchema = deriveConfigSchema(ch.configDef);
       // .passthrough() allows extra fields beyond the essential ones we model
-      const passthrough =
-        objSchema instanceof z.ZodObject ? objSchema.passthrough() : objSchema;
+      const passthrough = objSchema instanceof z.ZodObject ? objSchema.passthrough() : objSchema;
       knownShapes[ch.name] = passthrough.optional();
     } else {
       // Channels with no required fields (e.g., WhatsApp with QR pairing)
@@ -230,10 +229,7 @@ export function buildChannelsSchema(channels: ChannelDef[]): z.ZodTypeAny {
     return z.record(z.string(), z.record(z.string(), z.unknown())).optional();
   }
 
-  return z
-    .object(knownShapes)
-    .catchall(z.record(z.string(), z.unknown()))
-    .optional();
+  return z.object(knownShapes).catchall(z.record(z.string(), z.unknown())).optional();
 }
 
 /**
