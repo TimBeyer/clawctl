@@ -141,19 +141,6 @@ export const SIDEBAR_HELP: Record<string, SidebarContent> = {
       "personalize interactions.",
     ],
   },
-  telegram: {
-    title: "Telegram",
-    lines: [
-      "Connect a Telegram bot for",
-      "chat-based agent control.",
-      "",
-      "Requires a bot token from",
-      "@BotFather on Telegram.",
-      "",
-      "allowFrom: Telegram user IDs",
-      "groups: Group IDs + settings",
-    ],
-  },
   review: {
     title: "Review",
     lines: [

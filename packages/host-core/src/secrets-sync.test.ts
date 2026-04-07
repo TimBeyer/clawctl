@@ -12,7 +12,7 @@ describe("sanitizeKey", () => {
   });
 
   test("handles deep paths", () => {
-    expect(sanitizeKey(["telegram", "botToken"])).toBe("telegram_bottoken");
+    expect(sanitizeKey(["channels", "telegram", "botToken"])).toBe("channels_telegram_bottoken");
   });
 
   test("lowercases mixed case", () => {
@@ -32,7 +32,7 @@ describe("buildInfraSecrets", () => {
         resolvedValue: "sk-abc123",
       },
       {
-        path: ["telegram", "botToken"],
+        path: ["channels", "telegram", "botToken"],
         reference: "op://V/Bot/token",
         scheme: "op",
         resolvedValue: "123:ABC",
@@ -42,7 +42,7 @@ describe("buildInfraSecrets", () => {
     const result = buildInfraSecrets(resolvedMap);
     expect(result).toEqual({
       provider_apikey: "sk-abc123",
-      telegram_bottoken: "123:ABC",
+      channels_telegram_bottoken: "123:ABC",
     });
   });
 

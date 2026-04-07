@@ -6,8 +6,8 @@
 import { z } from "zod";
 import { resourcesSchema, networkSchema, agentSchema, toolsSchema, mountsSchema } from "./base.js";
 import { providerSchema } from "./provider.js";
-import { telegramSchema } from "./telegram.js";
 import { bootstrapSchema } from "./bootstrap.js";
+import { channelsSchema, openclawSchema } from "./channels.js";
 
 /** Schema for capability configs: true (enabled with defaults) or config object. */
 export const capabilitiesSchema = z
@@ -25,10 +25,11 @@ export const instanceConfigSchema = z.object({
   agent: agentSchema.optional(),
   provider: providerSchema.optional(),
   bootstrap: bootstrapSchema.optional(),
-  telegram: telegramSchema.optional(),
+  channels: channelsSchema,
+  openclaw: openclawSchema,
 });
 
 export { resourcesSchema, networkSchema, agentSchema, toolsSchema, mountsSchema };
 export { providerSchema };
 export { bootstrapSchema };
-export { telegramSchema };
+export { channelsSchema, openclawSchema };

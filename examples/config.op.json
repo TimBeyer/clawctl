@@ -10,7 +10,10 @@
     "type": "zai",
     "apiKey": "op://Sam/z.AI API Key/credential"
   },
-  "telegram": {
-    "botToken": "op://Sam/Telegram Token/credential"
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "botToken": "op://Sam/Telegram Token/credential"
+    }
   }
 }

@@ -36,8 +36,13 @@ export {
   mountsSchema,
   providerSchema,
   bootstrapSchema,
-  telegramSchema,
+  channelsSchema,
+  openclawSchema,
 } from "./schemas/index.js";
+
+// Channels
+export type { ChannelDef } from "./channels.js";
+export { CHANNEL_REGISTRY, CHANNEL_ORDER, getChannelSecretPaths } from "./channels.js";
 
 // Constants
 export {

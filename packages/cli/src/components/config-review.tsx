@@ -1,6 +1,7 @@
 import React from "react";
 import { Text, Box } from "ink";
 import type { InstanceConfig } from "@clawctl/types";
+import { CHANNEL_REGISTRY, CHANNEL_ORDER } from "@clawctl/types";
 import { ALL_CAPABILITIES } from "@clawctl/capabilities";
 
 interface ConfigReviewProps {
@@ -123,15 +124,32 @@ export function ConfigReview({ config, validationErrors, validationWarnings }: C
             </Text>
           )}
         </Row>
-        <Row label="Telegram">
-          {config.telegram ? (
-            <Text color="green">{"\u2713"} configured</Text>
-          ) : (
-            <Text dimColor>
-              {"\u2500\u2500"} not configured {"\u2500\u2500"}
-            </Text>
-          )}
-        </Row>
+        {/* Channel rows */}
+        {CHANNEL_ORDER.map((name) => {
+          const def = CHANNEL_REGISTRY[name];
+          if (!def) return null;
+          const chConfig = config.channels?.[name];
+          const isConfigured = chConfig !== undefined;
+          const summary =
+            isConfigured && def.configDef.summary
+              ? def.configDef.summary(
+                  typeof chConfig === "object" ? (chConfig as Record<string, string>) : {},
+                )
+              : null;
+          return (
+            <Row key={name} label={def.label}>
+              {isConfigured ? (
+                <Text color="green">
+                  {"\u2713"} {summary || "configured"}
+                </Text>
+              ) : (
+                <Text dimColor>
+                  {"\u2500\u2500"} not configured {"\u2500\u2500"}
+                </Text>
+              )}
+            </Row>
+          );
+        })}
       </Box>
 
       <Box

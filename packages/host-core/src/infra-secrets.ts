@@ -2,7 +2,7 @@
  * Post-onboard config patching: replace plaintext secrets with file provider SecretRefs.
  *
  * Two operations on known JSON paths:
- * 1. Patch main config — add file provider, replace telegram botToken with SecretRef
+ * 1. Patch main config — add file provider, replace channel secrets with SecretRefs
  * 2. Patch auth-profiles.json — replace token with tokenRef
  */
 import type { VMDriver, OnLine } from "./drivers/types.js";
@@ -65,7 +65,9 @@ export async function patchMainConfig(
   driver: VMDriver,
   vmName: string,
   resolvedMap: ResolvedSecretRef[],
-  config: { telegram?: { botToken?: string } },
+  config: {
+    channels?: Record<string, Record<string, unknown>>;
+  },
   onLine?: OnLine,
 ): Promise<void> {
   onLine?.("Patching main config with file provider...");
@@ -82,14 +84,17 @@ export async function patchMainConfig(
     mode: "json",
   };
 
-  // Replace telegram botToken with SecretRef if it was an op:// ref
-  const telegramRef = resolvedMap.find((r) => r.path[0] === "telegram" && r.path[1] === "botToken");
-  if (telegramRef && mainConfig.channels) {
+  // Replace channel secrets with SecretRefs if they were op:// refs.
+  for (const ref of resolvedMap) {
+    if (ref.path[0] !== "channels" || ref.path.length < 3) continue;
+    const channelName = ref.path[1];
+    const fieldName = ref.path[2];
+
+    if (!mainConfig.channels) continue;
     const channels = mainConfig.channels as Record<string, unknown>;
-    if (channels.telegram) {
-      const telegram = channels.telegram as Record<string, unknown>;
-      telegram.botToken = makeSecretRef(telegramRef.path);
-    }
+    const channel = channels[channelName];
+    if (!channel || typeof channel !== "object") continue;
+    (channel as Record<string, unknown>)[fieldName] = makeSecretRef(ref.path);
   }
 
   await writeVMJson(driver, vmName, CONFIG_PATH, mainConfig);

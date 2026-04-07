@@ -38,10 +38,12 @@ describe("validateConfig", () => {
       ],
       agent: { skipOnboarding: true, toolsProfile: "full", sandbox: false },
       provider: { type: "anthropic", apiKey: "sk-ant-xyz", model: "anthropic/claude-opus-4-6" },
-      telegram: {
-        botToken: "123:ABC",
-        allowFrom: ["111"],
-        groups: { "-100": { requireMention: true } },
+      channels: {
+        telegram: {
+          botToken: "123:ABC",
+          allowFrom: ["111"],
+          groups: { "-100": { requireMention: true } },
+        },
       },
     });
 
@@ -61,8 +63,11 @@ describe("validateConfig", () => {
     expect(config.provider?.type).toBe("anthropic");
     expect(config.provider?.apiKey).toBe("sk-ant-xyz");
     expect(config.provider?.model).toBe("anthropic/claude-opus-4-6");
-    expect(config.telegram?.botToken).toBe("123:ABC");
-    expect(config.telegram?.groups?.["-100"]?.requireMention).toBe(true);
+    expect(config.channels?.telegram?.botToken).toBe("123:ABC");
+    expect(
+      (config.channels?.telegram?.groups as Record<string, Record<string, unknown>>)?.["-100"]
+        ?.requireMention,
+    ).toBe(true);
   });
 
   test("throws on missing name", () => {
@@ -352,92 +357,64 @@ describe("validateConfig", () => {
     );
   });
 
-  // -- telegram ---------------------------------------------------------------
+  // -- channels ----------------------------------------------------------------
 
-  test("accepts telegram with botToken only", () => {
+  test("accepts channels with telegram config", () => {
     const config = validateConfig({
       name: "t",
       project: "/tmp",
-      telegram: { botToken: "123:ABC" },
+      channels: { telegram: { botToken: "123:ABC" } },
     });
-    expect(config.telegram?.botToken).toBe("123:ABC");
-    expect(config.telegram?.allowFrom).toBeUndefined();
-    expect(config.telegram?.groups).toBeUndefined();
+    expect(config.channels?.telegram?.botToken).toBe("123:ABC");
   });
 
-  test("accepts telegram with all fields", () => {
+  test("accepts channels with multiple channels", () => {
     const config = validateConfig({
       name: "t",
       project: "/tmp",
-      telegram: {
-        botToken: "123:ABC",
-        allowFrom: ["111", "222"],
-        groups: {
-          "-100123": { requireMention: true },
-          "-100456": {},
-        },
+      channels: {
+        telegram: { botToken: "123:ABC" },
+        discord: { token: "MTIz..." },
+        whatsapp: {},
       },
     });
-    expect(config.telegram?.botToken).toBe("123:ABC");
-    expect(config.telegram?.allowFrom).toEqual(["111", "222"]);
-    expect(config.telegram?.groups?.["-100123"]?.requireMention).toBe(true);
-    expect(config.telegram?.groups?.["-100456"]?.requireMention).toBeUndefined();
+    expect(config.channels?.telegram?.botToken).toBe("123:ABC");
+    expect(config.channels?.discord?.token).toBe("MTIz...");
+    expect(config.channels?.whatsapp).toEqual({});
   });
 
-  test("throws on missing telegram.botToken", () => {
-    expect(() => validateConfig({ name: "t", project: "/tmp", telegram: {} })).toThrow("botToken");
+  test("accepts channels with extra fields (passthrough)", () => {
+    const config = validateConfig({
+      name: "t",
+      project: "/tmp",
+      channels: {
+        telegram: { botToken: "123:ABC", streaming: "partial", allowFrom: ["111"] },
+      },
+    });
+    expect(config.channels?.telegram?.streaming).toBe("partial");
   });
 
-  test("throws on empty telegram.botToken", () => {
-    expect(() =>
-      validateConfig({ name: "t", project: "/tmp", telegram: { botToken: "" } }),
-    ).toThrow("botToken");
+  test("accepts unknown channel names permissively", () => {
+    const config = validateConfig({
+      name: "t",
+      project: "/tmp",
+      channels: { matrix: { homeserver: "https://matrix.org", accessToken: "tok" } },
+    });
+    expect(config.channels?.matrix?.homeserver).toBe("https://matrix.org");
   });
 
-  test("throws on non-array telegram.allowFrom", () => {
-    expect(() =>
-      validateConfig({
-        name: "t",
-        project: "/tmp",
-        telegram: { botToken: "123:ABC", allowFrom: "111" },
-      }),
-    ).toThrow("allowFrom");
-  });
+  // -- openclaw passthrough ---------------------------------------------------
 
-  test("throws on non-string entry in telegram.allowFrom", () => {
-    expect(() =>
-      validateConfig({
-        name: "t",
-        project: "/tmp",
-        telegram: { botToken: "123:ABC", allowFrom: [111] },
-      }),
-    ).toThrow("allowFrom");
-  });
-
-  test("throws on non-object telegram.groups", () => {
-    expect(() =>
-      validateConfig({
-        name: "t",
-        project: "/tmp",
-        telegram: { botToken: "123:ABC", groups: "bad" },
-      }),
-    ).toThrow("groups");
-  });
-
-  test("throws on non-boolean telegram.groups.*.requireMention", () => {
-    expect(() =>
-      validateConfig({
-        name: "t",
-        project: "/tmp",
-        telegram: { botToken: "123:ABC", groups: { "-100": { requireMention: "yes" } } },
-      }),
-    ).toThrow("requireMention");
-  });
-
-  test("throws on non-object telegram", () => {
-    expect(() => validateConfig({ name: "t", project: "/tmp", telegram: "bad" })).toThrow(
-      "telegram",
-    );
+  test("accepts openclaw passthrough config", () => {
+    const config = validateConfig({
+      name: "t",
+      project: "/tmp",
+      openclaw: {
+        "session.dmScope": "per-channel-peer",
+        "channels.discord.voice.enabled": true,
+      },
+    });
+    expect(config.openclaw?.["session.dmScope"]).toBe("per-channel-peer");
   });
 
   // -- op:// cross-validation -------------------------------------------------
@@ -554,15 +531,20 @@ describe("sanitizeConfig", () => {
     expect(net.gatewayPort).toBe(9000);
   });
 
-  test("strips telegram.botToken", () => {
+  test("strips channel secrets (channels.telegram.botToken)", () => {
     const result = sanitizeConfig({
       name: "t",
       project: "/tmp",
-      telegram: { botToken: "123:SECRET", allowFrom: ["111"] },
+      channels: {
+        telegram: { botToken: "123:SECRET", allowFrom: ["111"] },
+        discord: { token: "MTIz-SECRET" },
+      },
     });
-    const tg = result.telegram as Record<string, unknown>;
+    const tg = (result.channels as Record<string, Record<string, unknown>>).telegram;
     expect(tg.botToken).toBeUndefined();
     expect(tg.allowFrom).toEqual(["111"]);
+    const dc = (result.channels as Record<string, Record<string, unknown>>).discord;
+    expect(dc.token).toBeUndefined();
   });
 
   test("strips bootstrap field", () => {

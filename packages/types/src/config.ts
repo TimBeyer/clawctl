@@ -25,6 +25,8 @@ function formatZodError(error: z.ZodError): string {
 export interface ValidateConfigOptions {
   /** Strict Zod schema for the capabilities section (built from capability configDefs). */
   capabilitySchema?: z.ZodTypeAny;
+  /** Strict Zod schema for the channels section (built from ChannelDef configDefs). */
+  channelSchema?: z.ZodTypeAny;
 }
 
 /** Validate raw JSON and return a typed InstanceConfig. */
@@ -46,6 +48,18 @@ export function validateConfig(raw: unknown, opts?: ValidateConfigOptions): Inst
     if (!capResult.success) {
       const issue = (capResult as { error: z.ZodError }).error.issues[0];
       const path = ["capabilities", ...issue.path].join(".");
+      throw new Error(
+        issue.message.startsWith("'") ? issue.message : `'${path}': ${issue.message}`,
+      );
+    }
+  }
+
+  // Validate channel-specific config against strict schemas
+  if (opts?.channelSchema && config.channels) {
+    const chResult = opts.channelSchema.safeParse(config.channels);
+    if (!chResult.success) {
+      const issue = (chResult as { error: z.ZodError }).error.issues[0];
+      const path = ["channels", ...issue.path].join(".");
       throw new Error(
         issue.message.startsWith("'") ? issue.message : `'${path}': ${issue.message}`,
       );

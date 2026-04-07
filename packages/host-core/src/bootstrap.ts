@@ -2,13 +2,13 @@ import { randomBytes } from "crypto";
 import { mkdir, rm } from "fs/promises";
 import { join } from "path";
 import type { VMDriver, OnLine } from "./drivers/types.js";
-import { GATEWAY_PORT, CLAW_BIN_PATH } from "@clawctl/types";
+import { GATEWAY_PORT, CLAW_BIN_PATH, CHANNEL_REGISTRY } from "@clawctl/types";
+import type { InstanceConfig, ChannelDef } from "@clawctl/types";
 import { buildOnboardCommand } from "./providers.js";
 import { patchMainConfig, patchAuthProfiles } from "./infra-secrets.js";
 import { generateBootstrapPrompt } from "@clawctl/templates";
 import { redactSecrets } from "./redact.js";
 import { getTailscaleHostname } from "./tailscale.js";
-import type { InstanceConfig } from "@clawctl/types";
 import type { ResolvedSecretRef } from "./secrets.js";
 
 export interface BootstrapResult {
@@ -68,7 +68,7 @@ export async function bootstrapOpenclaw(
   // c) Post-onboard config (including gateway token — must be before daemon
   //    restart so the daemon picks it up)
   const gatewayToken = config.network?.gatewayToken ?? randomBytes(24).toString("hex");
-  const secrets = [gatewayToken, config.telegram?.botToken].filter(Boolean) as string[];
+  const secrets = [gatewayToken, ...collectChannelSecrets(config)].filter(Boolean) as string[];
   const safeLog = (msg: string) => onLine?.(redactSecrets(msg, secrets));
 
   const configCmds: string[] = [];
@@ -108,41 +108,28 @@ export async function bootstrapOpenclaw(
     }
   }
 
-  // d) Telegram setup (plaintext — must run before secret migration)
-  if (config.telegram) {
-    onLine?.("Configuring Telegram...");
-    const tg = config.telegram;
-    const tgCmds: string[] = [
-      "openclaw config set channels.telegram.enabled true",
-      `openclaw config set channels.telegram.botToken "${tg.botToken}"`,
-    ];
-
-    // Set allowFrom before dmPolicy — openclaw validates that allowlist
-    // mode has at least one sender ID
-    if (tg.allowFrom?.length) {
-      const allowJson = JSON.stringify(tg.allowFrom);
-      tgCmds.push(`openclaw config set channels.telegram.allowFrom '${allowJson}'`);
-    }
-
-    tgCmds.push("openclaw config set channels.telegram.dmPolicy allowlist");
-    tgCmds.push("openclaw config set plugins.entries.telegram.enabled true");
-
-    if (tg.groups) {
-      const groupIds = Object.keys(tg.groups);
-      if (groupIds.length > 0) {
-        const groupAllowJson = JSON.stringify(groupIds);
-        tgCmds.push(`openclaw config set channels.telegram.groupAllowFrom '${groupAllowJson}'`);
-      }
-      for (const [id, settings] of Object.entries(tg.groups)) {
-        if (settings.requireMention !== undefined) {
-          tgCmds.push(
-            `openclaw config set channels.telegram.groups.${id}.requireMention ${settings.requireMention}`,
-          );
+  // d) Channel setup (plaintext — must run before secret migration)
+  if (config.channels) {
+    for (const [channelName, channelConfig] of Object.entries(config.channels)) {
+      if (channelConfig.enabled === false) continue;
+      onLine?.(`Configuring ${channelName}...`);
+      const cmds = buildChannelCommands(channelName, channelConfig);
+      for (const cmd of cmds) {
+        safeLog(`  ${cmd}`);
+        const r = await driver.exec(vmName, cmd);
+        if (r.exitCode !== 0) {
+          safeLog(`  Warning: ${cmd} failed: ${r.stderr}`);
         }
       }
     }
+  }
 
-    for (const cmd of tgCmds) {
+  // d2) OpenClaw passthrough config
+  if (config.openclaw && Object.keys(config.openclaw).length > 0) {
+    onLine?.("Applying openclaw config overrides...");
+    for (const [path, value] of Object.entries(config.openclaw)) {
+      const serialized = serializeConfigValue(value);
+      const cmd = `openclaw config set ${path} ${serialized}`;
       safeLog(`  ${cmd}`);
       const r = await driver.exec(vmName, cmd);
       if (r.exitCode !== 0) {
@@ -242,4 +229,96 @@ export async function bootstrapOpenclaw(
     tailscaleUrl,
     doctorPassed,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Channel command generation
+// ---------------------------------------------------------------------------
+
+/** Serialize a config value for `openclaw config set`. */
+function serializeConfigValue(value: unknown): string {
+  if (typeof value === "string") return `"${value}"`;
+  if (typeof value === "boolean" || typeof value === "number") return String(value);
+  return `'${JSON.stringify(value)}'`;
+}
+
+/**
+ * Walk a config object and generate `openclaw config set` commands for each leaf.
+ * Arrays and plain objects are JSON-encoded as single values.
+ */
+function configToCommands(prefix: string, obj: Record<string, unknown>): string[] {
+  const cmds: string[] = [];
+  for (const [key, value] of Object.entries(obj)) {
+    const path = `${prefix}.${key}`;
+    if (value === null || value === undefined) continue;
+    if (Array.isArray(value) || typeof value !== "object") {
+      cmds.push(`openclaw config set ${path} ${serializeConfigValue(value)}`);
+    } else {
+      // Nested object — recurse
+      cmds.push(...configToCommands(path, value as Record<string, unknown>));
+    }
+  }
+  return cmds;
+}
+
+/**
+ * Build the full list of `openclaw config set` commands for a channel.
+ *
+ * 1. Enable the channel and its plugin
+ * 2. Set each config field from the channel config object
+ * 3. Run channel-specific postCommands (e.g., Telegram's dmPolicy after allowFrom)
+ */
+function buildChannelCommands(
+  channelName: string,
+  channelConfig: Record<string, unknown>,
+): string[] {
+  const def: ChannelDef | undefined = CHANNEL_REGISTRY[channelName];
+  const pluginName = def?.pluginName ?? channelName;
+  const enabled = channelConfig.enabled !== false;
+  const cmds: string[] = [
+    `openclaw config set channels.${channelName}.enabled ${enabled}`,
+    `openclaw config set plugins.entries.${pluginName}.enabled ${enabled}`,
+  ];
+
+  // Keys handled by postCommands — skipped by the generic loop
+  const postHandledKeys = new Set(def?.postCommands?.handledKeys ?? []);
+
+  // Apply config fields (skip enabled + postCommands-handled keys)
+  for (const [key, value] of Object.entries(channelConfig)) {
+    if (key === "enabled") continue;
+    if (postHandledKeys.has(key)) continue;
+    if (value === null || value === undefined) continue;
+    const path = `channels.${channelName}.${key}`;
+    if (Array.isArray(value) || typeof value !== "object") {
+      cmds.push(`openclaw config set ${path} ${serializeConfigValue(value)}`);
+    } else {
+      cmds.push(...configToCommands(path, value as Record<string, unknown>));
+    }
+  }
+
+  // Channel-specific post commands (e.g., Telegram dmPolicy after allowFrom)
+  if (def?.postCommands) {
+    cmds.push(...def.postCommands.run(channelConfig));
+  }
+
+  return cmds;
+}
+
+/**
+ * Collect all secret values from channel configs for log redaction.
+ */
+function collectChannelSecrets(config: InstanceConfig): string[] {
+  const secrets: string[] = [];
+  if (config.channels) {
+    for (const [channelName, channelConfig] of Object.entries(config.channels)) {
+      const def = CHANNEL_REGISTRY[channelName];
+      if (!def) continue;
+      for (const field of def.configDef.fields) {
+        if (!field.secret) continue;
+        const value = channelConfig[field.path as string];
+        if (typeof value === "string" && value) secrets.push(value);
+      }
+    }
+  }
+  return secrets;
 }

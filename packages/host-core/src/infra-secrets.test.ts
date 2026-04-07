@@ -15,9 +15,9 @@ describe("SecretRef construction", () => {
     expect(id).toBe("/provider_apikey");
   });
 
-  test("produces correct file provider ref for telegram botToken", () => {
-    const id = `/${sanitizeKey(["telegram", "botToken"])}`;
-    expect(id).toBe("/telegram_bottoken");
+  test("produces correct file provider ref for channel botToken", () => {
+    const id = `/${sanitizeKey(["channels", "telegram", "botToken"])}`;
+    expect(id).toBe("/channels_telegram_bottoken");
   });
 
   test("produces correct ref shape", () => {

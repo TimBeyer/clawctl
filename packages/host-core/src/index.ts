@@ -15,6 +15,7 @@ export { loadConfig, validateConfig, configToVMConfig, sanitizeConfig } from "./
 export {
   deriveConfigSchema,
   buildCapabilitiesSchema,
+  buildChannelsSchema,
   getSecretPaths,
   getByPath,
   setByPath,

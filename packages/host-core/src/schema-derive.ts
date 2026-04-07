@@ -8,7 +8,12 @@
  */
 
 import { z } from "zod";
-import type { CapabilityConfigDef, CapabilityConfigField, CapabilityDef } from "@clawctl/types";
+import type {
+  CapabilityConfigDef,
+  CapabilityConfigField,
+  CapabilityDef,
+  ChannelDef,
+} from "@clawctl/types";
 
 // ---------------------------------------------------------------------------
 // Path resolution utilities
@@ -69,6 +74,10 @@ function deriveFieldSchema(field: CapabilityConfigField): z.ZodTypeAny {
     case "text":
     case "password": {
       schema = field.required ? z.string().min(1) : z.string();
+      break;
+    }
+    case "toggle": {
+      schema = z.boolean();
       break;
     }
     case "select": {
@@ -192,6 +201,35 @@ export function buildCapabilitiesSchema(capabilities: CapabilityDef[]): z.ZodTyp
     .object(knownShapes)
     .catchall(z.union([z.literal(true), z.record(z.string(), z.unknown())]))
     .optional();
+}
+
+/**
+ * Build a composed Zod schema for the `channels` config section.
+ *
+ * Known channels get strict validation (derived from ChannelDef fields)
+ * with .passthrough() to allow extra fields we don't model. Unknown
+ * channel keys are allowed permissively.
+ */
+export function buildChannelsSchema(channels: ChannelDef[]): z.ZodTypeAny {
+  const knownShapes: Record<string, z.ZodTypeAny> = {};
+
+  for (const ch of channels) {
+    if (ch.configDef.fields.length > 0) {
+      const objSchema = deriveConfigSchema(ch.configDef);
+      // .passthrough() allows extra fields beyond the essential ones we model
+      const passthrough = objSchema instanceof z.ZodObject ? objSchema.passthrough() : objSchema;
+      knownShapes[ch.name] = passthrough.optional();
+    } else {
+      // Channels with no required fields (e.g., WhatsApp with QR pairing)
+      knownShapes[ch.name] = z.record(z.string(), z.unknown()).optional();
+    }
+  }
+
+  if (Object.keys(knownShapes).length === 0) {
+    return z.record(z.string(), z.record(z.string(), z.unknown())).optional();
+  }
+
+  return z.object(knownShapes).catchall(z.record(z.string(), z.unknown())).optional();
 }
 
 /**

@@ -61,11 +61,13 @@ and `project` are required. Everything else is optional and has sensible default
     "toolsProfile": "full",
     "sandbox": false
   },
-  "telegram": {
-    "botToken": "123456:ABC-...",
-    "allowFrom": ["123456789"],
-    "groups": {
-      "-100123456789": { "requireMention": true }
+  "channels": {
+    "telegram": {
+      "botToken": "123456:ABC-...",
+      "allowFrom": ["123456789"],
+      "groups": {
+        "-100123456789": { "requireMention": true }
+      }
     }
   }
 }
@@ -190,16 +192,75 @@ Agent behavior configuration. Applied during bootstrap (when `provider` is prese
 | `toolsProfile`   | string  | `"full"` | Agent tools profile (`"full"`, `"coding"`, `"messaging"`, etc.).                                         |
 | `sandbox`        | boolean | —        | Set to `false` to disable sandbox mode (`agents.defaults.sandbox.mode off`).                             |
 
-## `telegram`
+## `channels`
 
-Telegram channel configuration (optional). Applied during bootstrap after onboarding.
+Communication channels. Each key is a channel name; the value is
+channel-specific config. Applied during bootstrap via `openclaw config set`.
+
+Known channels with wizard support: **telegram**, **discord**, **slack**, **whatsapp**.
+Unknown channel names are accepted — they pass through to OpenClaw directly.
+
+### `enabled` field
+
+Every channel supports an `enabled` boolean:
+
+| `enabled` value | Behavior                                                                                                                                |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `true`          | Channel is configured during bootstrap.                                                                                                 |
+| omitted         | Treated as `true` — presence of the channel key means "enable it."                                                                      |
+| `false`         | Channel is skipped during bootstrap. Config is preserved (useful for temporarily disabling a channel without deleting its credentials). |
+
+### `channels.telegram`
 
 | Field                        | Type     | Description                                      |
 | ---------------------------- | -------- | ------------------------------------------------ |
+| `enabled`                    | boolean  | Enable this channel (default: `true`).           |
 | `botToken`                   | string   | Bot token from BotFather (required).             |
 | `allowFrom`                  | string[] | Telegram user IDs allowed to DM the bot.         |
 | `groups`                     | object   | Group IDs and their settings.                    |
 | `groups.<id>.requireMention` | boolean  | Whether the bot requires @mention in this group. |
+
+### `channels.discord`
+
+| Field     | Type    | Description                            |
+| --------- | ------- | -------------------------------------- |
+| `enabled` | boolean | Enable this channel (default: `true`). |
+| `token`   | string  | Discord bot token (required).          |
+
+### `channels.slack`
+
+| Field      | Type    | Description                                            |
+| ---------- | ------- | ------------------------------------------------------ |
+| `enabled`  | boolean | Enable this channel (default: `true`).                 |
+| `botToken` | string  | Slack Bot Token `xoxb-...` (required).                 |
+| `appToken` | string  | Slack App Token `xapp-...` for Socket Mode (required). |
+
+### `channels.whatsapp`
+
+| Field     | Type    | Description                            |
+| --------- | ------- | -------------------------------------- |
+| `enabled` | boolean | Enable this channel (default: `true`). |
+
+No credentials needed — uses QR code pairing after provisioning:
+`clawctl oc -i <name> channels login --channel whatsapp`
+
+Additional channel-specific fields beyond the essentials listed above are
+accepted and passed through to OpenClaw. See
+[OpenClaw channel docs](https://docs.openclaw.ai/channels) for all options.
+
+## `openclaw`
+
+Arbitrary OpenClaw config passthrough. Each key is a dotpath, applied via
+`openclaw config set` during bootstrap. No host-side validation — OpenClaw
+validates at daemon restart.
+
+```json
+"openclaw": {
+  "channels.discord.streaming": "partial",
+  "channels.discord.voice.enabled": true,
+  "session.dmScope": "per-channel-peer"
+}
+```
 
 ## Secret references
 
@@ -216,5 +277,5 @@ secrets and can be safely committed to git. See
 
 - [`config.json`](../examples/config.json) — minimal (name + project only)
 - [`config.bootstrap.json`](../examples/config.bootstrap.json) — minimal working gateway (name + project + API key)
-- [`config.full.json`](../examples/config.full.json) — all options including provider + telegram
+- [`config.full.json`](../examples/config.full.json) — all options including provider + channels
 - [`config.op.json`](../examples/config.op.json) — zero-plaintext secrets using `op://` and `env://` references
