@@ -34,8 +34,16 @@ export interface ChannelDef {
    * Extra commands to run after the field-derived config commands.
    * Receives the channel config object and returns additional
    * `openclaw config set` commands.
+   *
+   * Keys listed in `handledKeys` are skipped by the generic config loop
+   * so postCommands has full control over their ordering and format.
    */
-  postCommands?: (config: Record<string, unknown>) => string[];
+  postCommands?: {
+    /** Config keys that postCommands handles — skipped by the generic loop. */
+    handledKeys: string[];
+    /** Generate the commands for the handled keys. */
+    run: (config: Record<string, unknown>) => string[];
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -97,32 +105,35 @@ const telegramChannel: ChannelDef = {
     summary: (values) =>
       values.enabled === "true" ? (values.botToken ? "configured" : "enabled") : "",
   },
-  postCommands: (config) => {
-    const cmds: string[] = [];
-    // allowFrom → set allowlist, then dmPolicy
-    const allowFrom = config.allowFrom;
-    if (Array.isArray(allowFrom) && allowFrom.length > 0) {
-      cmds.push(`openclaw config set channels.telegram.allowFrom '${JSON.stringify(allowFrom)}'`);
-      cmds.push("openclaw config set channels.telegram.dmPolicy allowlist");
-    }
-    // groups
-    const groups = config.groups;
-    if (groups && typeof groups === "object") {
-      const groupIds = Object.keys(groups);
-      if (groupIds.length > 0) {
-        cmds.push(
-          `openclaw config set channels.telegram.groupAllowFrom '${JSON.stringify(groupIds)}'`,
-        );
+  postCommands: {
+    handledKeys: ["allowFrom", "groups"],
+    run: (config) => {
+      const cmds: string[] = [];
+      // allowFrom → set allowlist, then dmPolicy
+      const allowFrom = config.allowFrom;
+      if (Array.isArray(allowFrom) && allowFrom.length > 0) {
+        cmds.push(`openclaw config set channels.telegram.allowFrom '${JSON.stringify(allowFrom)}'`);
+        cmds.push("openclaw config set channels.telegram.dmPolicy allowlist");
       }
-      for (const [id, settings] of Object.entries(groups as Record<string, Record<string, unknown>>)) {
-        if (settings.requireMention !== undefined) {
+      // groups
+      const groups = config.groups;
+      if (groups && typeof groups === "object") {
+        const groupIds = Object.keys(groups);
+        if (groupIds.length > 0) {
           cmds.push(
-            `openclaw config set channels.telegram.groups.${id}.requireMention ${settings.requireMention}`,
+            `openclaw config set channels.telegram.groupAllowFrom '${JSON.stringify(groupIds)}'`,
           );
         }
+        for (const [id, settings] of Object.entries(groups as Record<string, Record<string, unknown>>)) {
+          if (settings.requireMention !== undefined) {
+            cmds.push(
+              `openclaw config set channels.telegram.groups.${id}.requireMention ${settings.requireMention}`,
+            );
+          }
+        }
       }
-    }
-    return cmds;
+      return cmds;
+    },
   },
 };
 

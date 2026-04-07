@@ -277,25 +277,10 @@ function buildChannelCommands(channelName: string, channelConfig: Record<string,
     `openclaw config set plugins.entries.${pluginName}.enabled ${enabled}`,
   ];
 
-  // Set each config field — skip fields handled by postCommands for known channels
-  const postHandledKeys = new Set<string>();
-  if (def?.postCommands) {
-    // Telegram's postCommands handles allowFrom and groups specially
-    // We detect which top-level keys the postCommands references by
-    // checking the ChannelDef — fields NOT in configDef.fields are
-    // handled as generic config; postCommands handles the rest that
-    // need special ordering
-    const fieldPaths = new Set(def.configDef.fields.map((f) => f.path as string));
-    for (const key of Object.keys(channelConfig)) {
-      // Skip keys that are in the essential fields (those are set via configToCommands)
-      // and also skip keys that postCommands will handle specially
-      if (!fieldPaths.has(key) && (key === "allowFrom" || key === "groups")) {
-        postHandledKeys.add(key);
-      }
-    }
-  }
+  // Keys handled by postCommands — skipped by the generic loop
+  const postHandledKeys = new Set(def?.postCommands?.handledKeys ?? []);
 
-  // Apply config fields (skip enabled — already handled above)
+  // Apply config fields (skip enabled + postCommands-handled keys)
   for (const [key, value] of Object.entries(channelConfig)) {
     if (key === "enabled") continue;
     if (postHandledKeys.has(key)) continue;
@@ -310,7 +295,7 @@ function buildChannelCommands(channelName: string, channelConfig: Record<string,
 
   // Channel-specific post commands (e.g., Telegram dmPolicy after allowFrom)
   if (def?.postCommands) {
-    cmds.push(...def.postCommands(channelConfig));
+    cmds.push(...def.postCommands.run(channelConfig));
   }
 
   return cmds;
