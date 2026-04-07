@@ -1,5 +1,21 @@
 # Changelog
 
+# [0.22.0](https://github.com/TimBeyer/clawctl/compare/v0.21.0...v0.22.0) (2026-04-07)
+
+
+### Bug Fixes
+
+* wizard only emits channel config when enabled is toggled on ([4785cda](https://github.com/TimBeyer/clawctl/commit/4785cda14f1111e3ed99672cca050d84c0a0fc7b))
+
+
+### Features
+
+* add ChannelDef system and channels/openclaw config keys ([fe7374f](https://github.com/TimBeyer/clawctl/commit/fe7374fbc21c08029cbce40ca3e3e840682b5127))
+* add group headers to wizard (Infrastructure, Channels, Identity) ([8e1fe40](https://github.com/TimBeyer/clawctl/commit/8e1fe40b6bbbac7e5c3154e7364471af638c33fb))
+* add toggle field type and enabled toggle to all channels ([ba8d4af](https://github.com/TimBeyer/clawctl/commit/ba8d4afed2557c59f44cf2fe2960db92635c0af0))
+* channel schema validation and telegram migration ([657206a](https://github.com/TimBeyer/clawctl/commit/657206ab5801854e3996b41424cb758226373781))
+* generic channel bootstrap loop and openclaw passthrough ([3fa9563](https://github.com/TimBeyer/clawctl/commit/3fa956390ef4bb5ed33e99418da1f3387b54a1c0))
+
 # [0.21.0](https://github.com/TimBeyer/clawctl/compare/v0.20.0...v0.21.0) (2026-04-01)
 
 
