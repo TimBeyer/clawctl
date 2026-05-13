@@ -109,11 +109,34 @@ export async function patchMainConfig(
  * - Adds (or refreshes) `<newProviderType>:default` with the file-provider
  *   tokenRef. Preserves any extra fields on an existing same-key profile.
  * - Removes other-provider `:default` profiles whose `provider` field is set
- *   and differs from `newProviderType` (so an anthropic→zai swap cleanly
- *   evicts the dead anthropic profile). Conservative: leaves profiles whose
- *   `provider` field is unset or whose key doesn't end in `:default`.
+ *   and differs from `newProviderType`, so a provider swap via a clawctl.json
+ *   edit cleanly evicts the prior provider's profile. Conservative: leaves
+ *   profiles whose `provider` field is unset or whose key doesn't end in
+ *   `:default` (forward-compat with profile shapes we don't recognise).
  * - Resets `lastGood` to point at the new provider only.
  * - Filters `usageStats` to keys still in `profiles`.
+ *
+ * Why surgery rather than delegating to openclaw's CLI:
+ *
+ * The rest of bootstrap.ts delegates state mutations to `openclaw config set`,
+ * `openclaw models set`, `openclaw onboard`, etc. This function is the
+ * standing exception because openclaw's current CLI surface doesn't expose
+ * the operations we need:
+ *
+ * 1. `openclaw onboard` re-runs skip Model/Auth setup entirely (upstream
+ *    openclaw/openclaw#16134), so we can't delegate provider swap to it.
+ * 2. `openclaw models auth paste-token` exists but only accepts plaintext —
+ *    there is no `--token-ref` flag for the file-provider SecretRef shape we
+ *    use, so delegating would write plaintext to auth-profiles.json that
+ *    we'd then have to surgically migrate to a tokenRef anyway.
+ * 3. There is no `openclaw models auth remove` command yet — eviction of a
+ *    prior provider's `:default` profile is tracked upstream in
+ *    openclaw/openclaw#10244 and is currently only doable via manual edits.
+ *
+ * So this function does add + remove + tokenRef-shape in one atomic
+ * read-modify-write. When openclaw ships either (a) a `models auth remove`
+ * command, or (b) a `--token-ref` flag on `paste-token`, this can be
+ * replaced with two delegate calls and the surgery retired.
  *
  * Pure / no I/O — drives `patchAuthProfiles` and is unit-tested in isolation.
  */

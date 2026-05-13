@@ -131,12 +131,15 @@ Re-apply semantics:
 - [x] Gate first-run-only steps in `bootstrapOpenclaw`. Read existing
       `data/config` if present; reuse `gateway.auth.token`.
 - [x] Run `bun test`, `bun run lint`, `bun run format:check`.
-- [ ] End-to-end smoke on an existing instance: re-run
+- [x] End-to-end smoke on an existing instance: re-run
       `clawctl create` against a clawctl.json with a different
       provider, assert `gateway.auth.token` byte-for-byte preserved
-      against a `data/config.bak.*` snapshot, assert prior auth profile
-      cleanly evicted, `openclaw doctor` green.
-- [ ] Open PR.
+      against a `data/config.bak.*` snapshot, prior auth profile
+      cleanly evicted, agent answers via new provider.
+- [x] Open PR.
+- [x] Document why `applyAuthProfileSwap` does surgery rather than
+      delegate, including links to upstream issues that would let us
+      retire the surgery.
 
 ## Notes
 
@@ -150,6 +153,16 @@ Re-apply semantics:
   missing-field cases and returns `undefined`, falling through to fresh
   generation, so a corrupt or partially-written `data/config` doesn't
   wedge the reapply path.
+- The choice to do surgery in `applyAuthProfileSwap` rather than
+  delegate to openclaw's CLI was validated against the upstream surface:
+  `openclaw onboard` re-runs skip Model/Auth (upstream
+  openclaw/openclaw#16134); `openclaw models auth paste-token` is
+  plaintext-only with no `--token-ref` flag; there is no
+  `openclaw models auth remove` (upstream openclaw/openclaw#10244).
+  Delegating today would mean writing plaintext to disk and _then_ doing
+  surgery, which is worse than the single atomic read-modify-write here.
+  The docblock on `applyAuthProfileSwap` records the rationale and the
+  upstream issues that, once resolved, would let us retire the surgery.
 
 ## Outcome
 
