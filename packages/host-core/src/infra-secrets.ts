@@ -3,7 +3,7 @@
  *
  * Two operations on known JSON paths:
  * 1. Patch main config — add file provider, replace channel secrets with SecretRefs
- * 2. Patch auth-profiles.json — replace token with tokenRef
+ * 2. Patch auth-profiles.json — converge active provider profile to the configured one
  */
 import type { VMDriver, OnLine } from "./drivers/types.js";
 import type { ResolvedSecretRef } from "./secrets.js";
@@ -102,10 +102,112 @@ export async function patchMainConfig(
 }
 
 /**
- * Patch auth-profiles.json to use tokenRef instead of plaintext token.
+ * Pure transformation: converge an auth-profiles.json structure on the
+ * configured provider.
  *
- * Finds the profile matching `<providerType>:default` and replaces
- * `token` with `tokenRef` pointing to the file provider.
+ * Behaviour:
+ * - Adds (or refreshes) `<newProviderType>:default` with the file-provider
+ *   tokenRef. Preserves any extra fields on an existing same-key profile.
+ * - Removes other-provider `:default` profiles whose `provider` field is set
+ *   and differs from `newProviderType`, so a provider swap via a clawctl.json
+ *   edit cleanly evicts the prior provider's profile. Conservative: leaves
+ *   profiles whose `provider` field is unset or whose key doesn't end in
+ *   `:default` (forward-compat with profile shapes we don't recognise).
+ * - Resets `lastGood` to point at the new provider only.
+ * - Filters `usageStats` to keys still in `profiles`.
+ *
+ * Why surgery rather than delegating to openclaw's CLI:
+ *
+ * The rest of bootstrap.ts delegates state mutations to `openclaw config set`,
+ * `openclaw models set`, `openclaw onboard`, etc. This function is the
+ * standing exception because openclaw's current CLI surface doesn't expose
+ * the operations we need:
+ *
+ * 1. `openclaw onboard` re-runs skip Model/Auth setup entirely (upstream
+ *    openclaw/openclaw#16134), so we can't delegate provider swap to it.
+ * 2. `openclaw models auth paste-token` exists but only accepts plaintext —
+ *    there is no `--token-ref` flag for the file-provider SecretRef shape we
+ *    use, so delegating would write plaintext to auth-profiles.json that
+ *    we'd then have to surgically migrate to a tokenRef anyway.
+ * 3. There is no `openclaw models auth remove` command yet — eviction of a
+ *    prior provider's `:default` profile is tracked upstream in
+ *    openclaw/openclaw#10244 and is currently only doable via manual edits.
+ *
+ * So this function does add + remove + tokenRef-shape in one atomic
+ * read-modify-write. When openclaw ships either (a) a `models auth remove`
+ * command, or (b) a `--token-ref` flag on `paste-token`, this can be
+ * replaced with two delegate calls and the surgery retired.
+ *
+ * Pure / no I/O — drives `patchAuthProfiles` and is unit-tested in isolation.
+ */
+export function applyAuthProfileSwap(
+  authProfiles: Record<string, unknown>,
+  newProviderType: string,
+  apiKeyPath: string[],
+): Record<string, unknown> {
+  const result = structuredClone(authProfiles);
+  const profiles = (result.profiles ?? (result.profiles = {})) as Record<
+    string,
+    Record<string, unknown>
+  >;
+  const newProfileKey = `${newProviderType}:default`;
+  const newTokenRef = makeSecretRef(apiKeyPath);
+
+  // Add or refresh the new provider's profile.
+  const existing = profiles[newProfileKey];
+  if (existing && typeof existing === "object") {
+    // Same-key profile already there — preserve extra fields, but ensure
+    // type/provider/tokenRef are canonical and any plaintext token is removed.
+    const merged: Record<string, unknown> = { ...existing };
+    delete merged.token;
+    merged.type = "token";
+    merged.provider = newProviderType;
+    merged.tokenRef = newTokenRef;
+    profiles[newProfileKey] = merged;
+  } else {
+    profiles[newProfileKey] = {
+      type: "token",
+      provider: newProviderType,
+      tokenRef: newTokenRef,
+    };
+  }
+
+  // Evict conflicting other-provider :default profiles.
+  for (const [key, profile] of Object.entries(profiles)) {
+    if (key === newProfileKey) continue;
+    if (!key.endsWith(":default")) continue;
+    if (!profile || typeof profile !== "object") continue;
+    const provider = (profile as Record<string, unknown>).provider;
+    if (typeof provider !== "string") continue;
+    if (provider === newProviderType) continue;
+    delete profiles[key];
+  }
+
+  // Reset lastGood to the converged profile only.
+  result.lastGood = { [newProviderType]: newProfileKey };
+
+  // Drop usageStats for profiles that no longer exist.
+  if (result.usageStats && typeof result.usageStats === "object") {
+    const filtered: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(result.usageStats as Record<string, unknown>)) {
+      if (key in profiles) filtered[key] = value;
+    }
+    result.usageStats = filtered;
+  }
+
+  return result;
+}
+
+/**
+ * Patch auth-profiles.json to bind the configured provider's credentials.
+ *
+ * On first run (after `openclaw onboard`) this replaces the plaintext `token`
+ * field with a `tokenRef` pointing at the file provider. On re-apply (e.g.
+ * switching from one provider to another via a clawctl.json edit) it evicts
+ * the prior provider's profile and adds the new one.
+ *
+ * Skips entirely when no `provider.apiKey` is in `resolvedMap` (e.g. inline
+ * plaintext or no-key configurations).
  */
 export async function patchAuthProfiles(
   driver: VMDriver,
@@ -131,19 +233,8 @@ export async function patchAuthProfiles(
   }
 
   const authProfiles = await readVMJson(driver, vmName, AUTH_PROFILES_PATH);
-  const profiles = (authProfiles.profiles ?? {}) as Record<string, Record<string, unknown>>;
-  const profileKey = `${providerType}:default`;
-  const profile = profiles[profileKey];
+  const updated = applyAuthProfileSwap(authProfiles, providerType, apiKeyRef.path);
 
-  if (!profile) {
-    onLine?.(`Profile "${profileKey}" not found — skipping auth-profiles patch`);
-    return;
-  }
-
-  // Replace token with tokenRef
-  delete profile.token;
-  profile.tokenRef = makeSecretRef(apiKeyRef.path);
-
-  await writeVMJson(driver, vmName, AUTH_PROFILES_PATH, authProfiles);
+  await writeVMJson(driver, vmName, AUTH_PROFILES_PATH, updated);
   onLine?.("auth-profiles.json patched");
 }
