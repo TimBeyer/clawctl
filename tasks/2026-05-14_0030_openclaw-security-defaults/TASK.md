@@ -125,7 +125,79 @@ the `openclaw` passthrough as the catch-all escape hatch.
 
 ## Notes
 
-(Filled during implementation.)
+### Phase A — real schema (OpenClaw 2026.5.7)
+
+The web research's framing was directionally right but several specifics
+were wrong. The actual layers:
+
+1. **`tools.exec.*`** (gateway config) — the primary exec gate.
+   - `security`: `deny | allowlist | full`
+   - `ask`: `off | on-miss | always`
+   - `host`: `auto | sandbox | gateway | node`
+   - Other knobs: `pathPrepend`, `safeBins`, `strictInlineEval`.
+2. **`~/.openclaw/exec-approvals.json`** (host approvals file) — a
+   parallel, file-based policy that's intersected with the config policy.
+   - `defaults.{security, ask, askFallback}` apply to all agents.
+   - `agents.<name>.{security, ask, allowlist}` override per agent.
+   - "Effective" = host approvals INTERSECTED with config request.
+     If the host says `security=allowlist`, that wins over config
+     `security=full` ("stricter host security wins").
+3. **`tools.elevated.{enabled, allowFrom}`** — separate "privileged
+   surface" toggle, source-keyed (e.g. `allowFrom.telegram=[<id>]`).
+   Independent of `tools.exec.*`.
+4. **`commands.*`** — slash-command gating. `commands.config` is the
+   `/config` slash toggle (default false). Siblings include `bash`,
+   `debug`, `restart`, `text`, `mcp`, `plugins`, `native`,
+   `nativeSkills`, `allowFrom`, `ownerAllowFrom`, `useAccessGroups`.
+5. **`tools.profile`** — enum: `minimal | coding | messaging | full`.
+6. **`tools.sandbox.tools.*`** — sandbox-specific tool policy, separate
+   from `agents.defaults.sandbox.mode` (which is the on/off switch).
+
+### Real root cause for the observed denial
+
+`packages/capabilities/src/capabilities/one-password/op-cli.ts:99-117`
+writes `~/.openclaw/exec-approvals.json` from scratch with:
+
+```json
+{
+  "defaults": { "security": "deny", "ask": "on-miss", "askFallback": "deny" },
+  "agents": { "main": { "security": "allowlist", "allowlist": [{"pattern": "~/.local/bin/op"}] } }
+}
+```
+
+This clobbers any defaults the operator (or the yolo preset) had set.
+Even if we set `tools.exec.security=full` in the gateway config, the
+host approvals file says `agents.main.security=allowlist` → effective
+is `allowlist` → only the `op` binary runs.
+
+### Canonical "yolo" preset
+
+`openclaw exec-policy preset yolo` writes BOTH:
+
+- `data/config`: `tools.exec.security=full`, `tools.exec.ask=off`,
+  `tools.exec.host=gateway`.
+- `~/.openclaw/exec-approvals.json` `defaults`: `security=full`,
+  `ask=off`, `askFallback=full`.
+
+It does **not** touch `agents.<name>.*` overrides — so the 1Password
+override survives the preset.
+
+### Implementation plan refinement
+
+1. Run `openclaw exec-policy preset yolo` once after onboard.
+2. Refactor the 1Password capability so it merges instead of clobbers
+   the approvals file: read existing JSON, add `~/.local/bin/op` to
+   `agents.main.allowlist`, do NOT touch `defaults.*` or
+   `agents.main.security`. With yolo's `defaults.security=full`, the
+   per-agent override only exists if the operator explicitly created
+   it; the op allowlist entry becomes harmless documentation.
+3. Set `commands.config=true` (not part of yolo preset).
+4. Set `tools.elevated.enabled=true` and auto-derive
+   `tools.elevated.allowFrom.<channel>` from channel `allowFrom` lists.
+5. Flip `agent.sandbox` default to false (was opt-in).
+
+Step 2 is the critical fix — without it, yolo + commands.config are
+still overridden by the 1Password capability.
 
 ## Outcome
 
