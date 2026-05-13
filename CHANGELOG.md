@@ -1,5 +1,19 @@
 # Changelog
 
+# [0.23.0](https://github.com/TimBeyer/clawctl/compare/v0.22.1...v0.23.0) (2026-05-13)
+
+
+### Bug Fixes
+
+* **one-password:** write permissive exec-approvals defaults ([a9cdc18](https://github.com/TimBeyer/clawctl/commit/a9cdc183047b07cfbb8237ff1f74a10443b9832b))
+* **types:** add stringList field type for array-valued config fields ([1c03594](https://github.com/TimBeyer/clawctl/commit/1c035949268d3200244514a1a49187ef35bb4359))
+
+
+### Features
+
+* **host-core:** apply trusted-operator security defaults on bootstrap ([3783704](https://github.com/TimBeyer/clawctl/commit/3783704d6d171a6334470897cff36967e28e5a80))
+* **host-core:** set commands.ownerAllowFrom from channel allowFrom ([c505d95](https://github.com/TimBeyer/clawctl/commit/c505d951c274f983e14a272f83ad347f78e5f546))
+
 ## [0.22.1](https://github.com/TimBeyer/clawctl/compare/v0.22.0...v0.22.1) (2026-05-13)
 
 
