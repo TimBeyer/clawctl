@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import { mkdir, rm } from "fs/promises";
 import { join } from "path";
 import type { VMDriver, OnLine } from "./drivers/types.js";
-import { GATEWAY_PORT, CLAW_BIN_PATH, CHANNEL_REGISTRY } from "@clawctl/types";
+import { GATEWAY_PORT, CLAW_BIN_PATH, CHANNEL_REGISTRY, PROJECT_MOUNT_POINT } from "@clawctl/types";
 import type { InstanceConfig, ChannelDef } from "@clawctl/types";
 import { buildOnboardCommand } from "./providers.js";
 import { patchMainConfig, patchAuthProfiles } from "./infra-secrets.js";
@@ -10,6 +10,43 @@ import { generateBootstrapPrompt } from "@clawctl/templates";
 import { redactSecrets } from "./redact.js";
 import { getTailscaleHostname } from "./tailscale.js";
 import type { ResolvedSecretRef } from "./secrets.js";
+
+const OPENCLAW_CONFIG_PATH = `${PROJECT_MOUNT_POINT}/data/config`;
+
+/**
+ * True if openclaw has already been onboarded on this instance. data/config
+ * is created by `openclaw onboard`, so its presence on the mount is the
+ * sentinel: it means the gateway auth token has already been issued and the
+ * daemon is configured. Re-running onboard would rotate that token and
+ * re-issue credentials, so subsequent `clawctl create` invocations skip
+ * onboard and only apply the post-onboard config delta.
+ */
+async function isAlreadyOnboarded(driver: VMDriver, vmName: string): Promise<boolean> {
+  const r = await driver.exec(vmName, `test -f ${OPENCLAW_CONFIG_PATH}`);
+  return r.exitCode === 0;
+}
+
+/**
+ * Read the existing gateway.auth.token from data/config. Returns undefined
+ * if the file isn't readable as JSON or the field isn't a string — callers
+ * fall back to generating a fresh token in that case.
+ */
+async function readExistingGatewayToken(
+  driver: VMDriver,
+  vmName: string,
+): Promise<string | undefined> {
+  const result = await driver.exec(vmName, `cat ${OPENCLAW_CONFIG_PATH}`);
+  if (result.exitCode !== 0) return undefined;
+  try {
+    const parsed = JSON.parse(result.stdout) as Record<string, unknown>;
+    const gateway = parsed.gateway as Record<string, unknown> | undefined;
+    const auth = gateway?.auth as Record<string, unknown> | undefined;
+    const token = auth?.token;
+    return typeof token === "string" && token.length > 0 ? token : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export interface BootstrapResult {
   gatewayToken: string;
@@ -40,34 +77,51 @@ export async function bootstrapOpenclaw(
   const workspaceDir = join(config.project, "data", "workspace");
   await mkdir(workspaceDir, { recursive: true });
 
-  // b) Run openclaw onboard --non-interactive (always plaintext — we migrate to
-  //    file provider SecretRefs post-onboard)
-  const onboardCmd = buildOnboardCommand(provider, GATEWAY_PORT);
+  // Detect prior onboard. data/config is openclaw's own state file; if it
+  // exists the gateway auth token has already been issued and the daemon
+  // configured. Re-running onboard would rotate the token, so on re-apply we
+  // skip onboard and just thread the existing token through the apply-state
+  // steps below. This makes `clawctl create` idempotent in the strong sense:
+  // first run bootstraps, subsequent runs apply the clawctl.json diff.
+  const alreadyOnboarded = await isAlreadyOnboarded(driver, vmName);
 
-  onLine?.(`Running openclaw onboard (${provider.type})...`);
-  const onboardResult = await driver.exec(vmName, onboardCmd, onLine);
-  if (onboardResult.exitCode !== 0) {
-    // Onboard may exit non-zero due to gateway startup timing (websocket close
-    // before the service is fully ready). Check if config was actually written —
-    // if so, onboard did its job and we can continue. The daemon restart (step g)
-    // and openclaw doctor (step i) will verify the gateway later.
-    const configCheck = await driver.exec(vmName, "test -f /mnt/project/data/config");
-    if (configCheck.exitCode !== 0) {
-      throw new Error(
-        `openclaw onboard failed (exit ${onboardResult.exitCode}): ${onboardResult.stderr}`,
-      );
+  if (!alreadyOnboarded) {
+    // b) Run openclaw onboard --non-interactive (always plaintext — we migrate to
+    //    file provider SecretRefs post-onboard)
+    const onboardCmd = buildOnboardCommand(provider, GATEWAY_PORT);
+
+    onLine?.(`Running openclaw onboard (${provider.type})...`);
+    const onboardResult = await driver.exec(vmName, onboardCmd, onLine);
+    if (onboardResult.exitCode !== 0) {
+      // Onboard may exit non-zero due to gateway startup timing (websocket close
+      // before the service is fully ready). Check if config was actually written —
+      // if so, onboard did its job and we can continue. The daemon restart (step g)
+      // and openclaw doctor (step i) will verify the gateway later.
+      const configCheck = await driver.exec(vmName, `test -f ${OPENCLAW_CONFIG_PATH}`);
+      if (configCheck.exitCode !== 0) {
+        throw new Error(
+          `openclaw onboard failed (exit ${onboardResult.exitCode}): ${onboardResult.stderr}`,
+        );
+      }
+      onLine?.("Onboard exited with warnings but config was written — continuing");
     }
-    onLine?.("Onboard exited with warnings but config was written — continuing");
+
+    // OpenClaw's onboard creates a nested .git in the workspace — remove it.
+    // The project repo tracks data/workspace/ directly; no nested repos.
+    const wsGit = join(workspaceDir, ".git");
+    await rm(wsGit, { recursive: true, force: true });
+  } else {
+    onLine?.(`Skipping onboard — instance already initialized (provider: ${provider.type})`);
   }
 
-  // OpenClaw's onboard creates a nested .git in the workspace — remove it.
-  // The project repo tracks data/workspace/ directly; no nested repos.
-  const wsGit = join(workspaceDir, ".git");
-  await rm(wsGit, { recursive: true, force: true });
-
   // c) Post-onboard config (including gateway token — must be before daemon
-  //    restart so the daemon picks it up)
-  const gatewayToken = config.network?.gatewayToken ?? randomBytes(24).toString("hex");
+  //    restart so the daemon picks it up). Precedence for the token:
+  //    explicit config override > existing token on disk > fresh random.
+  const existingToken = alreadyOnboarded
+    ? await readExistingGatewayToken(driver, vmName)
+    : undefined;
+  const gatewayToken =
+    config.network?.gatewayToken ?? existingToken ?? randomBytes(24).toString("hex");
   const secrets = [gatewayToken, ...collectChannelSecrets(config)].filter(Boolean) as string[];
   const safeLog = (msg: string) => onLine?.(redactSecrets(msg, secrets));
 
@@ -184,10 +238,12 @@ export async function bootstrapOpenclaw(
     onLine?.("Warning: openclaw doctor reported issues");
   }
 
-  // j) Send bootstrap prompt to agent (if configured)
+  // j) Send bootstrap prompt to agent (first run only, if configured).
+  //    The bootstrap prompt seeds the agent's initial state; re-sending it on
+  //    every `clawctl create` would re-run the seeding work each time.
   //    Uses `openclaw agent --message` inside the VM — simpler and more reliable
   //    than hitting the gateway HTTP API from the host.
-  if (config.bootstrap) {
+  if (!alreadyOnboarded && config.bootstrap) {
     const prompt =
       typeof config.bootstrap === "string"
         ? config.bootstrap
