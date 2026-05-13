@@ -10,12 +10,14 @@ call privileged tooling, and use slash commands — without the operator
 having to shell into the VM and edit OpenClaw config by hand.
 
 **In scope:**
+
 - Post-onboard config writes in `host-core/bootstrap.ts`.
 - New typed fields on `InstanceConfig.agent` for source-specific IDs
   that aren't auto-derivable (e.g. extra elevated allowFrom entries).
 - Documentation of the trusted-operator default profile.
 
 **Out of scope:**
+
 - Changing the OpenClaw installer or onboarding flow itself.
 - Per-agent overrides for multi-agent setups (clawctl currently
   manages a single primary agent per instance).
@@ -161,7 +163,7 @@ writes `~/.openclaw/exec-approvals.json` from scratch with:
 ```json
 {
   "defaults": { "security": "deny", "ask": "on-miss", "askFallback": "deny" },
-  "agents": { "main": { "security": "allowlist", "allowlist": [{"pattern": "~/.local/bin/op"}] } }
+  "agents": { "main": { "security": "allowlist", "allowlist": [{ "pattern": "~/.local/bin/op" }] } }
 }
 ```
 
