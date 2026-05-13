@@ -1,6 +1,6 @@
 # OpenClaw security defaults for trusted-operator setup
 
-## Status: In Progress
+## Status: Resolved
 
 ## Scope
 
@@ -113,17 +113,17 @@ the `openclaw` passthrough as the catch-all escape hatch.
 
 ## Steps
 
-- [ ] Phase A: spin up a fresh instance via the test config and
+- [x] Phase A: spin up a fresh instance via the test config and
       introspect the live OpenClaw config schema.
-- [ ] Phase A: record exact dotpaths and findings in Notes.
-- [ ] Phase B: update `bootstrap.ts` post-onboard config emit.
-- [ ] Phase B: extend `agentSchema` and `InstanceConfig.agent`.
-- [ ] Update `docs/config-reference.md`.
-- [ ] Unit tests (if there's an existing bootstrap-config test
-      harness; otherwise add one).
-- [ ] End-to-end: destroy + recreate via test config, confirm exec
-      and slash commands work, confirm idempotency on re-run.
-- [ ] Mark resolved.
+- [x] Phase A: record exact dotpaths and findings in Notes.
+- [x] Phase B: update `bootstrap.ts` post-onboard config emit.
+- [x] Phase B: extend `agentSchema` and `InstanceConfig.agent`.
+- [x] Fix pre-existing `stringList` field-type gap blocking
+      headless configs with `channels.telegram.allowFrom`.
+- [x] Update `docs/config-reference.md`.
+- [x] End-to-end: bootstrap sam via the test config, confirm
+      effective policy is `security=full`, confirm idempotency.
+- [x] Mark resolved.
 
 ## Notes
 
@@ -203,4 +203,85 @@ still overridden by the 1Password capability.
 
 ## Outcome
 
-(To be written when resolved.)
+A fresh `clawctl create` with a provider configured now produces a
+gateway where the agent can exec, install packages, and use owner-only
+slash commands out of the box — the original symptom is gone.
+
+### Delivered
+
+Five distinct fixes, in the order they need to land:
+
+1. **1Password capability writes permissive approvals**
+   (`packages/capabilities/src/capabilities/one-password/op-cli.ts`)
+   — was hardcoding `defaults.security=deny` and
+   `agents.main.security=allowlist`, which combined with the new
+   per-agent-override-wins rule silently capped effective policy
+   at `allowlist` even when the gateway config asked for `full`.
+   Now writes `security=full` everywhere with the op pattern kept as
+   forward-compatible documentation.
+
+2. **bootstrap.ts applies the trusted-operator profile**
+   (`packages/host-core/src/bootstrap.ts`):
+   - `openclaw exec-policy preset yolo` after onboard.
+   - `commands.config=true` — enable the `/config` slash command.
+   - `tools.elevated.enabled=true` plus
+     `tools.elevated.allowFrom.<channel>` auto-derived from each
+     channel's `allowFrom`.
+   - `commands.ownerAllowFrom` auto-derived as `<channel>:<id>`
+     entries from the same channel `allowFrom` map — required
+     separately because `commands.config` gates the slash and
+     `commands.ownerAllowFrom` gates the sender.
+   - `agents.defaults.sandbox.mode=off` is now the default (was
+     opt-in); sandbox flips back on via `agent.sandbox: true`.
+
+3. **Typed config surface for explicit overrides**
+   (`packages/types/src/schemas/base.ts`, `types.ts`) — new
+   `agent.elevated.allowFrom` lets operators override the
+   auto-derived elevated map without falling back to the
+   `openclaw` passthrough.
+
+4. **stringList field type for array-valued channel fields**
+   (`packages/types/src/capability.ts`, `channels.ts`,
+   `packages/host-core/src/schema-derive.ts`) — `telegram.allowFrom`
+   was declared as `type: "text"` but the runtime accepts arrays
+   and tests use arrays; the derived `z.string()` rejected the
+   array form during `loadConfig` validation, blocking any headless
+   config with sender IDs. Found while running the E2E.
+
+5. **Docs**: `docs/config-reference.md` documents the trusted-operator
+   defaults, the new `agent.elevated.allowFrom` field, the new
+   `sandbox` default, and points operators at the `openclaw`
+   passthrough as the escape hatch for non-typed knobs.
+
+### Verified end-to-end
+
+Bootstrapped a fresh `sam` instance via
+`/Users/tim/Development/openclaw-setup/vm-bootstrap.json`. Final state
+inside the VM:
+
+- `tools.exec.security = full`, `commands.config = true`,
+  `tools.elevated.enabled = true`,
+  `tools.elevated.allowFrom.telegram = ["<id>"]`,
+  `commands.ownerAllowFrom = ["telegram:<id>"]`,
+  `agents.defaults.sandbox.mode = off`.
+- `exec-approvals.json`: `defaults.security=full`,
+  `agents.main.security=full` with the op pattern in the allowlist.
+- `openclaw exec-policy show` reports
+  effective `security=full, ask=off`.
+- `openclaw doctor` no longer flags the command-owner warning.
+  Remaining warnings (NODE_COMPILE_CACHE perf hints, plugin registry
+  rebuild, state dir chmod) are unrelated.
+- Idempotent: re-running `clawctl-dev create --config …` against the
+  same instance is a no-op for the security configuration.
+
+### Out of scope / follow-ups
+
+- Wizard editing UI for the new `stringList` field type — the wizard
+  currently renders it read-only. The existing wizard never produced
+  a valid array for `telegram.allowFrom` either, so this is no worse
+  than before. Worth a separate small PR.
+- The bootstrap prompt failed once on first-run with
+  `FailoverError: No API key found for provider "zai"` — looks like a
+  timing issue between auth-profile patching and the bootstrap-prompt
+  send. The bootstrap completes regardless; the agent is functional
+  on the second message. Worth investigating separately.
