@@ -198,9 +198,7 @@ export async function bootstrapOpenclaw(
     }
   }
   if (ownerIds.length > 0) {
-    configCmds.push(
-      `openclaw config set commands.ownerAllowFrom '${JSON.stringify(ownerIds)}'`,
-    );
+    configCmds.push(`openclaw config set commands.ownerAllowFrom '${JSON.stringify(ownerIds)}'`);
   }
 
   configCmds.push(`openclaw config set gateway.auth.token "${gatewayToken}"`);
