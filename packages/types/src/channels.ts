@@ -91,13 +91,13 @@ const telegramChannel: ChannelDef = {
       {
         path: "allowFrom",
         label: "Allow From",
-        type: "text",
+        type: "stringList",
         placeholder: "user_id_1, user_id_2",
         help: {
           title: "Allowed Users",
           lines: [
-            "Comma-separated Telegram user IDs allowed to DM the bot.",
-            "Leave empty to use pairing mode (approve via CLI).",
+            "Telegram user IDs allowed to DM the bot. JSON array in config files,",
+            "comma-separated in the TUI. Leave empty to use pairing mode (approve via CLI).",
           ],
         },
       },
