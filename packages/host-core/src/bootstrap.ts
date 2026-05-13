@@ -155,31 +155,52 @@ export async function bootstrapOpenclaw(
   // way for the agent to introspect/adjust its own configuration.
   configCmds.push("openclaw config set commands.config true");
 
-  // Elevated tool access: allow privileged surfaces from senders the
-  // operator already trusted at the channel layer. We mirror each
-  // configured channel's allowFrom into tools.elevated.allowFrom.<channel>
-  // so the operator never repeats IDs. Explicit agent.elevated.allowFrom
-  // (if set) wins over the channel-derived defaults.
-  configCmds.push("openclaw config set tools.elevated.enabled true");
-  const elevatedAllowFrom: Record<string, (string | number)[]> = {};
+  // Channel-derived sender allowlist. The IDs the operator put in each
+  // channel's allowFrom are the same humans they want to grant elevated
+  // and owner privileges to — repeating them in three places is the
+  // friction we set out to remove. Explicit agent.elevated.allowFrom
+  // overrides the auto-derived map.
+  const channelAllowFrom: Record<string, (string | number)[]> = {};
   if (config.channels) {
     for (const [channelName, channelConfig] of Object.entries(config.channels)) {
       if (channelConfig.enabled === false) continue;
       const af = (channelConfig as { allowFrom?: unknown }).allowFrom;
       if (Array.isArray(af) && af.length > 0) {
-        elevatedAllowFrom[channelName] = af as (string | number)[];
+        channelAllowFrom[channelName] = af as (string | number)[];
       }
     }
   }
+  const elevatedAllowFrom: Record<string, (string | number)[]> = { ...channelAllowFrom };
   const explicitElevated = config.agent?.elevated?.allowFrom;
   if (explicitElevated) {
     for (const [k, v] of Object.entries(explicitElevated)) {
       elevatedAllowFrom[k] = v;
     }
   }
+
+  // Elevated tool access: privileged tool surfaces gated by sender.
+  configCmds.push("openclaw config set tools.elevated.enabled true");
   for (const [channelName, ids] of Object.entries(elevatedAllowFrom)) {
     const json = JSON.stringify(ids);
     configCmds.push(`openclaw config set tools.elevated.allowFrom.${channelName} '${json}'`);
+  }
+
+  // Command-owner allowlist. Required separately from commands.config:
+  // commands.config gates "is the /config slash enabled at all", and
+  // commands.ownerAllowFrom gates "is *this sender* allowed to call it"
+  // for the owner-only family (/config, /diagnostics, /export-trajectory,
+  // exec approvals, …). Format is "<channel>:<id>" — flatten the
+  // channel-derived map into that shape.
+  const ownerIds: string[] = [];
+  for (const [channelName, ids] of Object.entries(elevatedAllowFrom)) {
+    for (const id of ids) {
+      ownerIds.push(`${channelName}:${id}`);
+    }
+  }
+  if (ownerIds.length > 0) {
+    configCmds.push(
+      `openclaw config set commands.ownerAllowFrom '${JSON.stringify(ownerIds)}'`,
+    );
   }
 
   configCmds.push(`openclaw config set gateway.auth.token "${gatewayToken}"`);
