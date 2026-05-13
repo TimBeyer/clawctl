@@ -54,7 +54,17 @@ export interface InstanceConfig {
   agent?: {
     skipOnboarding?: boolean;
     toolsProfile?: string;
+    /** Sandbox agent execution. Default `false` (off) for trusted-operator setups. */
     sandbox?: boolean;
+    /**
+     * Elevated tool access overrides. By default clawctl mirrors each
+     * channel's `allowFrom` into `tools.elevated.allowFrom.<channel>`,
+     * so the same IDs that can DM the bot can also trigger elevated
+     * surfaces. Set this to override the auto-derived defaults.
+     */
+    elevated?: {
+      allowFrom?: Record<string, (string | number)[]>;
+    };
   };
 
   /** Model provider configuration. Required for full bootstrap. */
