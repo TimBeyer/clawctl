@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.22.1](https://github.com/TimBeyer/clawctl/compare/v0.22.0...v0.22.1) (2026-05-13)
+
+
+### Bug Fixes
+
+* **host-core:** gate first-run-only steps in bootstrapOpenclaw ([6ed53cf](https://github.com/TimBeyer/clawctl/commit/6ed53cfae70f2ec4df973b30b9072eaea175906c))
+* **host-core:** handle provider switch in patchAuthProfiles ([504ca0a](https://github.com/TimBeyer/clawctl/commit/504ca0a92c64f0f41f4a5cd26e4253cc81922400))
+
 # [0.22.0](https://github.com/TimBeyer/clawctl/compare/v0.21.0...v0.22.0) (2026-04-07)
 
 
