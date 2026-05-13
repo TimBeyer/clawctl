@@ -85,6 +85,23 @@ export async function provisionOpWrapper(ctx: CapabilityContext): Promise<Provis
 
 /**
  * Install exec-approvals.json for the 1Password CLI.
+ *
+ * This file is clawctl-managed — it sets the per-agent exec policy that
+ * the OpenClaw gateway intersects with `tools.exec.*` config. Defaults
+ * mirror clawctl's trusted-operator trust model: `security=full` so the
+ * agent can exec freely. The op pattern is kept in the allowlist as
+ * forward-compatible documentation: if the operator later flips to
+ * restrictive mode (security=allowlist) via `openclaw approvals` or
+ * by editing this file, op still works without them remembering to
+ * re-add it.
+ *
+ * Earlier versions of this capability wrote `security=deny` /
+ * `agents.main.security=allowlist` defaults, which combined with
+ * recent upstream policy-intersection rules (per-agent override beats
+ * config request) silently blocked all exec on a fresh install. We
+ * now own this file in the permissive direction; operators who want
+ * lock-down customize via `openclaw approvals` after bootstrap.
+ *
  * Conditional — only installs if op is available.
  */
 export async function provisionExecApprovals(ctx: CapabilityContext): Promise<ProvisionResult> {
@@ -100,14 +117,14 @@ export async function provisionExecApprovals(ctx: CapabilityContext): Promise<Pr
       {
         version: 1,
         defaults: {
-          security: "deny",
-          ask: "on-miss",
-          askFallback: "deny",
+          security: "full",
+          ask: "off",
+          askFallback: "full",
         },
         agents: {
           main: {
-            security: "allowlist",
-            ask: "on-miss",
+            security: "full",
+            ask: "off",
             allowlist: [{ pattern: "~/.local/bin/op" }],
           },
         },

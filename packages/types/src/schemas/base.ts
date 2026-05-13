@@ -20,6 +20,11 @@ export const agentSchema = z.object({
   skipOnboarding: z.boolean().optional(),
   toolsProfile: z.string().optional(),
   sandbox: z.boolean().optional(),
+  elevated: z
+    .object({
+      allowFrom: z.record(z.string(), z.array(z.union([z.string(), z.number()]))).optional(),
+    })
+    .optional(),
 });
 
 export const toolsSchema = z.record(

@@ -131,9 +131,76 @@ export async function bootstrapOpenclaw(
   }
   configCmds.push(`openclaw config set tools.profile ${config.agent?.toolsProfile ?? "full"}`);
   configCmds.push("openclaw config set agents.defaults.workspace /mnt/project/data/workspace");
-  if (config.agent?.sandbox === false) {
+
+  // Trusted-operator default: sandbox off unless the operator explicitly
+  // requests it (agent.sandbox === true). clawctl owns the host+VM, so
+  // sandbox-as-protection adds friction without buying isolation we don't
+  // already have. Earlier behavior gated this on opt-in (sandbox === false);
+  // we invert because the new tools.exec policy layer means "no opt-in"
+  // resulted in a blocked-by-default gateway.
+  if (config.agent?.sandbox !== true) {
     configCmds.push("openclaw config set agents.defaults.sandbox.mode off");
   }
+
+  // Apply the trusted-operator exec policy: tools.exec.security=full,
+  // ask=off, host=gateway in the gateway config, plus matching defaults
+  // in ~/.openclaw/exec-approvals.json. Without this the host approvals
+  // file's defaults (and any per-agent override) silently intersect
+  // tools.profile=full down to "exec denied" — see
+  // tasks/2026-05-14_*/TASK.md for the full schema map.
+  configCmds.push("openclaw exec-policy preset yolo");
+
+  // Allow the agent to use the /config slash command. Disabled upstream
+  // by default; for a trusted single-operator setup it's the obvious
+  // way for the agent to introspect/adjust its own configuration.
+  configCmds.push("openclaw config set commands.config true");
+
+  // Channel-derived sender allowlist. The IDs the operator put in each
+  // channel's allowFrom are the same humans they want to grant elevated
+  // and owner privileges to — repeating them in three places is the
+  // friction we set out to remove. Explicit agent.elevated.allowFrom
+  // overrides the auto-derived map.
+  const channelAllowFrom: Record<string, (string | number)[]> = {};
+  if (config.channels) {
+    for (const [channelName, channelConfig] of Object.entries(config.channels)) {
+      if (channelConfig.enabled === false) continue;
+      const af = (channelConfig as { allowFrom?: unknown }).allowFrom;
+      if (Array.isArray(af) && af.length > 0) {
+        channelAllowFrom[channelName] = af as (string | number)[];
+      }
+    }
+  }
+  const elevatedAllowFrom: Record<string, (string | number)[]> = { ...channelAllowFrom };
+  const explicitElevated = config.agent?.elevated?.allowFrom;
+  if (explicitElevated) {
+    for (const [k, v] of Object.entries(explicitElevated)) {
+      elevatedAllowFrom[k] = v;
+    }
+  }
+
+  // Elevated tool access: privileged tool surfaces gated by sender.
+  configCmds.push("openclaw config set tools.elevated.enabled true");
+  for (const [channelName, ids] of Object.entries(elevatedAllowFrom)) {
+    const json = JSON.stringify(ids);
+    configCmds.push(`openclaw config set tools.elevated.allowFrom.${channelName} '${json}'`);
+  }
+
+  // Command-owner allowlist. Required separately from commands.config:
+  // commands.config gates "is the /config slash enabled at all", and
+  // commands.ownerAllowFrom gates "is *this sender* allowed to call it"
+  // for the owner-only family (/config, /diagnostics, /export-trajectory,
+  // exec approvals, …). Format is "<channel>:<id>" — flatten the
+  // channel-derived map into that shape.
+  const ownerIds: string[] = [];
+  for (const [channelName, ids] of Object.entries(elevatedAllowFrom)) {
+    for (const id of ids) {
+      ownerIds.push(`${channelName}:${id}`);
+    }
+  }
+  if (ownerIds.length > 0) {
+    configCmds.push(`openclaw config set commands.ownerAllowFrom '${JSON.stringify(ownerIds)}'`);
+  }
+
   configCmds.push(`openclaw config set gateway.auth.token "${gatewayToken}"`);
 
   // Tailscale gateway mode (serve/funnel/off) — defaults to "serve" when

@@ -91,6 +91,10 @@ function deriveFieldSchema(field: CapabilityConfigField): z.ZodTypeAny {
       }
       break;
     }
+    case "stringList": {
+      schema = z.array(z.string());
+      break;
+    }
     default:
       schema = z.string();
   }

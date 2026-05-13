@@ -154,7 +154,7 @@ export interface CapabilityMigration {
 // ---------------------------------------------------------------------------
 
 /** Field types supported by the config definition / TUI form. */
-export type ConfigFieldType = "text" | "password" | "select" | "toggle";
+export type ConfigFieldType = "text" | "password" | "select" | "toggle" | "stringList";
 
 /**
  * Recursive JSON Pointer paths for nested config objects.

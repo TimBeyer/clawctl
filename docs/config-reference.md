@@ -186,11 +186,34 @@ groq, cerebras, etc.).
 
 Agent behavior configuration. Applied during bootstrap (when `provider` is present).
 
-| Field            | Type    | Default  | Description                                                                                              |
-| ---------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------- |
-| `skipOnboarding` | boolean | `true`   | Skip `openclaw onboard` in headless mode. Set `false` to run onboarding (requires interactive terminal). |
-| `toolsProfile`   | string  | `"full"` | Agent tools profile (`"full"`, `"coding"`, `"messaging"`, etc.).                                         |
-| `sandbox`        | boolean | —        | Set to `false` to disable sandbox mode (`agents.defaults.sandbox.mode off`).                             |
+| Field                | Type    | Default  | Description                                                                                                                                                            |
+| -------------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skipOnboarding`     | boolean | `true`   | Skip `openclaw onboard` in headless mode. Set `false` to run onboarding (requires interactive terminal).                                                               |
+| `toolsProfile`       | string  | `"full"` | Agent tools profile (`"full"`, `"coding"`, `"messaging"`, etc.).                                                                                                       |
+| `sandbox`            | boolean | `false`  | Sandbox the agent (`agents.defaults.sandbox.mode`). Default off matches clawctl's trusted-operator trust model; set `true` to opt back in to sandboxing.               |
+| `elevated.allowFrom` | object  | —        | Override the auto-derived `tools.elevated.allowFrom` map. Each key is a channel name (`telegram`, `discord`, …); the value is an array of sender IDs allowed elevated. |
+
+### Security defaults clawctl applies
+
+On a fresh bootstrap, clawctl configures OpenClaw for a **single, trusted
+operator** — the same person owns the host and the VM, and the gateway
+is reachable only over localhost or Tailscale. The post-onboard step
+runs `openclaw exec-policy preset yolo` (sets `tools.exec.security=full`
+and matching approvals defaults) and additionally writes:
+
+| Setting                              | Value                           | Why                                                                          |
+| ------------------------------------ | ------------------------------- | ---------------------------------------------------------------------------- |
+| `tools.profile`                      | `agent.toolsProfile` (`"full"`) | Baseline tool policy.                                                        |
+| `agents.defaults.sandbox.mode`       | `off`                           | No sandbox by default; flip via `agent.sandbox: true` if desired.            |
+| `tools.exec.security`                | `full`                          | Agent may exec arbitrary commands.                                           |
+| `commands.config`                    | `true`                          | Agent may use the `/config` slash command to introspect/adjust its config.   |
+| `tools.elevated.enabled`             | `true`                          | Privileged surfaces available to trusted senders.                            |
+| `tools.elevated.allowFrom.<channel>` | auto-derived                    | Mirrors each channel's `allowFrom`; override via `agent.elevated.allowFrom`. |
+
+Operators who want a tighter posture can override individual settings
+via the `openclaw` passthrough below (e.g.
+`"openclaw": { "tools.exec.security": "allowlist" }`), or by running
+`openclaw exec-policy preset cautious` / `deny-all` inside the VM.
 
 ## `channels`
 
